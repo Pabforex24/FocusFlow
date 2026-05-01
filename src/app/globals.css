@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap');
+
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    /* ── Fonts ── */
+    --font-heading: 'Bricolage Grotesque', sans-serif;
+    --font-body: 'Space Grotesk', sans-serif;
+
+    /* ── Background layers ── */
+    --bg:   #080810;
+    --bg-2: #0f0f1a;
+    --bg-3: #161625;
+    --bg-4: #1d1d30;
+    --bg-5: #24243b;
+
+    /* ── Borders ── */
+    --border:   #1e1e30;
+    --border-2: #2a2a42;
+    --border-3: #363658;
+
+    /* ── Text ── */
+    --text:   #f2f2fa;
+    --text-2: #8e8eaa;
+    --text-3: #55556e;
+    --text-4: #30304a;
+
+    /* ── Accent purple ── */
+    --accent:        #7B61FF;
+    --accent-hover:  #6a50e8;
+    --accent-light:  rgba(123,97,255,0.12);
+    --accent-border: rgba(123,97,255,0.28);
+
+    /* ── Status ── */
+    --success: #00C2A8;
+    --warning: #FFB830;
+    --danger:  #FF6B6B;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings use Bricolage Grotesque */
+  h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-heading);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-2);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-3); }
+
+  /* Selection */
+  ::selection {
+    background: rgba(123,97,255,0.28);
+    color: var(--text);
+  }
+
+  /* Dark native inputs */
+  input[type='date'], input[type='time'], select { color-scheme: dark; }
+}
+
+@layer components {
+  /* Page fade-up animation */
+  .page-enter {
+    animation: fadeUp 0.28s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+
+  /* Subtle dot grid background */
+  .dot-grid {
+    background-image: radial-gradient(circle, rgba(123,97,255,0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+@keyframes xp-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(123,97,255,0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(123,97,255,0);  }
+  100% { box-shadow: 0 0 0 0 rgba(123,97,255,0);    }
+}
+
+.animate-scale-in  { animation: scale-in  0.2s cubic-bezier(0.34,1.56,0.64,1) both; }
+.animate-fade-in   { animation: fade-in   0.25s ease both; }
+.animate-xp-flash  { animation: xp-flash  0.6s ease-out; }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 5px; height: 5px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--border-2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-3); }
+
+/* ── Range input ───────────────────────────────────────────────────────────── */
+input[type=range] {
+  height: 4px;
+  border-radius: 99px;
+  background: var(--bg-4);
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #7B61FF;
+  box-shadow: 0 0 8px rgba(123,97,255,0.5);
+  cursor: pointer;
+}
+
+/* ── Select ────────────────────────────────────────────────────────────────── */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2355556e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px !important;
+}
