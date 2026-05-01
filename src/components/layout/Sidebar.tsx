@@ -11,7 +11,6 @@ import {
   Flame,
   Zap,
   Trophy,
-  BarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStore } from '@/store'
@@ -22,7 +21,6 @@ const NAV_ITEMS = [
   { href: '/goals',       label: 'Objectifs',   icon: Target          },
   { href: '/tasks',       label: 'Tâches',      icon: CheckSquare     },
   { href: '/challenges',  label: 'Challenges',  icon: Trophy          },
-  { href: '/progression', label: 'Progression', icon: BarChart2       },
   { href: '/coach',       label: 'IA Coach',    icon: Sparkles        },
 ]
 
@@ -34,6 +32,11 @@ export function Sidebar() {
   const pendingToday = tasks.filter(
     (t) => !t.done && new Date(t.scheduledAt).toDateString() === today
   ).length
+
+  // XP progress percent for display
+  const xpMax = userStats.level * 100 + 50
+  const xpCurrent = xpMax - userStats.xpToNextLevel
+  const xpPct = Math.min(100, Math.round((xpCurrent / xpMax) * 100))
 
   return (
     <>
@@ -50,11 +53,11 @@ export function Sidebar() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
           <p className="text-[10px] font-bold tracking-widest uppercase text-content-3 px-2 mb-2 mt-1">
             Principal
           </p>
-          {NAV_ITEMS.slice(0, 6).map((item) => (
+          {NAV_ITEMS.slice(0, 5).map((item) => (
             <NavLink
               key={item.href}
               href={item.href}
@@ -69,7 +72,7 @@ export function Sidebar() {
           <p className="text-[10px] font-bold tracking-widest uppercase text-content-3 px-2 mb-2 mt-4">
             Intelligence
           </p>
-          {NAV_ITEMS.slice(6).map((item) => (
+          {NAV_ITEMS.slice(5).map((item) => (
             <NavLink
               key={item.href}
               href={item.href}
@@ -93,7 +96,7 @@ export function Sidebar() {
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
-                  width: `${Math.min(100, Math.round(((userStats.xpToNextLevel) / (userStats.level * 100 + 50)) * 100))}%`,
+                  width: `${xpPct}%`,
                   background: 'linear-gradient(90deg, #7B61FF, #A259FF)',
                 }}
               />
@@ -112,7 +115,7 @@ export function Sidebar() {
 
       {/* ── Mobile bottom nav ──────────────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-bg-2/95 backdrop-blur border-t border-border z-40 flex items-center px-1 py-1">
-        {[NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[4], NAV_ITEMS[5], NAV_ITEMS[6]].map((item) => {
+        {[NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]].map((item) => {
           const active = pathname.startsWith(item.href)
           return (
             <Link
@@ -140,11 +143,7 @@ export function Sidebar() {
 
 // ── NavLink sub-component ─────────────────────────────────────────────────────
 function NavLink({
-  href,
-  active,
-  icon,
-  badge,
-  children,
+  href, active, icon, badge, children,
 }: {
   href: string
   active: boolean

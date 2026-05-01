@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import {
   AppStore, Domain, Goal, Task, Challenge, ActiveChallenge,
   FocusSession, UserStats, Badge, OnboardingState,
-  ALL_BADGES, xpForLevel,
+  ALL_BADGES, xpForLevel, FrequencyType, getOccurrenceDates,
 } from '@/types'
 
 // ─── Challenge catalogue ──────────────────────────────────────────────────────
@@ -14,8 +14,8 @@ export const CHALLENGE_CATALOGUE: Challenge[] = [
     description: 'Construis une routine de trading solide : backtest quotidien, journal et analyse hebdo.',
     durationDays: 30, color: '#00C2A8', icon: 'TrendingUp',
     blueprints: [
-      { id: 'bp-t1', title: '1h de backtest',                    domainId: 'seed-d1', duration: '1h'   },
-      { id: 'bp-t2', title: 'Mettre à jour le journal de trades', domainId: 'seed-d1', duration: '20min' },
+      { id: 'bp-t1', title: '1h de backtest', domainId: 'seed-d1', duration: '1h', frequency: 'workdays' },
+      { id: 'bp-t2', title: 'Mettre à jour le journal de trades', domainId: 'seed-d1', duration: '20min', frequency: 'daily' },
     ],
   },
   {
@@ -24,18 +24,18 @@ export const CHALLENGE_CATALOGUE: Challenge[] = [
     description: 'Adopte une routine sportive en 21 jours avec cardio, musculation et récupération.',
     durationDays: 21, color: '#FFB830', icon: 'Dumbbell',
     blueprints: [
-      { id: 'bp-s1', title: 'Footing 20 minutes', domainId: 'seed-d2', duration: '20min' },
-      { id: 'bp-s2', title: 'Séance musculation', domainId: 'seed-d2', duration: '45min' },
+      { id: 'bp-s1', title: 'Footing 20 minutes', domainId: 'seed-d2', duration: '20min', frequency: 'daily' },
+      { id: 'bp-s2', title: 'Séance musculation', domainId: 'seed-d2', duration: '45min', frequency: 'workdays' },
     ],
   },
   {
     id: 'ch-learning-14',
     title: 'Deep Learning 14J',
-    description: 'Plonge dans un sujet d\'étude intensif avec sessions concentrées et révisions.',
+    description: "Plonge dans un sujet d'étude intensif avec sessions concentrées et révisions.",
     durationDays: 14, color: '#4EA8DE', icon: 'Brain',
     blueprints: [
-      { id: 'bp-l1', title: 'Session d\'étude focalisée', domainId: 'seed-d3', duration: '1h30' },
-      { id: 'bp-l2', title: 'Révision des notes',         domainId: 'seed-d3', duration: '20min' },
+      { id: 'bp-l1', title: "Session d'étude focalisée", domainId: 'seed-d3', duration: '1h30', frequency: 'daily' },
+      { id: 'bp-l2', title: 'Révision des notes', domainId: 'seed-d3', duration: '20min', frequency: 'daily' },
     ],
   },
   {
@@ -44,8 +44,8 @@ export const CHALLENGE_CATALOGUE: Challenge[] = [
     description: 'Une semaine pour tout remettre à zéro : hydratation, sommeil, mouvement, pleine conscience.',
     durationDays: 7, color: '#1BC47D', icon: 'Leaf',
     blueprints: [
-      { id: 'bp-w1', title: 'Boire 2L d\'eau',    domainId: 'seed-d2', duration: '—'    },
-      { id: 'bp-w2', title: 'Méditation 10 min',  domainId: 'seed-d2', duration: '10min' },
+      { id: 'bp-w1', title: "Boire 2L d'eau", domainId: 'seed-d2', duration: '—', frequency: 'daily' },
+      { id: 'bp-w2', title: 'Méditation 10 min', domainId: 'seed-d2', duration: '10min', frequency: 'daily' },
     ],
   },
 ]
@@ -68,11 +68,11 @@ const seedGoals: Goal[] = [
 ]
 
 const seedTasks: Task[] = [
-  { id: uid(), title: '1h30 de backtest EUR/USD',              domainId: 'seed-d1', goalId: 'seed-g1', duration: '1h30',  scheduledAt: `${today}T08:00:00.000Z`,    done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Analyser les trades de la semaine',     domainId: 'seed-d1', goalId: 'seed-g1', duration: '30min', scheduledAt: `${today}T10:00:00.000Z`,    done: true,  xpValue: 10, doneAt: new Date().toISOString(), createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Footing 20 minutes',                    domainId: 'seed-d2', goalId: 'seed-g2', duration: '20min', scheduledAt: `${today}T07:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Réviser chapitre 3 — Marchés financiers',domainId:'seed-d3', goalId: 'seed-g3', duration: '1h',    scheduledAt: `${today}T14:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Backtest stratégie RSI',                domainId: 'seed-d1', goalId: 'seed-g1', duration: '2h',    scheduledAt: `${tomorrow}T09:00:00.000Z`, done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
+  { id: uid(), title: '1h30 de backtest EUR/USD',               domainId: 'seed-d1', goalId: 'seed-g1', duration: '1h30',  scheduledAt: `${today}T08:00:00.000Z`,    done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Analyser les trades de la semaine',      domainId: 'seed-d1', goalId: 'seed-g1', duration: '30min', scheduledAt: `${today}T10:00:00.000Z`,    done: true,  xpValue: 10, doneAt: new Date().toISOString(), createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Footing 20 minutes',                     domainId: 'seed-d2', goalId: 'seed-g2', duration: '20min', scheduledAt: `${today}T07:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Réviser chapitre 3 — Marchés financiers',domainId: 'seed-d3', goalId: 'seed-g3', duration: '1h',    scheduledAt: `${today}T14:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Backtest stratégie RSI',                 domainId: 'seed-d1', goalId: 'seed-g1', duration: '2h',    scheduledAt: `${tomorrow}T09:00:00.000Z`, done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
 ]
 
 const initialUserStats: UserStats = {
@@ -81,10 +81,7 @@ const initialUserStats: UserStats = {
   hardcoreMode: false,
 }
 
-const initialOnboarding: OnboardingState = {
-  completed: false,
-  step: 'domains',
-}
+const initialOnboarding: OnboardingState = { completed: false, step: 'domains' }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -98,23 +95,42 @@ function computeLevel(xp: number): { level: number; xpToNextLevel: number } {
   return { level, xpToNextLevel: xpForLevel(level) - (xp - cumulative) }
 }
 
-function buildChallengeTasksForDay(
+/**
+ * Génère TOUTES les occurrences des tâches d'un challenge entre startDate et endDate.
+ * Chaque blueprint génère ses tâches selon sa fréquence propre.
+ */
+function buildAllChallengeTasks(
   challenge: Challenge,
   acId: string,
-  dayDate: Date,
+  startDate: Date,
+  endDate: Date,
   domainIdMap: Record<string, string>
 ): Omit<Task, 'id' | 'createdAt'>[] {
-  const dayStr = dayDate.toISOString().split('T')[0]
-  return challenge.blueprints.map((bp) => ({
-    title: bp.title,
-    domainId: domainIdMap[bp.domainId] ?? bp.domainId,
-    duration: bp.duration,
-    scheduledAt: `${dayStr}T08:00:00.000Z`,
-    done: false,
-    xpValue: 20,
-    challengeActiveId: acId,
-    priority: 'medium' as const,
-  }))
+  const tasks: Omit<Task, 'id' | 'createdAt'>[] = []
+
+  for (const bp of challenge.blueprints) {
+    const freq: FrequencyType = bp.frequency || 'daily'
+    const dates = getOccurrenceDates(startDate, endDate, freq, bp.customDays)
+
+    for (const d of dates) {
+      const dayStr = d.toISOString().split('T')[0]
+      tasks.push({
+        title: bp.title,
+        domainId: domainIdMap[bp.domainId] ?? bp.domainId,
+        duration: bp.duration,
+        scheduledAt: `${dayStr}T08:00:00.000Z`,
+        done: false,
+        xpValue: 20,
+        challengeActiveId: acId,
+        priority: 'medium',
+        frequency: freq,
+        customDays: bp.customDays,
+        isGenerated: true,
+      })
+    }
+  }
+
+  return tasks
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -185,12 +201,11 @@ export const useStore = create<AppStore>()(
           awardXP(task.xpValue ?? 10)
           updateStreak()
           checkAndAwardBadges()
-          // Check perfectionist badge
           const { tasks: updatedTasks } = get()
           const todayStr = new Date().toDateString()
           const todayAll = updatedTasks.filter((t) => new Date(t.scheduledAt).toDateString() === todayStr)
           if (todayAll.length > 0 && todayAll.every((t) => t.done)) {
-            awardXP(50) // perfectionist bonus
+            awardXP(50)
           }
         }
       },
@@ -202,9 +217,7 @@ export const useStore = create<AppStore>()(
         set((s) => {
           const newXP = s.userStats.xp + amount
           const { level, xpToNextLevel } = computeLevel(newXP)
-          return {
-            userStats: { ...s.userStats, xp: newXP, level, xpToNextLevel },
-          }
+          return { userStats: { ...s.userStats, xp: newXP, level, xpToNextLevel } }
         })
       },
 
@@ -268,13 +281,9 @@ export const useStore = create<AppStore>()(
       startFocus: (taskId, durationMinutes = 25) => {
         set({
           focusSession: {
-            id: uid(),
-            taskId,
-            durationMinutes,
-            elapsedSeconds: 0,
-            status: 'running',
-            startedAt: new Date().toISOString(),
-            xpEarned: 0,
+            id: uid(), taskId, durationMinutes,
+            elapsedSeconds: 0, status: 'running',
+            startedAt: new Date().toISOString(), xpEarned: 0,
           },
         })
       },
@@ -282,19 +291,14 @@ export const useStore = create<AppStore>()(
         set((s) => {
           if (!s.focusSession || s.focusSession.status !== 'running') return s
           const elapsed = s.focusSession.elapsedSeconds + 1
-          const target = s.focusSession.durationMinutes * 60
+          const target  = s.focusSession.durationMinutes * 60
           if (elapsed >= target) {
-            // Auto-complete
-            return {
-              focusSession: { ...s.focusSession, elapsedSeconds: target, status: 'done', completedAt: new Date().toISOString(), xpEarned: 30 },
-            }
+            return { focusSession: { ...s.focusSession, elapsedSeconds: target, status: 'done', completedAt: new Date().toISOString(), xpEarned: 30 } }
           }
           return { focusSession: { ...s.focusSession, elapsedSeconds: elapsed } }
         }),
-      pauseFocus: () =>
-        set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'paused' } } : s),
-      resumeFocus: () =>
-        set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'running' } } : s),
+      pauseFocus:   () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'paused'  } } : s),
+      resumeFocus:  () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'running' } } : s),
       completeFocus: () => {
         const { focusSession, awardXP, toggleTask, checkAndAwardBadges } = get()
         if (!focusSession) return
@@ -307,8 +311,7 @@ export const useStore = create<AppStore>()(
         }))
         checkAndAwardBadges()
       },
-      abandonFocus: () =>
-        set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } } : s),
+      abandonFocus: () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } } : s),
 
       // ── Challenge actions ─────────────────────────────────────────────────────
       startChallenge: (challengeId, domainIdMap) => {
@@ -319,13 +322,15 @@ export const useStore = create<AppStore>()(
         if (!challenge) return
 
         const startDate = new Date()
-        const endDate = new Date(Date.now() + challenge.durationDays * 86400000)
+        // endDate calculé depuis deadline ou durationDays
+        const endDate = challenge.deadline
+          ? new Date(challenge.deadline)
+          : new Date(Date.now() + challenge.durationDays * 86400000)
+
         const acId = uid()
 
-        // Lazy generation: génère uniquement J0 et J1
-        const todayTasks = buildChallengeTasksForDay(challenge, acId, startDate, domainIdMap)
-        const tomorrowDate = new Date(startDate); tomorrowDate.setDate(tomorrowDate.getDate() + 1)
-        const tomorrowTasks = buildChallengeTasksForDay(challenge, acId, tomorrowDate, domainIdMap)
+        // Génération COMPLÈTE de toutes les tâches
+        const allTasks = buildAllChallengeTasks(challenge, acId, startDate, endDate, domainIdMap)
 
         const newAC: ActiveChallenge = {
           id: acId, challengeId,
@@ -337,14 +342,12 @@ export const useStore = create<AppStore>()(
         }
 
         set((s) => ({
-          tasks: [...s.tasks, ...[...todayTasks, ...tomorrowTasks].map((t) => ({
-            ...t, id: uid(), createdAt: new Date().toISOString(),
-          }))],
+          tasks: [...s.tasks, ...allTasks.map((t) => ({ ...t, id: uid(), createdAt: new Date().toISOString() }))],
           activeChallenges: [...s.activeChallenges, newAC],
         }))
       },
 
-      generateTodayChallengeTasks: (activeChallengeId) => {
+      generateAllChallengeTasks: (activeChallengeId) => {
         const { activeChallenges, customChallenges, tasks } = get()
         const ac = activeChallenges.find((a) => a.id === activeChallengeId)
         if (!ac || !ac.isActive) return
@@ -354,23 +357,31 @@ export const useStore = create<AppStore>()(
           (customChallenges || []).find((c) => c.id === ac.challengeId)
         if (!challenge) return
 
-        const todayStr = new Date().toDateString()
-        const alreadyHasToday = tasks.some(
-          (t) => t.challengeActiveId === activeChallengeId &&
-                 new Date(t.scheduledAt).toDateString() === todayStr
+        // Supprimer les tâches non-complétées existantes et regénérer
+        const existingGenerated = tasks.filter(
+          (t) => t.challengeActiveId === activeChallengeId && t.isGenerated && !t.done
         )
-        if (alreadyHasToday) return
+        const idsToRemove = new Set(existingGenerated.map((t) => t.id))
 
-        const newDay = ac.currentDay + 1
-        if (newDay > challenge.durationDays) return
+        const newTasks = buildAllChallengeTasks(
+          challenge,
+          activeChallengeId,
+          new Date(ac.startDate),
+          new Date(ac.endDate),
+          {}
+        )
 
-        const newTasks = buildChallengeTasksForDay(challenge, activeChallengeId, new Date(), {})
         set((s) => ({
-          tasks: [...s.tasks, ...newTasks.map((t) => ({ ...t, id: uid(), createdAt: new Date().toISOString() }))],
-          activeChallenges: s.activeChallenges.map((a) =>
-            a.id === activeChallengeId ? { ...a, currentDay: newDay } : a
-          ),
+          tasks: [
+            ...s.tasks.filter((t) => !idsToRemove.has(t.id)),
+            ...newTasks.map((t) => ({ ...t, id: uid(), createdAt: new Date().toISOString() })),
+          ],
         }))
+      },
+
+      // Alias deprecated
+      generateTodayChallengeTasks: (activeChallengeId) => {
+        get().generateAllChallengeTasks(activeChallengeId)
       },
 
       stopChallenge: (activeChallengeId) => {
@@ -387,17 +398,10 @@ export const useStore = create<AppStore>()(
       },
 
       getChallengeProgress: (activeChallengeId) => {
-        const { tasks, activeChallenges } = get()
-        const ac = activeChallenges.find((a) => a.id === activeChallengeId)
-        if (!ac) return 0
-        const challenge =
-          CHALLENGE_CATALOGUE.find((c) => c.id === ac.challengeId) ||
-          (get().customChallenges || []).find((c) => c.id === ac.challengeId)
-        if (!challenge) return 0
+        const { tasks } = get()
         const ct = tasks.filter((t) => t.challengeActiveId === activeChallengeId)
-        const totalExpected = challenge.blueprints.length * ac.currentDay
-        if (!totalExpected) return 0
-        return Math.round((ct.filter((t) => t.done).length / totalExpected) * 100)
+        if (!ct.length) return 0
+        return Math.round((ct.filter((t) => t.done).length / ct.length) * 100)
       },
 
       getTodayChallengeTaskCount: (activeChallengeId) => {
@@ -419,6 +423,7 @@ export const useStore = create<AppStore>()(
           color: data.color,
           icon: data.icon,
           blueprints: data.blueprints.map((bp) => ({ ...bp, id: bp.id || uid() })),
+          deadline: data.deadline,
         }
         set((s) => ({ customChallenges: [...(s.customChallenges || []), newC] }))
       },
@@ -432,14 +437,14 @@ export const useStore = create<AppStore>()(
       // ── Selectors ────────────────────────────────────────────────────────────
       updateStreak: () => {
         const { tasks, streak, lastActive, userStats } = get()
-        const today     = new Date().toDateString()
-        const yesterday = new Date(Date.now() - 86400000).toDateString()
-        const hasDone   = tasks.some((t) => t.done && new Date(t.scheduledAt).toDateString() === today)
-        if (hasDone && lastActive !== today) {
-          const newStreak = lastActive === yesterday ? streak + 1 : 1
+        const todayStr    = new Date().toDateString()
+        const yesterdayStr= new Date(Date.now() - 86400000).toDateString()
+        const hasDone = tasks.some((t) => t.done && new Date(t.scheduledAt).toDateString() === todayStr)
+        if (hasDone && lastActive !== todayStr) {
+          const newStreak = lastActive === yesterdayStr ? streak + 1 : 1
           set({
             streak: newStreak,
-            lastActive: today,
+            lastActive: todayStr,
             userStats: { ...userStats, longestStreak: Math.max(userStats.longestStreak, newStreak) },
           })
         }
@@ -458,7 +463,7 @@ export const useStore = create<AppStore>()(
 
       getDomainProgress: (domainId) => {
         const { goals, getGoalProgress } = get()
-        const gs = goals.filter((g) => g.domainId === domainId)
+        const gs = goals.filter((g) => g.domainId === domainId && !g.challengeId)
         if (!gs.length) return 0
         return Math.round(gs.reduce((a, g) => a + getGoalProgress(g.id), 0) / gs.length)
       },
@@ -482,11 +487,9 @@ export const useStore = create<AppStore>()(
       },
 
       // ── Onboarding ────────────────────────────────────────────────────────────
-      completeOnboarding: () =>
-        set({ onboarding: { completed: true, step: 'done' } }),
-      setOnboardingStep: (step) =>
-        set((s) => ({ onboarding: { ...s.onboarding, step } })),
+      completeOnboarding: () => set({ onboarding: { completed: true, step: 'done' } }),
+      setOnboardingStep: (step) => set((s) => ({ onboarding: { ...s.onboarding, step } })),
     }),
-    { name: 'focusflow-store-v7' }
+    { name: 'focusflow-store-v8' }
   )
 )

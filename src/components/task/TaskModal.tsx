@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Modal, Field, inputCls, selectCls } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { Domain, Goal, Task } from '@/types'
+import { Domain, Goal, Task, FrequencyType } from '@/types'
 import { DomainIcon } from '@/components/domain/DomainIcon'
 import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
 
 interface TaskModalProps {
   open: boolean
@@ -16,15 +17,30 @@ interface TaskModalProps {
   defaultDate?: Date
 }
 
+const FREQ_OPTIONS: { value: FrequencyType; label: string }[] = [
+  { value: 'daily',    label: 'Chaque jour'    },
+  { value: 'workdays', label: 'Jours ouvrables' },
+  { value: 'weekend',  label: 'Week-end'        },
+  { value: 'custom',   label: 'Personnalisé'    },
+]
+
+const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+
 export function TaskModal({ open, onClose, onSave, domains, goals, defaultDate }: TaskModalProps) {
   const [title,         setTitle]         = useState('')
   const [domainId,      setDomainId]      = useState('')
   const [goalId,        setGoalId]        = useState('')
   const [duration,      setDuration]      = useState('')
   const [scheduledDate, setScheduledDate] = useState(format(defaultDate || new Date(), 'yyyy-MM-dd'))
+  const [frequency,     setFrequency]     = useState<FrequencyType | ''>('')
+  const [customDays,    setCustomDays]    = useState<number[]>([])
 
   useEffect(() => {
-    if (open) setScheduledDate(format(defaultDate || new Date(), 'yyyy-MM-dd'))
+    if (open) {
+      setScheduledDate(format(defaultDate || new Date(), 'yyyy-MM-dd'))
+      setFrequency('')
+      setCustomDays([])
+    }
   }, [open, defaultDate])
 
   const filteredGoals = domainId ? goals.filter((g) => g.domainId === domainId) : goals
@@ -35,6 +51,9 @@ export function TaskModal({ open, onClose, onSave, domains, goals, defaultDate }
     const g = goals.find((g) => g.id === val)
     if (g?.domainId) setDomainId(g.domainId)
   }
+
+  const toggleDay = (day: number) =>
+    setCustomDays((d) => d.includes(day) ? d.filter((x) => x !== day) : [...d, day])
 
   const handleSave = () => {
     if (!title.trim()) return
@@ -47,8 +66,10 @@ export function TaskModal({ open, onClose, onSave, domains, goals, defaultDate }
       done: false,
       xpValue: 10,
       priority: 'medium',
+      frequency: frequency || undefined,
+      customDays: frequency === 'custom' ? customDays : undefined,
     })
-    setTitle(''); setDuration(''); setGoalId('')
+    setTitle(''); setDuration(''); setGoalId(''); setFrequency(''); setCustomDays([])
     onClose()
   }
 
@@ -103,6 +124,40 @@ export function TaskModal({ open, onClose, onSave, domains, goals, defaultDate }
           </select>
         </Field>
       </div>
+
+      {/* Fréquence (optionnel) */}
+      <Field label="Fréquence (optionnel)">
+        <select className={selectCls} value={frequency} onChange={(e) => { setFrequency(e.target.value as FrequencyType | ''); setCustomDays([]) }}>
+          <option value="">— Tâche unique —</option>
+          {FREQ_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </Field>
+
+      {/* Jours personnalisés */}
+      {frequency === 'custom' && (
+        <Field label="Jours">
+          <div className="flex gap-1.5 flex-wrap">
+            {DAY_LABELS.map((label, idx) => {
+              const active = customDays.includes(idx)
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => toggleDay(idx)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs font-bold border transition-all',
+                    active ? 'bg-accent/20 border-accent/60 text-accent' : 'bg-bg-3 border-border text-content-3'
+                  )}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </Field>
+      )}
 
       <div className="flex gap-2 justify-end mt-2">
         <Button variant="ghost" onClick={onClose}>Annuler</Button>

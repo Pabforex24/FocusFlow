@@ -14,22 +14,28 @@ export interface Goal {
   domainId: string
   title: string
   description?: string
-  deadline?: string
+  deadline?: string       // null si challenge-objectif
+  challengeId?: string    // défini si l'objectif est rattaché à un challenge
   createdAt: string
 }
+
+export type FrequencyType = 'daily' | 'weekend' | 'workdays' | 'custom'
 
 export interface Task {
   id: string
   title: string
   domainId?: string
   goalId?: string
-  challengeActiveId?: string   // ← relation propre (remplace goalId="challenge:")
+  challengeActiveId?: string
   duration?: string
   scheduledAt: string
   done: boolean
   doneAt?: string
-  xpValue: number              // XP gagné à la complétion
+  xpValue: number
   priority?: 'low' | 'medium' | 'high'
+  frequency?: FrequencyType         // pour tâches récurrentes de challenge
+  customDays?: number[]             // 0=dim,1=lun,...6=sam — si frequency==='custom'
+  isGenerated?: boolean             // marqueur tâches auto-générées
   createdAt: string
 }
 
@@ -56,17 +62,17 @@ export type BadgeId =
   | 'challenge_3'
   | 'early_bird'
   | 'night_owl'
-  | 'perfectionist'    // 100% d'une journée
-  | 'comeback'         // revient après pénalité
-  | 'focus_5'          // 5 sessions Focus complétées
-  | 'focus_master'     // 25 sessions Focus complétées
+  | 'perfectionist'
+  | 'comeback'
+  | 'focus_5'
+  | 'focus_master'
 
 export interface Badge {
   id: BadgeId
   title: string
   description: string
-  icon: string         // emoji
-  unlockedAt?: string  // ISO — absent si pas encore débloqué
+  icon: string
+  unlockedAt?: string
   xpReward: number
 }
 
@@ -77,8 +83,8 @@ export type FocusStatus = 'idle' | 'running' | 'paused' | 'done' | 'abandoned'
 export interface FocusSession {
   id: string
   taskId?: string
-  durationMinutes: number   // durée cible (25 par défaut)
-  elapsedSeconds: number    // suivi réel
+  durationMinutes: number
+  elapsedSeconds: number
   status: FocusStatus
   startedAt?: string
   completedAt?: string
@@ -87,12 +93,14 @@ export interface FocusSession {
 
 // ─── Challenge types ──────────────────────────────────────────────────────────
 
+/** Définition d'une tâche dans un challenge (blueprint) — fréquence incluse */
 export interface ChallengeBlueprint {
   id: string
   title: string
   domainId: string
   duration: string
-  description?: string
+  frequency?: FrequencyType
+  customDays?: number[]   // 0-6
 }
 
 export interface Challenge {
@@ -103,6 +111,8 @@ export interface Challenge {
   color: string
   icon: string
   blueprints: ChallengeBlueprint[]
+  /** Date d'échéance explicite (overrides durationDays if set) */
+  deadline?: string
 }
 
 export interface ActiveChallenge {
@@ -111,7 +121,7 @@ export interface ActiveChallenge {
   startDate: string
   endDate: string
   isActive: boolean
-  currentDay: number        // jour courant généré (lazy generation)
+  currentDay: number
   createdAt: string
 }
 
@@ -131,6 +141,7 @@ export interface GoalWithProgress extends Goal {
   domain?: Domain
   taskCount: number
   doneCount: number
+  challengeTitle?: string
 }
 
 // ─── Store interface ──────────────────────────────────────────────────────────
@@ -186,12 +197,14 @@ export interface AppStore {
   // ── Challenge actions ─────────────────────────────────────────────────────
   startChallenge: (challengeId: string, domainIdMap: Record<string, string>) => void
   stopChallenge: (activeChallengeId: string) => void
-  generateTodayChallengeTasks: (activeChallengeId: string) => void
+  generateAllChallengeTasks: (activeChallengeId: string) => void
   getChallengeProgress: (activeChallengeId: string, challengeId: string) => number
   getTodayChallengeTaskCount: (activeChallengeId: string) => { total: number; done: number }
   addCustomChallenge: (data: Omit<Challenge, 'id'>) => void
   updateCustomChallenge: (id: string, data: Partial<Omit<Challenge, 'id'>>) => void
   deleteCustomChallenge: (id: string) => void
+  /** Deprecated alias kept for compat */
+  generateTodayChallengeTasks: (activeChallengeId: string) => void
 
   // ── Selectors ────────────────────────────────────────────────────────────
   updateStreak: () => void
@@ -224,10 +237,8 @@ export const DOMAIN_ICONS = [
   'Sun', 'Moon', 'Compass', 'Layers',
 ]
 
-// XP par niveau (niveau n nécessite n * 100 + 50 XP)
 export const xpForLevel = (level: number) => level * 100 + 50
 
-// All badge definitions
 export const ALL_BADGES: Badge[] = [
   { id: 'first_task',    title: 'Premier pas',      description: 'Complète ta première tâche',            icon: '🌱', xpReward: 50  },
   { id: 'streak_7',      title: 'Semaine de feu',   description: '7 jours de streak consécutifs',         icon: '🔥', xpReward: 150 },
@@ -239,8 +250,39 @@ export const ALL_BADGES: Badge[] = [
   { id: 'challenge_3',   title: 'Série de défis',    description: '3 challenges terminés',                 icon: '👑', xpReward: 600 },
   { id: 'early_bird',    title: 'Lève-tôt',          description: 'Compléter une tâche avant 8h',          icon: '🌅', xpReward: 75  },
   { id: 'night_owl',     title: 'Noctambule',        description: 'Compléter une tâche après 23h',         icon: '🌙', xpReward: 75  },
-  { id: 'perfectionist', title: 'Perfectionniste',   description: '100% des tâches d\'une journée',        icon: '✨', xpReward: 200 },
+  { id: 'perfectionist', title: 'Perfectionniste',   description: "100% des tâches d'une journée",         icon: '✨', xpReward: 200 },
   { id: 'comeback',      title: 'Résilience',        description: 'Revenir après une pénalité',            icon: '💫', xpReward: 100 },
   { id: 'focus_5',       title: 'Focus Padawan',     description: '5 sessions Focus complétées',           icon: '🧘', xpReward: 150 },
   { id: 'focus_master',  title: 'Focus Master',      description: '25 sessions Focus complétées',          icon: '🎓', xpReward: 400 },
 ]
+
+/** Retourne les dates entre start et end (inclus) qui correspondent à la fréquence */
+export function getOccurrenceDates(
+  start: Date,
+  end: Date,
+  frequency: FrequencyType,
+  customDays?: number[]
+): Date[] {
+  const dates: Date[] = []
+  const cur = new Date(start)
+  cur.setHours(0, 0, 0, 0)
+  const endNorm = new Date(end)
+  endNorm.setHours(23, 59, 59, 999)
+
+  while (cur <= endNorm) {
+    const dow = cur.getDay() // 0=dim
+    let include = false
+    if (frequency === 'daily') {
+      include = true
+    } else if (frequency === 'workdays') {
+      include = dow >= 1 && dow <= 5
+    } else if (frequency === 'weekend') {
+      include = dow === 0 || dow === 6
+    } else if (frequency === 'custom') {
+      include = (customDays || []).includes(dow)
+    }
+    if (include) dates.push(new Date(cur))
+    cur.setDate(cur.getDate() + 1)
+  }
+  return dates
+}

@@ -1,4 +1,4 @@
-// File: /Users/macbook/Movies/focusflow-build/src/app/coach/page.tsx
+// File: /Users/macbook/focusflow/src/app/coach/page.tsx
 import * as entry from '../../../../src/app/coach/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
