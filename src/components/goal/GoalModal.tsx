@@ -5,8 +5,6 @@ import { Modal, Field, inputCls, selectCls } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Domain, Goal } from '@/types'
 import { DomainIcon } from '@/components/domain/DomainIcon'
-import { useStore } from '@/store'
-import { CHALLENGE_CATALOGUE } from '@/store'
 
 interface GoalModalProps {
   open: boolean
@@ -17,61 +15,58 @@ interface GoalModalProps {
   defaultDomainId?: string
 }
 
-export function GoalModal({ open, onClose, onSave, domains, existing, defaultDomainId }: GoalModalProps) {
-  const { customChallenges, activeChallenges } = useStore()
-  const allChallenges = [...CHALLENGE_CATALOGUE, ...(customChallenges || [])]
+const UNIT_SUGGESTIONS = ['heures', 'séances', 'km', 'pages', 'modules', 'projets', '']
 
+export function GoalModal({
+  open, onClose, onSave, domains, existing, defaultDomainId,
+}: GoalModalProps) {
   const [title,       setTitle]       = useState('')
   const [description, setDescription] = useState('')
   const [domainId,    setDomainId]    = useState('')
-  const [deadline,    setDeadline]    = useState('')
-  const [challengeId, setChallengeId] = useState('')
+  const [unit,        setUnit]        = useState('')
 
   useEffect(() => {
+    if (!open) return
     if (existing) {
       setTitle(existing.title)
       setDescription(existing.description || '')
       setDomainId(existing.domainId)
-      setDeadline(existing.deadline || '')
-      setChallengeId(existing.challengeId || '')
+      setUnit(existing.unit || '')
     } else {
       setTitle('')
       setDescription('')
       setDomainId(defaultDomainId || '')
-      setDeadline('')
-      setChallengeId('')
+      setUnit('')
     }
   }, [existing, defaultDomainId, open])
 
-  const linkedToChallenge = !!challengeId
-
   const handleSave = () => {
     if (!title.trim()) return
-    onSave({
-      title: title.trim(),
-      description,
-      domainId,
-      deadline: linkedToChallenge ? undefined : deadline,
-      challengeId: challengeId || undefined,
-    })
+    onSave({ title: title.trim(), description, domainId, unit })
     onClose()
   }
 
   const selectedDomain = domains.find((d) => d.id === domainId)
 
   return (
-    <Modal open={open} onClose={onClose} title={existing ? "Modifier l'objectif" : 'Nouvel objectif'}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={existing ? "Modifier l'objectif" : 'Nouvel objectif'}
+    >
+      {/* Titre */}
       <Field label="Titre de l'objectif">
         <input
           className={inputCls}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="ex: Faire 30h de backtest en 1 mois"
+          placeholder="ex: 30h de backtest, 20 séances de sport…"
           autoFocus
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
         />
       </Field>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {/* Domaine */}
         <Field label="Domaine">
           <div className="relative">
@@ -94,61 +89,24 @@ export function GoalModal({ open, onClose, onSave, domains, existing, defaultDom
           </div>
         </Field>
 
-        {/* Échéance ou lien challenge */}
-        {!linkedToChallenge ? (
-          <Field label="Échéance">
-            <input
-              type="date"
-              className={inputCls}
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-            />
-          </Field>
-        ) : (
-          <Field label="Challenge lié">
-            <select
-              className={selectCls}
-              value={challengeId}
-              onChange={(e) => setChallengeId(e.target.value)}
-            >
-              <option value="">— Aucun —</option>
-              {allChallenges.map((c) => (
-                <option key={c.id} value={c.id}>{c.title}</option>
-              ))}
-            </select>
-          </Field>
-        )}
-      </div>
-
-      {/* Toggle : lier à un challenge */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => {
-            if (linkedToChallenge) setChallengeId('')
-            else setDeadline('')
-          }}
-          className="flex items-center gap-2 text-xs text-content-3 hover:text-accent transition-colors"
-        >
-          <span className={`w-8 h-4 rounded-full relative transition-colors ${linkedToChallenge ? 'bg-accent' : 'bg-bg-4'}`}>
-            <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${linkedToChallenge ? 'left-4' : 'left-0.5'}`} />
-          </span>
-          {linkedToChallenge ? 'Lié à un challenge' : 'Lier à un challenge'}
-        </button>
-        {linkedToChallenge && !challengeId && (
-          <select
-            className={selectCls + ' flex-1 text-xs'}
-            value={challengeId}
-            onChange={(e) => setChallengeId(e.target.value)}
-          >
-            <option value="">— Choisir un challenge —</option>
-            {allChallenges.map((c) => (
-              <option key={c.id} value={c.id}>{c.title}</option>
+        {/* Unité (optionnel) */}
+        <Field label="Unité (optionnel)">
+          <input
+            className={inputCls}
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder="heures, séances, km…"
+            list="unit-suggestions"
+          />
+          <datalist id="unit-suggestions">
+            {UNIT_SUGGESTIONS.filter(Boolean).map((u) => (
+              <option key={u} value={u} />
             ))}
-          </select>
-        )}
+          </datalist>
+        </Field>
       </div>
 
+      {/* Description */}
       <Field label="Description (optionnel)">
         <textarea
           className={inputCls + ' resize-none'}
@@ -158,6 +116,12 @@ export function GoalModal({ open, onClose, onSave, domains, existing, defaultDom
           placeholder="Décrivez votre objectif…"
         />
       </Field>
+
+      {/* Info — pas d'échéance */}
+      <p className="text-[11px] text-content-3 bg-bg-3 rounded-xl px-3 py-2 border border-border">
+        💡 Un objectif représente une cible globale (ex: "30h de backtest").
+        La progression est calculée automatiquement depuis vos tâches complétées.
+      </p>
 
       <div className="flex gap-2 justify-end mt-2">
         <Button variant="ghost" onClick={onClose}>Annuler</Button>

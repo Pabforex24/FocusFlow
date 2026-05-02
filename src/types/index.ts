@@ -9,17 +9,56 @@ export interface Domain {
   createdAt: string
 }
 
+/**
+ * Un Objectif = cible globale indépendante (sans échéance).
+ * Ex: "30h de backtest", "8 séances de sport"
+ */
 export interface Goal {
   id: string
   domainId: string
   title: string
   description?: string
-  deadline?: string       // null si challenge-objectif
-  challengeId?: string    // défini si l'objectif est rattaché à un challenge
+  unit?: string   // ex: "heures", "séances", "km" — optionnel, affiché dans la progression
+  // ❌ pas de deadline — un objectif est une cible globale permanente
   createdAt: string
 }
 
-export type FrequencyType = 'daily' | 'weekend' | 'workdays' | 'custom'
+export type FrequencyType = 'daily' | 'workdays' | 'weekend' | 'custom'
+
+/**
+ * Blueprint = modèle de tâche récurrente lié à un objectif DANS un challenge.
+ * goalId est obligatoire : chaque tâche d'un challenge est liée à un objectif.
+ */
+export interface ChallengeBlueprint {
+  id: string
+  title: string
+  domainId: string
+  goalId: string        // ← objectif auquel cette tâche est rattachée
+  duration: string
+  frequency: FrequencyType
+  customDays?: number[] // 0=dim…6=sam, utilisé si frequency==='custom'
+}
+
+export interface Challenge {
+  id: string
+  title: string
+  description: string
+  durationDays: number
+  deadline?: string     // date ISO explicite (optionnel, prioritaire sur durationDays)
+  color: string
+  icon: string
+  blueprints: ChallengeBlueprint[]
+}
+
+export interface ActiveChallenge {
+  id: string
+  challengeId: string
+  startDate: string
+  endDate: string
+  isActive: boolean
+  currentDay: number
+  createdAt: string
+}
 
 export interface Task {
   id: string
@@ -33,9 +72,9 @@ export interface Task {
   doneAt?: string
   xpValue: number
   priority?: 'low' | 'medium' | 'high'
-  frequency?: FrequencyType         // pour tâches récurrentes de challenge
-  customDays?: number[]             // 0=dim,1=lun,...6=sam — si frequency==='custom'
-  isGenerated?: boolean             // marqueur tâches auto-générées
+  frequency?: FrequencyType
+  customDays?: number[]
+  isGenerated?: boolean
   createdAt: string
 }
 
@@ -52,20 +91,11 @@ export interface UserStats {
 }
 
 export type BadgeId =
-  | 'first_task'
-  | 'streak_7'
-  | 'streak_30'
-  | 'tasks_10'
-  | 'tasks_30'
-  | 'tasks_100'
-  | 'challenge_done'
-  | 'challenge_3'
-  | 'early_bird'
-  | 'night_owl'
-  | 'perfectionist'
-  | 'comeback'
-  | 'focus_5'
-  | 'focus_master'
+  | 'first_task' | 'streak_7' | 'streak_30'
+  | 'tasks_10' | 'tasks_30' | 'tasks_100'
+  | 'challenge_done' | 'challenge_3'
+  | 'early_bird' | 'night_owl' | 'perfectionist'
+  | 'comeback' | 'focus_5' | 'focus_master'
 
 export interface Badge {
   id: BadgeId
@@ -91,40 +121,6 @@ export interface FocusSession {
   xpEarned: number
 }
 
-// ─── Challenge types ──────────────────────────────────────────────────────────
-
-/** Définition d'une tâche dans un challenge (blueprint) — fréquence incluse */
-export interface ChallengeBlueprint {
-  id: string
-  title: string
-  domainId: string
-  duration: string
-  frequency?: FrequencyType
-  customDays?: number[]   // 0-6
-}
-
-export interface Challenge {
-  id: string
-  title: string
-  description: string
-  durationDays: number
-  color: string
-  icon: string
-  blueprints: ChallengeBlueprint[]
-  /** Date d'échéance explicite (overrides durationDays if set) */
-  deadline?: string
-}
-
-export interface ActiveChallenge {
-  id: string
-  challengeId: string
-  startDate: string
-  endDate: string
-  isActive: boolean
-  currentDay: number
-  createdAt: string
-}
-
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 
 export type OnboardingStep = 'domains' | 'goal' | 'tasks' | 'done'
@@ -141,52 +137,41 @@ export interface GoalWithProgress extends Goal {
   domain?: Domain
   taskCount: number
   doneCount: number
-  challengeTitle?: string
 }
 
 // ─── Store interface ──────────────────────────────────────────────────────────
 
 export interface AppStore {
-  // ── Data ──────────────────────────────────────────────────────────────────
   domains: Domain[]
   goals: Goal[]
   tasks: Task[]
   streak: number
   lastActive: string | null
   onboarding: OnboardingState
-
-  // ── Gamification state ────────────────────────────────────────────────────
   userStats: UserStats
   badges: Badge[]
   focusSession: FocusSession | null
-
-  // ── Challenges ────────────────────────────────────────────────────────────
   activeChallenges: ActiveChallenge[]
   customChallenges: Challenge[]
 
-  // ── Domain actions ────────────────────────────────────────────────────────
   addDomain: (domain: Omit<Domain, 'id' | 'createdAt'>) => void
   updateDomain: (id: string, data: Partial<Domain>) => void
   deleteDomain: (id: string) => void
 
-  // ── Goal actions ──────────────────────────────────────────────────────────
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt'>) => void
   updateGoal: (id: string, data: Partial<Goal>) => void
   deleteGoal: (id: string) => void
 
-  // ── Task actions ──────────────────────────────────────────────────────────
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void
   toggleTask: (id: string) => void
   deleteTask: (id: string) => void
   bulkAddTasks: (tasks: Omit<Task, 'id' | 'createdAt'>[]) => void
 
-  // ── Gamification actions ──────────────────────────────────────────────────
-  awardXP: (amount: number, reason?: string) => void
+  awardXP: (amount: number) => void
   checkAndAwardBadges: () => void
   applyDailyPenalty: () => void
   toggleHardcoreMode: () => void
 
-  // ── Focus Session actions ─────────────────────────────────────────────────
   startFocus: (taskId?: string, durationMinutes?: number) => void
   tickFocus: () => void
   pauseFocus: () => void
@@ -194,19 +179,15 @@ export interface AppStore {
   completeFocus: () => void
   abandonFocus: () => void
 
-  // ── Challenge actions ─────────────────────────────────────────────────────
-  startChallenge: (challengeId: string, domainIdMap: Record<string, string>) => void
+  startChallenge: (challengeId: string) => void
   stopChallenge: (activeChallengeId: string) => void
-  generateAllChallengeTasks: (activeChallengeId: string) => void
   getChallengeProgress: (activeChallengeId: string, challengeId: string) => number
   getTodayChallengeTaskCount: (activeChallengeId: string) => { total: number; done: number }
   addCustomChallenge: (data: Omit<Challenge, 'id'>) => void
   updateCustomChallenge: (id: string, data: Partial<Omit<Challenge, 'id'>>) => void
   deleteCustomChallenge: (id: string) => void
-  /** Deprecated alias kept for compat */
   generateTodayChallengeTasks: (activeChallengeId: string) => void
 
-  // ── Selectors ────────────────────────────────────────────────────────────
   updateStreak: () => void
   getTasksForDate: (date: Date) => Task[]
   getDomainProgress: (domainId: string) => number
@@ -214,7 +195,6 @@ export interface AppStore {
   getGlobalProgress: () => number
   getTop3Tasks: () => Task[]
 
-  // ── Onboarding ────────────────────────────────────────────────────────────
   completeOnboarding: () => void
   setOnboardingStep: (step: OnboardingStep) => void
 }
@@ -240,23 +220,24 @@ export const DOMAIN_ICONS = [
 export const xpForLevel = (level: number) => level * 100 + 50
 
 export const ALL_BADGES: Badge[] = [
-  { id: 'first_task',    title: 'Premier pas',      description: 'Complète ta première tâche',            icon: '🌱', xpReward: 50  },
-  { id: 'streak_7',      title: 'Semaine de feu',   description: '7 jours de streak consécutifs',         icon: '🔥', xpReward: 150 },
-  { id: 'streak_30',     title: 'Invincible',        description: '30 jours de streak consécutifs',        icon: '⚡', xpReward: 500 },
-  { id: 'tasks_10',      title: 'En marche',         description: '10 tâches complétées au total',         icon: '🚀', xpReward: 100 },
-  { id: 'tasks_30',      title: 'Momentum',          description: '30 tâches complétées au total',         icon: '💪', xpReward: 200 },
-  { id: 'tasks_100',     title: 'Centurion',         description: '100 tâches complétées au total',        icon: '🏆', xpReward: 500 },
-  { id: 'challenge_done',title: 'Challenger',        description: 'Terminer ton premier challenge',        icon: '🎯', xpReward: 300 },
-  { id: 'challenge_3',   title: 'Série de défis',    description: '3 challenges terminés',                 icon: '👑', xpReward: 600 },
-  { id: 'early_bird',    title: 'Lève-tôt',          description: 'Compléter une tâche avant 8h',          icon: '🌅', xpReward: 75  },
-  { id: 'night_owl',     title: 'Noctambule',        description: 'Compléter une tâche après 23h',         icon: '🌙', xpReward: 75  },
-  { id: 'perfectionist', title: 'Perfectionniste',   description: "100% des tâches d'une journée",         icon: '✨', xpReward: 200 },
-  { id: 'comeback',      title: 'Résilience',        description: 'Revenir après une pénalité',            icon: '💫', xpReward: 100 },
-  { id: 'focus_5',       title: 'Focus Padawan',     description: '5 sessions Focus complétées',           icon: '🧘', xpReward: 150 },
-  { id: 'focus_master',  title: 'Focus Master',      description: '25 sessions Focus complétées',          icon: '🎓', xpReward: 400 },
+  { id: 'first_task',     title: 'Premier pas',     description: 'Complète ta première tâche',       icon: '🌱', xpReward: 50  },
+  { id: 'streak_7',       title: 'Semaine de feu',  description: '7 jours de streak consécutifs',    icon: '🔥', xpReward: 150 },
+  { id: 'streak_30',      title: 'Invincible',       description: '30 jours de streak consécutifs',   icon: '⚡', xpReward: 500 },
+  { id: 'tasks_10',       title: 'En marche',        description: '10 tâches complétées au total',    icon: '🚀', xpReward: 100 },
+  { id: 'tasks_30',       title: 'Momentum',         description: '30 tâches complétées au total',    icon: '💪', xpReward: 200 },
+  { id: 'tasks_100',      title: 'Centurion',        description: '100 tâches complétées au total',   icon: '🏆', xpReward: 500 },
+  { id: 'challenge_done', title: 'Challenger',       description: 'Terminer ton premier challenge',   icon: '🎯', xpReward: 300 },
+  { id: 'challenge_3',    title: 'Série de défis',   description: '3 challenges terminés',            icon: '👑', xpReward: 600 },
+  { id: 'early_bird',     title: 'Lève-tôt',         description: 'Compléter une tâche avant 8h',     icon: '🌅', xpReward: 75  },
+  { id: 'night_owl',      title: 'Noctambule',       description: 'Compléter une tâche après 23h',    icon: '🌙', xpReward: 75  },
+  { id: 'perfectionist',  title: 'Perfectionniste',  description: "100% des tâches d'une journée",    icon: '✨', xpReward: 200 },
+  { id: 'comeback',       title: 'Résilience',       description: 'Revenir après une pénalité',       icon: '💫', xpReward: 100 },
+  { id: 'focus_5',        title: 'Focus Padawan',    description: '5 sessions Focus complétées',      icon: '🧘', xpReward: 150 },
+  { id: 'focus_master',   title: 'Focus Master',     description: '25 sessions Focus complétées',     icon: '🎓', xpReward: 400 },
 ]
 
-/** Retourne les dates entre start et end (inclus) qui correspondent à la fréquence */
+// ─── Helper : génère les dates d'occurrence entre start et end ─────────────────
+
 export function getOccurrenceDates(
   start: Date,
   end: Date,
@@ -270,17 +251,12 @@ export function getOccurrenceDates(
   endNorm.setHours(23, 59, 59, 999)
 
   while (cur <= endNorm) {
-    const dow = cur.getDay() // 0=dim
+    const dow = cur.getDay()
     let include = false
-    if (frequency === 'daily') {
-      include = true
-    } else if (frequency === 'workdays') {
-      include = dow >= 1 && dow <= 5
-    } else if (frequency === 'weekend') {
-      include = dow === 0 || dow === 6
-    } else if (frequency === 'custom') {
-      include = (customDays || []).includes(dow)
-    }
+    if (frequency === 'daily')    include = true
+    else if (frequency === 'workdays') include = dow >= 1 && dow <= 5
+    else if (frequency === 'weekend')  include = dow === 0 || dow === 6
+    else if (frequency === 'custom')   include = (customDays || []).includes(dow)
     if (include) dates.push(new Date(cur))
     cur.setDate(cur.getDate() + 1)
   }
