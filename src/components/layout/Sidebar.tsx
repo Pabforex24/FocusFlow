@@ -3,14 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard,
-  Globe,
-  Target,
-  CheckSquare,
-  Sparkles,
-  Flame,
-  Zap,
-  Trophy,
+  LayoutDashboard, Globe, Target, CheckSquare,
+  Sparkles, Flame, Zap, Trophy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStore } from '@/store'
@@ -24,14 +18,7 @@ const NAV_ITEMS = [
   { href: '/coach',      label: 'IA Coach',   icon: Sparkles        },
 ]
 
-// Mobile bottom nav : Dashboard / Tâches / Challenges / Objectifs / IA Coach
-const MOBILE_NAV = [
-  NAV_ITEMS[0], // Dashboard
-  NAV_ITEMS[3], // Tâches
-  NAV_ITEMS[4], // Challenges
-  NAV_ITEMS[2], // Objectifs  ← était /progression, corrigé
-  NAV_ITEMS[5], // IA Coach
-]
+const MOBILE_NAV = [NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]]
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -48,21 +35,36 @@ export function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop sidebar ───────────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-56 min-w-[224px] h-screen sticky top-0 bg-bg-2 border-r border-border z-40">
+      {/* ── Desktop sidebar ─────────────────────────────────────────── */}
+      <aside
+        className="hidden md:flex flex-col w-56 min-w-[224px] h-screen sticky top-0 z-40"
+        style={{
+          background: 'linear-gradient(180deg, rgba(9,13,26,0.97) 0%, rgba(5,8,18,0.98) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderRight: '1px solid rgba(255,255,255,0.055)',
+          boxShadow: '4px 0 40px rgba(0,0,0,0.40)',
+        }}
+      >
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center">
-            <Zap size={16} className="text-white" />
+        <div className="flex items-center gap-3 px-5 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, #00E5B0 0%, #3DD8FA 100%)',
+              boxShadow: '0 0 16px rgba(0,229,176,0.40)',
+            }}
+          >
+            <Zap size={15} className="text-bg" strokeWidth={2.5} />
           </div>
           <span className="font-heading font-extrabold text-base tracking-tight">
-            Focus<span className="text-accent">Flow</span>
+            Focus<span style={{ color: '#00E5B0' }}>Flow</span>
           </span>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-content-3 px-2 mb-2 mt-1">
+          <p className="text-[9px] font-bold tracking-[0.18em] uppercase text-content-4 px-3 mb-2 mt-1">
             Principal
           </p>
           {NAV_ITEMS.slice(0, 5).map((item) => (
@@ -70,14 +72,14 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               active={pathname.startsWith(item.href)}
-              icon={<item.icon size={16} />}
+              icon={<item.icon size={15} strokeWidth={1.75} />}
               badge={item.href === '/tasks' && pendingToday > 0 ? pendingToday : undefined}
             >
               {item.label}
             </NavLink>
           ))}
 
-          <p className="text-[10px] font-bold tracking-widest uppercase text-content-3 px-2 mb-2 mt-4">
+          <p className="text-[9px] font-bold tracking-[0.18em] uppercase text-content-4 px-3 mb-2 mt-5">
             Intelligence
           </p>
           {NAV_ITEMS.slice(5).map((item) => (
@@ -85,54 +87,87 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               active={pathname.startsWith(item.href)}
-              icon={<item.icon size={16} />}
+              icon={<item.icon size={15} strokeWidth={1.75} />}
             >
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        {/* Streak + XP footer */}
-        <div className="p-3 border-t border-border space-y-2">
-          <div className="flex items-center gap-2 px-1">
-            <div className="flex items-center gap-1 text-[10px] font-bold" style={{ color: '#7B61FF' }}>
-              <Zap size={11} fill="currentColor" />
-              <span>Nv.{userStats.level}</span>
+        {/* Footer */}
+        <div className="p-3 space-y-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          {/* XP bar */}
+          <div className="px-1">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: '#00E5B0' }}>
+                <Zap size={11} fill="currentColor" strokeWidth={0} />
+                <span>Nv.{userStats.level}</span>
+              </div>
+              <span className="text-[9px]" style={{ color: '#3D4F6E' }}>{xpPct}%</span>
             </div>
-            <div className="flex-1 h-1 bg-bg-4 rounded-full overflow-hidden">
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
               <div
                 className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg, #7B61FF, #A259FF)' }}
+                style={{
+                  width: `${xpPct}%`,
+                  background: 'linear-gradient(90deg, #00E5B0, #3DD8FA)',
+                  boxShadow: '0 0 8px rgba(0,229,176,0.5)',
+                }}
               />
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-gradient-to-r from-warning/10 to-danger/5 border border-warning/20 rounded-xl px-3 py-2.5">
-            <Flame size={20} className="text-warning flex-shrink-0" />
+
+          {/* Streak */}
+          <div
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+            style={{
+              background: 'linear-gradient(135deg, rgba(200,134,90,0.10) 0%, rgba(9,13,26,0.60) 100%)',
+              border: '1px solid rgba(200,134,90,0.18)',
+              boxShadow: '0 0 12px rgba(200,134,90,0.08)',
+            }}
+          >
+            <Flame size={18} style={{ color: '#C8865A' }} className="flex-shrink-0" strokeWidth={1.75} />
             <div>
-              <div className="font-heading font-extrabold text-warning text-xl leading-none">{streak}</div>
-              <div className="text-[10px] text-content-3 mt-0.5">jours de suite</div>
+              <div className="font-heading font-extrabold text-xl leading-none" style={{ color: '#C8865A' }}>{streak}</div>
+              <div className="text-[9px] mt-0.5" style={{ color: '#3D4F6E' }}>jours de suite</div>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* ── Mobile bottom nav ─────────────────────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-bg-2/95 backdrop-blur border-t border-border z-40 flex items-center px-1 py-1">
+      {/* ── Mobile bottom nav ───────────────────────────────────────── */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center px-1 py-1"
+        style={{
+          background: 'rgba(5,8,18,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(255,255,255,0.055)',
+          boxShadow: '0 -8px 32px rgba(0,0,0,0.50)',
+        }}
+      >
         {MOBILE_NAV.map((item) => {
           const active = pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                'flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl transition-all duration-150 relative',
-                active ? 'text-accent' : 'text-content-3'
-              )}
+              className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl transition-all duration-150 relative"
+              style={{ color: active ? '#00E5B0' : '#3D4F6E' }}
             >
-              <item.icon size={18} />
-              <span className="text-[9px] font-medium truncate">{item.label}</span>
+              {active && (
+                <span
+                  className="absolute inset-x-2 inset-y-0.5 rounded-xl"
+                  style={{ background: 'rgba(0,229,176,0.07)', border: '1px solid rgba(0,229,176,0.12)' }}
+                />
+              )}
+              <item.icon size={18} strokeWidth={active ? 2 : 1.75} className="relative" />
+              <span className="text-[9px] font-semibold tracking-wide relative">{item.label}</span>
               {item.href === '/tasks' && pendingToday > 0 && (
-                <span className="absolute top-1.5 right-[20%] w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                <span
+                  className="absolute top-1 right-[18%] w-4 h-4 text-bg text-[9px] font-bold rounded-full flex items-center justify-center"
+                  style={{ background: '#00E5B0', boxShadow: '0 0 8px rgba(0,229,176,0.5)' }}
+                >
                   {pendingToday}
                 </span>
               )}
@@ -144,32 +179,39 @@ export function Sidebar() {
   )
 }
 
-// ── NavLink sub-component ──────────────────────────────────────────────────────
 function NavLink({
   href, active, icon, badge, children,
 }: {
-  href: string
-  active: boolean
-  icon: React.ReactNode
-  badge?: number
-  children: React.ReactNode
+  href: string; active: boolean; icon: React.ReactNode; badge?: number; children: React.ReactNode
 }) {
   return (
     <Link
       href={href}
-      className={cn(
-        'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 relative',
-        active
-          ? 'bg-accent/15 text-accent'
-          : 'text-content-2 hover:bg-bg-3 hover:text-content'
-      )}
+      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 relative group"
+      style={active ? {
+        background: 'rgba(0,229,176,0.09)',
+        color: '#00E5B0',
+        border: '1px solid rgba(0,229,176,0.14)',
+        boxShadow: '0 0 12px rgba(0,229,176,0.08)',
+      } : {
+        color: '#3D4F6E',
+        border: '1px solid transparent',
+      }}
     >
-      <span className={cn('transition-opacity', active ? 'opacity-100' : 'opacity-60')}>
+      <span
+        className="transition-all duration-150"
+        style={active ? { filter: 'drop-shadow(0 0 4px rgba(0,229,176,0.6))' } : {}}
+      >
         {icon}
       </span>
-      {children}
+      <span className={cn('transition-colors', active ? '' : 'group-hover:text-content-2')}>
+        {children}
+      </span>
       {badge !== undefined && (
-        <span className="ml-auto bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+        <span
+          className="ml-auto text-bg text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none"
+          style={{ background: '#00E5B0', boxShadow: '0 0 8px rgba(0,229,176,0.4)' }}
+        >
           {badge}
         </span>
       )}

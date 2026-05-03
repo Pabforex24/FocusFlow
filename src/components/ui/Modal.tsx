@@ -11,9 +11,10 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   className?: string
+  accent?: string   // hex couleur pour le glow du titre
 }
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+export function Modal({ open, onClose, title, children, className, accent }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,42 +34,58 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm animate-fade-in" />
+      <div className="fixed inset-0 z-40 bg-black/75 backdrop-blur-md animate-fade-in" />
 
-      {/*
-        Scroll container :
-        - fixed inset-0 : couvre tout l'écran
-        - overflow-y-auto : scroll si le modal est plus grand que l'écran
-        - z-50 : au-dessus du backdrop
-        - px/py : marges extérieures
-      */}
+      {/* Scroll container */}
       <div
         ref={overlayRef}
-        className="fixed inset-0 z-50 overflow-y-auto px-3 py-8 sm:px-6 sm:py-12"
+        className="fixed inset-0 z-50 overflow-y-auto px-3 py-8 sm:px-6 sm:py-10"
         onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
       >
-        {/*
-          Modal box :
-          - mx-auto : centré horizontalement
-          - max-w contrôlé par className
-          - PAS de centrage vertical flex → le modal commence toujours en haut
-            avec le padding du conteneur (py-8 / py-12)
-        */}
         <div
           className={cn(
-            'relative mx-auto w-full bg-bg-2 border border-border-2 rounded-2xl shadow-card animate-scale-in',
+            'relative mx-auto w-full animate-scale-in',
             'max-w-md',
             className
           )}
           onClick={(e) => e.stopPropagation()}
+          style={{
+            background: 'linear-gradient(145deg, rgba(14, 18, 36, 0.95) 0%, rgba(9, 13, 26, 0.98) 100%)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: `1px solid rgba(255,255,255,0.07)`,
+            borderRadius: '20px',
+            boxShadow: `0 24px 80px rgba(0,0,0,0.70), inset 0 1px 0 rgba(255,255,255,0.05)`,
+          }}
         >
+          {/* Accent line top */}
+          <div
+            className="h-px w-full rounded-t-[20px]"
+            style={{
+              background: accent
+                ? `linear-gradient(90deg, transparent 0%, ${accent} 50%, transparent 100%)`
+                : 'linear-gradient(90deg, transparent 0%, rgba(0,229,176,0.6) 50%, transparent 100%)',
+            }}
+          />
+
           {/* Header */}
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border rounded-t-2xl">
-            <h2 className="font-heading font-bold text-base sm:text-lg">{title}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X size={16} />
-            </Button>
+          <div className="flex items-center justify-between px-5 sm:px-6 pt-5 pb-4">
+            <h2
+              className="font-heading font-bold text-base sm:text-lg tracking-tight"
+              style={accent ? { color: accent } : {}}
+            >
+              {title}
+            </h2>
+            <button
+              onClick={onClose}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-content-3 hover:text-content hover:bg-bg-4 transition-all"
+            >
+              <X size={15} />
+            </button>
           </div>
+
+          {/* Divider */}
+          <div className="h-px mx-5 sm:mx-6" style={{ background: 'rgba(255,255,255,0.05)' }} />
 
           {/* Body */}
           <div className="px-5 sm:px-6 py-5">
@@ -89,13 +106,13 @@ interface FieldProps {
 export function Field({ label, children, className }: FieldProps) {
   return (
     <div className={cn('mb-4', className)}>
-      <label className="block text-xs font-medium text-content-2 mb-1.5">{label}</label>
+      <label className="block text-xs font-semibold text-content-3 uppercase tracking-widest mb-2">{label}</label>
       {children}
     </div>
   )
 }
 
 export const inputCls =
-  'w-full bg-bg-3 border border-border text-content rounded-xl px-3 py-2 text-sm outline-none transition-all duration-150 focus:border-accent focus:ring-2 focus:ring-accent/15 placeholder:text-content-4'
+  'w-full bg-bg-4 border border-border text-content rounded-xl px-3 py-2.5 text-sm outline-none transition-all duration-150 focus:border-accent/40 focus:ring-2 focus:ring-accent/10 placeholder:text-content-4 font-medium'
 
 export const selectCls = inputCls + ' cursor-pointer'

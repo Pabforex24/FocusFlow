@@ -11,17 +11,21 @@ export function Badge({ color, children, className }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold',
+        'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide',
         className
       )}
       style={
         color
           ? {
-              background: hexToRgba(color, 0.15),
+              background: hexToRgba(color, 0.12),
               color,
-              border: `1px solid ${hexToRgba(color, 0.3)}`,
+              border: `1px solid ${hexToRgba(color, 0.25)}`,
             }
-          : {}
+          : {
+              background: 'rgba(255,255,255,0.06)',
+              color: '#7c7c9a',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }
       }
     >
       {children}
@@ -34,28 +38,34 @@ interface ChipProps {
   color?: string
   onClick?: () => void
   children: React.ReactNode
+  className?: string
 }
 
-export function Chip({ active, color, onClick, children }: ChipProps) {
+export function Chip({ active, color, onClick, children, className }: ChipProps) {
+  const activeColor = color || '#d4a843'
+
   return (
     <button
       onClick={onClick}
       className={cn(
-        'px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150',
-        active
-          ? 'text-white'
-          : 'bg-bg-3 border-border text-content-2 hover:border-border-2 hover:text-content'
+        'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold',
+        'border transition-all duration-200',
+        !active && 'hover:border-white/[0.12] hover:text-content',
+        className
       )}
       style={
-        active && color
+        active
           ? {
-              background: hexToRgba(color, 0.2),
-              color,
-              borderColor: hexToRgba(color, 0.4),
+              background: hexToRgba(activeColor, 0.14),
+              color: activeColor,
+              borderColor: hexToRgba(activeColor, 0.3),
+              boxShadow: `0 0 12px ${hexToRgba(activeColor, 0.1)}`,
             }
-          : active
-          ? { background: '#6d5aec', borderColor: '#6d5aec' }
-          : {}
+          : {
+              background: 'transparent',
+              color: '#7c7c9a',
+              borderColor: 'rgba(255,255,255,0.07)',
+            }
       }
     >
       {children}

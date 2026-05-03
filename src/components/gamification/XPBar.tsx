@@ -4,67 +4,67 @@ import { useStore } from '@/store'
 import { cn } from '@/lib/utils'
 import { Zap } from 'lucide-react'
 
-interface XPBarProps {
-  compact?: boolean
-  className?: string
-}
+interface XPBarProps { compact?: boolean; className?: string }
 
 export function XPBar({ compact = false, className }: XPBarProps) {
   const { userStats } = useStore()
   const { xp, level, xpToNextLevel } = userStats
-  const xpInCurrentLevel = xp - Array.from({ length: level - 1 }, (_, i) => (i + 1) * 100 + 50).reduce((a, b) => a + b, 0)
-  const xpNeeded = (level * 100 + 50)
-  const pct = Math.min(100, Math.round((xpInCurrentLevel / xpNeeded) * 100))
+  const xpNeeded = level * 100 + 50
+  const xpCurrent = xpNeeded - xpToNextLevel
+  const pct = Math.min(100, Math.round((xpCurrent / xpNeeded) * 100))
 
   if (compact) {
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        <div className="flex items-center gap-1 text-xs font-bold" style={{ color: '#7B61FF' }}>
-          <Zap size={12} fill="currentColor" />
+        <div className="flex items-center gap-1 text-xs font-bold" style={{ color: '#00E5B0' }}>
+          <Zap size={12} fill="currentColor" strokeWidth={0} />
           <span>Nv.{level}</span>
         </div>
-        <div className="flex-1 h-1 bg-bg-4 rounded-full overflow-hidden">
+        <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div
             className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #7B61FF, #A259FF)' }}
+            style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #00E5B0, #3DD8FA)', boxShadow: '0 0 8px rgba(0,229,176,0.5)' }}
           />
         </div>
-        <span className="text-[10px] text-content-3">{xpToNextLevel}xp</span>
+        <span className="text-[10px]" style={{ color: '#3D4F6E' }}>{xpToNextLevel}xp</span>
       </div>
     )
   }
 
   return (
-    <div className={cn('bg-bg-2 border border-border rounded-xl p-4', className)}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
+    <div
+      className={cn('rounded-2xl p-4', className)}
+      style={{
+        background: 'linear-gradient(135deg, rgba(0,229,176,0.06) 0%, rgba(9,13,26,0.90) 100%)',
+        border: '1px solid rgba(0,229,176,0.14)',
+        boxShadow: '0 0 24px rgba(0,229,176,0.06)',
+      }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2.5">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-extrabold"
-            style={{ background: 'rgba(123,97,255,0.2)', color: '#7B61FF' }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold"
+            style={{ background: 'rgba(0,229,176,0.15)', color: '#00E5B0', border: '1px solid rgba(0,229,176,0.25)', boxShadow: '0 0 12px rgba(0,229,176,0.15)' }}
           >
             {level}
           </div>
           <div>
-            <p className="text-xs font-bold text-content">Niveau {level}</p>
-            <p className="text-[10px] text-content-3">{xp} XP total</p>
+            <p className="text-xs font-bold text-content tracking-tight">Niveau {level}</p>
+            <p className="text-[10px]" style={{ color: '#3D4F6E' }}>{xp} XP total</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xs text-content-3">Prochain niveau</p>
-          <p className="text-[10px] font-bold text-accent">{xpToNextLevel} XP restants</p>
+          <p className="text-[10px]" style={{ color: '#3D4F6E' }}>Prochain niveau</p>
+          <p className="text-[11px] font-bold" style={{ color: '#00E5B0' }}>{xpToNextLevel} XP restants</p>
         </div>
       </div>
-      <div className="h-2 bg-bg-4 rounded-full overflow-hidden">
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{
-            width: `${pct}%`,
-            background: 'linear-gradient(90deg, #7B61FF, #A259FF)',
-            boxShadow: '0 0 8px rgba(123,97,255,0.5)',
-          }}
+          style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #00E5B0, #3DD8FA)', boxShadow: '0 0 10px rgba(0,229,176,0.5)' }}
         />
       </div>
-      <p className="text-[10px] text-content-4 mt-1 text-right">{pct}% vers le niveau {level + 1}</p>
+      <p className="text-[10px] mt-1.5 text-right" style={{ color: '#1E2A40' }}>{pct}% vers le niveau {level + 1}</p>
     </div>
   )
 }

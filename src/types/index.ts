@@ -153,6 +153,7 @@ export interface AppStore {
   focusSession: FocusSession | null
   activeChallenges: ActiveChallenge[]
   customChallenges: Challenge[]
+  deletedCatalogueIds: string[]
 
   addDomain: (domain: Omit<Domain, 'id' | 'createdAt'>) => void
   updateDomain: (id: string, data: Partial<Domain>) => void
