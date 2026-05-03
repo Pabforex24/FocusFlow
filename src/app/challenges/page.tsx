@@ -15,6 +15,7 @@ export default function ChallengesPage() {
   const {
     activeChallenges, getChallengeProgress, stopChallenge,
     customChallenges, deleteCustomChallenge,
+    deleteCatalogueChallenge, deletedCatalogueIds,
   } = useStore()
   const { toast } = useToast()
 
@@ -33,6 +34,14 @@ export default function ChallengesPage() {
   }).length
 
   const allChallenges = [...CHALLENGE_CATALOGUE, ...(customChallenges || [])]
+
+  const hiddenCatalogueIds = new Set(deletedCatalogueIds || [])
+
+  const handleDeleteCatalogue = (id: string) => {
+    if (!confirm('Masquer ce challenge du catalogue ?')) return
+    deleteCatalogueChallenge(id)
+    toast('Challenge masqué', 'info')
+  }
 
   const handleDeleteCustom = (id: string) => {
     if (!confirm('Supprimer ce challenge ? Les tâches en cours seront conservées.')) return
@@ -153,7 +162,7 @@ export default function ChallengesPage() {
           Ces challenges suggérés peuvent être modifiés ou supprimés.
         </p>
         <div className="grid sm:grid-cols-2 gap-4">
-          {CHALLENGE_CATALOGUE.filter((c) => !activeIds.has(c.id)).map((challenge) => {
+          {CHALLENGE_CATALOGUE.filter((c) => !activeIds.has(c.id) && !hiddenCatalogueIds.has(c.id)).map((challenge) => {
             const pastAc = activeChallenges.find((ac) => ac.challengeId === challenge.id && !ac.isActive)
             return (
               <div key={challenge.id} className="relative group">
@@ -169,9 +178,16 @@ export default function ChallengesPage() {
                   <button
                     onClick={() => setEditingChallenge(challenge)}
                     className="w-7 h-7 rounded-lg flex items-center justify-center bg-bg-4 border border-border-2 text-content-3 hover:text-accent hover:border-accent/40 transition-all"
-                    title="Dupliquer et modifier"
+                    title="Modifier"
                   >
                     <Pencil size={11} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCatalogue(challenge.id)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center bg-bg-4 border border-border-2 text-content-3 hover:text-danger hover:border-danger/40 transition-all"
+                    title="Masquer du catalogue"
+                  >
+                    <Trash2 size={11} />
                   </button>
                 </div>
               </div>

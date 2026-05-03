@@ -24,11 +24,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${spaceGrotesk.variable} ${bricolageGrotesque.variable}`}>
+      {/*
+        ⚠️  NE PAS mettre overflow-y-auto sur <main> ni sur le wrapper flex :
+        cela crée un contexte de scroll isolé (BFC) qui casse position:fixed
+        des modals — ils se positionnent par rapport au conteneur, pas la viewport.
+        Le scroll naturel du document (body) suffit.
+      */}
       <body className="bg-bg text-content font-body antialiased">
         <ToastProvider>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="flex-1 min-w-0 pb-20 md:pb-0 overflow-y-auto">
+            <main className="flex-1 min-w-0 pb-20 md:pb-0">
               {children}
             </main>
           </div>

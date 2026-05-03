@@ -16,12 +16,21 @@ import { cn } from '@/lib/utils'
 import { useStore } from '@/store'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/domains',     label: 'Domaines',    icon: Globe           },
-  { href: '/goals',       label: 'Objectifs',   icon: Target          },
-  { href: '/tasks',       label: 'Tâches',      icon: CheckSquare     },
-  { href: '/challenges',  label: 'Challenges',  icon: Trophy          },
-  { href: '/coach',       label: 'IA Coach',    icon: Sparkles        },
+  { href: '/dashboard',  label: 'Dashboard',  icon: LayoutDashboard },
+  { href: '/domains',    label: 'Domaines',   icon: Globe           },
+  { href: '/goals',      label: 'Objectifs',  icon: Target          },
+  { href: '/tasks',      label: 'Tâches',     icon: CheckSquare     },
+  { href: '/challenges', label: 'Challenges', icon: Trophy          },
+  { href: '/coach',      label: 'IA Coach',   icon: Sparkles        },
+]
+
+// Mobile bottom nav : Dashboard / Tâches / Challenges / Objectifs / IA Coach
+const MOBILE_NAV = [
+  NAV_ITEMS[0], // Dashboard
+  NAV_ITEMS[3], // Tâches
+  NAV_ITEMS[4], // Challenges
+  NAV_ITEMS[2], // Objectifs  ← était /progression, corrigé
+  NAV_ITEMS[5], // IA Coach
 ]
 
 export function Sidebar() {
@@ -33,14 +42,13 @@ export function Sidebar() {
     (t) => !t.done && new Date(t.scheduledAt).toDateString() === today
   ).length
 
-  // XP progress percent for display
-  const xpMax = userStats.level * 100 + 50
+  const xpMax     = userStats.level * 100 + 50
   const xpCurrent = xpMax - userStats.xpToNextLevel
-  const xpPct = Math.min(100, Math.round((xpCurrent / xpMax) * 100))
+  const xpPct     = Math.min(100, Math.round((xpCurrent / xpMax) * 100))
 
   return (
     <>
-      {/* ── Desktop sidebar ────────────────────────────────────────── */}
+      {/* ── Desktop sidebar ───────────────────────────────────────────── */}
       <aside className="hidden md:flex flex-col w-56 min-w-[224px] h-screen sticky top-0 bg-bg-2 border-r border-border z-40">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
@@ -86,7 +94,6 @@ export function Sidebar() {
 
         {/* Streak + XP footer */}
         <div className="p-3 border-t border-border space-y-2">
-          {/* XP mini bar */}
           <div className="flex items-center gap-2 px-1">
             <div className="flex items-center gap-1 text-[10px] font-bold" style={{ color: '#7B61FF' }}>
               <Zap size={11} fill="currentColor" />
@@ -95,14 +102,10 @@ export function Sidebar() {
             <div className="flex-1 h-1 bg-bg-4 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${xpPct}%`,
-                  background: 'linear-gradient(90deg, #7B61FF, #A259FF)',
-                }}
+                style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg, #7B61FF, #A259FF)' }}
               />
             </div>
           </div>
-          {/* Streak */}
           <div className="flex items-center gap-3 bg-gradient-to-r from-warning/10 to-danger/5 border border-warning/20 rounded-xl px-3 py-2.5">
             <Flame size={20} className="text-warning flex-shrink-0" />
             <div>
@@ -113,9 +116,9 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* ── Mobile bottom nav ──────────────────────────────────────── */}
+      {/* ── Mobile bottom nav ─────────────────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-bg-2/95 backdrop-blur border-t border-border z-40 flex items-center px-1 py-1">
-        {[NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]].map((item) => {
+        {MOBILE_NAV.map((item) => {
           const active = pathname.startsWith(item.href)
           return (
             <Link
@@ -141,7 +144,7 @@ export function Sidebar() {
   )
 }
 
-// ── NavLink sub-component ─────────────────────────────────────────────────────
+// ── NavLink sub-component ──────────────────────────────────────────────────────
 function NavLink({
   href, active, icon, badge, children,
 }: {

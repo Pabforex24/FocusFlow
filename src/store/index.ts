@@ -7,8 +7,6 @@ import {
 } from '@/types'
 
 // ─── Challenge catalogue ──────────────────────────────────────────────────────
-// Les blueprints du catalogue référencent des goalId "seed" — ils seront
-// remplacés par les vrais goalId de l'utilisateur au moment du lancement.
 export const CHALLENGE_CATALOGUE: Challenge[] = [
   {
     id: 'ch-trading-30',
@@ -16,8 +14,8 @@ export const CHALLENGE_CATALOGUE: Challenge[] = [
     description: 'Construis une routine de trading solide : backtest quotidien, journal et analyse hebdo.',
     durationDays: 30, color: '#00C2A8', icon: 'TrendingUp',
     blueprints: [
-      { id: 'bp-t1', title: '1h de backtest',                     domainId: 'seed-d1', goalId: '', duration: '1h',    frequency: 'workdays' },
-      { id: 'bp-t2', title: 'Mettre à jour le journal de trades',  domainId: 'seed-d1', goalId: '', duration: '20min', frequency: 'daily'    },
+      { id: 'bp-t1', title: '1h de backtest',                    domainId: 'seed-d1', goalId: '', duration: '1h',    frequency: 'workdays' },
+      { id: 'bp-t2', title: 'Mettre à jour le journal de trades', domainId: 'seed-d1', goalId: '', duration: '20min', frequency: 'daily'    },
     ],
   },
   {
@@ -26,8 +24,8 @@ export const CHALLENGE_CATALOGUE: Challenge[] = [
     description: 'Adopte une routine sportive en 21 jours avec cardio, musculation et récupération.',
     durationDays: 21, color: '#FFB830', icon: 'Dumbbell',
     blueprints: [
-      { id: 'bp-s1', title: 'Footing 20 minutes',  domainId: 'seed-d2', goalId: '', duration: '20min', frequency: 'daily'    },
-      { id: 'bp-s2', title: 'Séance musculation',   domainId: 'seed-d2', goalId: '', duration: '45min', frequency: 'workdays' },
+      { id: 'bp-s1', title: 'Footing 20 minutes', domainId: 'seed-d2', goalId: '', duration: '20min', frequency: 'daily'    },
+      { id: 'bp-s2', title: 'Séance musculation',  domainId: 'seed-d2', goalId: '', duration: '45min', frequency: 'workdays' },
     ],
   },
   {
@@ -46,8 +44,8 @@ export const CHALLENGE_CATALOGUE: Challenge[] = [
     description: 'Une semaine pour tout remettre à zéro : hydratation, sommeil, mouvement, pleine conscience.',
     durationDays: 7, color: '#1BC47D', icon: 'Leaf',
     blueprints: [
-      { id: 'bp-w1', title: "Boire 2L d'eau",    domainId: 'seed-d2', goalId: '', duration: '—',    frequency: 'daily' },
-      { id: 'bp-w2', title: 'Méditation 10 min',  domainId: 'seed-d2', goalId: '', duration: '10min', frequency: 'daily' },
+      { id: 'bp-w1', title: "Boire 2L d'eau",   domainId: 'seed-d2', goalId: '', duration: '—',    frequency: 'daily' },
+      { id: 'bp-w2', title: 'Méditation 10 min', domainId: 'seed-d2', goalId: '', duration: '10min', frequency: 'daily' },
     ],
   },
 ]
@@ -58,14 +56,12 @@ const today    = new Date().toISOString().split('T')[0]
 const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
-
 const seedDomains: Domain[] = [
   { id: 'seed-d1', name: 'Trading', icon: 'TrendingUp', color: '#00C2A8', createdAt: new Date().toISOString() },
   { id: 'seed-d2', name: 'Sport',   icon: 'Dumbbell',   color: '#FFB830', createdAt: new Date().toISOString() },
   { id: 'seed-d3', name: 'Études',  icon: 'BookOpen',   color: '#4EA8DE', createdAt: new Date().toISOString() },
 ]
 
-// Seed goals — sans deadline, sans unit obligatoire
 const seedGoals: Goal[] = [
   { id: 'seed-g1', domainId: 'seed-d1', title: '30h de backtest',          unit: 'heures',  createdAt: new Date().toISOString() },
   { id: 'seed-g2', domainId: 'seed-d2', title: '20 séances de sport',       unit: 'séances', createdAt: new Date().toISOString() },
@@ -73,11 +69,11 @@ const seedGoals: Goal[] = [
 ]
 
 const seedTasks: Task[] = [
-  { id: uid(), title: '1h30 de backtest EUR/USD',                domainId: 'seed-d1', goalId: 'seed-g1', duration: '1h30',  scheduledAt: `${today}T08:00:00.000Z`,    done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Analyser les trades de la semaine',        domainId: 'seed-d1', goalId: 'seed-g1', duration: '30min', scheduledAt: `${today}T10:00:00.000Z`,    done: true,  xpValue: 10, doneAt: new Date().toISOString(), createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Footing 20 minutes',                       domainId: 'seed-d2', goalId: 'seed-g2', duration: '20min', scheduledAt: `${today}T07:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Réviser chapitre 3 — Marchés financiers',  domainId: 'seed-d3', goalId: 'seed-g3', duration: '1h',    scheduledAt: `${today}T14:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Backtest stratégie RSI',                   domainId: 'seed-d1', goalId: 'seed-g1', duration: '2h',    scheduledAt: `${tomorrow}T09:00:00.000Z`, done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
+  { id: uid(), title: '1h30 de backtest EUR/USD',               domainId: 'seed-d1', goalId: 'seed-g1', duration: '1h30',  scheduledAt: `${today}T08:00:00.000Z`,    done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Analyser les trades de la semaine',       domainId: 'seed-d1', goalId: 'seed-g1', duration: '30min', scheduledAt: `${today}T10:00:00.000Z`,    done: true,  xpValue: 10, doneAt: new Date().toISOString(), createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Footing 20 minutes',                      domainId: 'seed-d2', goalId: 'seed-g2', duration: '20min', scheduledAt: `${today}T07:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Réviser chapitre 3 — Marchés financiers', domainId: 'seed-d3', goalId: 'seed-g3', duration: '1h',    scheduledAt: `${today}T14:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Backtest stratégie RSI',                  domainId: 'seed-d1', goalId: 'seed-g1', duration: '2h',    scheduledAt: `${tomorrow}T09:00:00.000Z`, done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
 ]
 
 const initialUserStats: UserStats = {
@@ -96,24 +92,17 @@ function computeLevel(xp: number): { level: number; xpToNextLevel: number } {
   return { level, xpToNextLevel: xpForLevel(level) - (xp - cumulative) }
 }
 
-/**
- * Génère TOUTES les occurrences de tâches d'un challenge.
- * Chaque blueprint produit des tâches liées à son goalId.
- * blueprintGoalMap : { blueprintId → goalId réel de l'utilisateur }
- */
 function buildAllTasks(
   challenge: Challenge,
   acId: string,
   startDate: Date,
   endDate: Date,
-  blueprintGoalMap: Record<string, string>   // bp.id → goalId utilisateur
+  blueprintGoalMap: Record<string, string>
 ): Omit<Task, 'id' | 'createdAt'>[] {
   const tasks: Omit<Task, 'id' | 'createdAt'>[] = []
-
   for (const bp of challenge.blueprints) {
     const resolvedGoalId = blueprintGoalMap[bp.id] || bp.goalId
     const dates = getOccurrenceDates(startDate, endDate, bp.frequency, bp.customDays)
-
     for (const d of dates) {
       tasks.push({
         title: bp.title,
@@ -284,11 +273,6 @@ export const useStore = create<AppStore>()(
       abandonFocus: () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } } : s),
 
       // ── Challenge ─────────────────────────────────────────────────────────────
-      /**
-       * Démarre un challenge.
-       * blueprintGoalMap : { blueprintId → goalId } — renseigné par ChallengeStartModal
-       * après que l'utilisateur a associé ses objectifs à chaque blueprint.
-       */
       startChallenge: (challengeId, blueprintGoalMap = {}) => {
         const { customChallenges } = get()
         const challenge =
@@ -301,7 +285,7 @@ export const useStore = create<AppStore>()(
           ? new Date(challenge.deadline)
           : new Date(Date.now() + challenge.durationDays * 86400000)
 
-        const acId    = uid()
+        const acId     = uid()
         const allTasks = buildAllTasks(challenge, acId, startDate, endDate, blueprintGoalMap as Record<string, string>)
 
         const newAC: ActiveChallenge = {
@@ -318,7 +302,8 @@ export const useStore = create<AppStore>()(
         }))
       },
 
-      generateTodayChallengeTasks: () => {}, // legacy no-op
+      // Legacy no-op — gardé pour compatibilité des types
+      generateTodayChallengeTasks: () => {},
 
       stopChallenge: (acId) =>
         set((s) => ({
@@ -398,6 +383,34 @@ export const useStore = create<AppStore>()(
       completeOnboarding: () => set({ onboarding: { completed: true, step: 'done' } }),
       setOnboardingStep: (step) => set((s) => ({ onboarding: { ...s.onboarding, step } })),
     }),
-    { name: 'focusflow-store-v9' }
+    {
+      name: 'focusflow-store-v10',
+      // ── FIX DUPLICATION ──────────────────────────────────────────────────────
+      // Le merge par défaut de Zustand/persist fait un shallow merge entre
+      // l'état persisté (localStorage) et l'initialState. Résultat : les
+      // seedDomains/seedGoals/seedTasks de l'initialState se cumulent avec
+      // les données déjà sauvegardées → doublons.
+      //
+      // Solution : un merge personnalisé qui laisse les données persistées
+      // écraser complètement l'initialState pour les tableaux de données.
+      merge: (persisted: unknown, current: AppStore): AppStore => {
+        const p = persisted as Partial<AppStore>
+        return {
+          ...current,
+          ...p,
+          // Pour les tableaux : si des données existent en localStorage, on
+          // les utilise telles quelles — on n'y ajoute PAS les seeds.
+          domains:          p.domains?.length          ? p.domains          : current.domains,
+          goals:            p.goals?.length            ? p.goals            : current.goals,
+          tasks:            p.tasks?.length            ? p.tasks            : current.tasks,
+          activeChallenges: p.activeChallenges?.length ? p.activeChallenges : current.activeChallenges,
+          customChallenges: p.customChallenges?.length ? p.customChallenges : current.customChallenges,
+          badges:           p.badges?.length           ? p.badges           : current.badges,
+          // Objets scalaires : merge normal
+          userStats:  { ...current.userStats,  ...(p.userStats  || {}) },
+          onboarding: { ...current.onboarding, ...(p.onboarding || {}) },
+        }
+      },
+    }
   )
 )

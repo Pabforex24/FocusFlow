@@ -179,14 +179,15 @@ export interface AppStore {
   completeFocus: () => void
   abandonFocus: () => void
 
-  startChallenge: (challengeId: string) => void
+  startChallenge: (challengeId: string, blueprintGoalMap?: Record<string, string>) => void
   stopChallenge: (activeChallengeId: string) => void
   getChallengeProgress: (activeChallengeId: string, challengeId: string) => number
   getTodayChallengeTaskCount: (activeChallengeId: string) => { total: number; done: number }
   addCustomChallenge: (data: Omit<Challenge, 'id'>) => void
   updateCustomChallenge: (id: string, data: Partial<Omit<Challenge, 'id'>>) => void
   deleteCustomChallenge: (id: string) => void
-  generateTodayChallengeTasks: (activeChallengeId: string) => void
+  updateCatalogueChallenge: (id: string, data: Partial<Omit<Challenge, 'id'>>) => void
+  deleteCatalogueChallenge: (id: string) => void
 
   updateStreak: () => void
   getTasksForDate: (date: Date) => Task[]

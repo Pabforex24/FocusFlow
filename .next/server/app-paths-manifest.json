@@ -1,9 +1,8 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
   "/domains/page": "app/domains/page.js",
-  "/goals/page": "app/goals/page.js",
-  "/challenges/page": "app/challenges/page.js",
   "/tasks/page": "app/tasks/page.js",
-  "/coach/page": "app/coach/page.js"
+  "/challenges/page": "app/challenges/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/coach/page": "app/coach/page.js",
+  "/goals/page": "app/goals/page.js"
 }

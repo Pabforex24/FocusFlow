@@ -16,16 +16,12 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     if (open) document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  // Lock body scroll
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = ''
@@ -35,34 +31,55 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
-    >
+    <>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" />
+      <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm animate-fade-in" />
 
-      {/* Modal */}
+      {/*
+        Scroll container :
+        - fixed inset-0 : couvre tout l'écran
+        - overflow-y-auto : scroll si le modal est plus grand que l'écran
+        - z-50 : au-dessus du backdrop
+        - px/py : marges extérieures
+      */}
       <div
-        className={cn(
-          'relative w-full max-w-md bg-bg-2 border border-border-2 rounded-2xl p-6 shadow-card animate-scale-in',
-          className
-        )}
+        ref={overlayRef}
+        className="fixed inset-0 z-50 overflow-y-auto px-3 py-8 sm:px-6 sm:py-12"
+        onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
       >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-heading font-bold text-lg">{title}</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X size={16} />
-          </Button>
+        {/*
+          Modal box :
+          - mx-auto : centré horizontalement
+          - max-w contrôlé par className
+          - PAS de centrage vertical flex → le modal commence toujours en haut
+            avec le padding du conteneur (py-8 / py-12)
+        */}
+        <div
+          className={cn(
+            'relative mx-auto w-full bg-bg-2 border border-border-2 rounded-2xl shadow-card animate-scale-in',
+            'max-w-md',
+            className
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border rounded-t-2xl">
+            <h2 className="font-heading font-bold text-base sm:text-lg">{title}</h2>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X size={16} />
+            </Button>
+          </div>
+
+          {/* Body */}
+          <div className="px-5 sm:px-6 py-5">
+            {children}
+          </div>
         </div>
-        {children}
       </div>
-    </div>
+    </>
   )
 }
 
-// ── Form field wrapper ────────────────────────────────────────────────────────
 interface FieldProps {
   label: string
   children: React.ReactNode
@@ -78,7 +95,6 @@ export function Field({ label, children, className }: FieldProps) {
   )
 }
 
-// ── Shared input styles (use with className on native inputs) ─────────────────
 export const inputCls =
   'w-full bg-bg-3 border border-border text-content rounded-xl px-3 py-2 text-sm outline-none transition-all duration-150 focus:border-accent focus:ring-2 focus:ring-accent/15 placeholder:text-content-4'
 
