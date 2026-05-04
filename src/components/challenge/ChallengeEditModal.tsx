@@ -35,13 +35,13 @@ const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditModalProps) {
   const { domains, goals, addCustomChallenge, updateCustomChallenge, updateCatalogueChallenge } = useStore()
 
-  const [title,      setTitle]      = useState('')
-  const [description,setDescription]= useState('')
-  const [deadline,   setDeadline]   = useState(format(addDays(new Date(), 21), 'yyyy-MM-dd'))
-  const [color,      setColor]      = useState(DOMAIN_COLORS[0])
-  const [icon,       setIcon]       = useState(DOMAIN_ICONS[0])
-  const [blueprints, setBlueprints] = useState<ChallengeBlueprint[]>([DEFAULT_BP()])
-  const [submitted,  setSubmitted]  = useState(false)
+  const [title,       setTitle]       = useState('')
+  const [description, setDescription] = useState('')
+  const [deadline,    setDeadline]    = useState(format(addDays(new Date(), 21), 'yyyy-MM-dd'))
+  const [color,       setColor]       = useState(DOMAIN_COLORS[0])
+  const [icon,        setIcon]        = useState(DOMAIN_ICONS[0])
+  const [blueprints,  setBlueprints]  = useState<ChallengeBlueprint[]>([DEFAULT_BP()])
+  const [submitted,   setSubmitted]   = useState(false)
 
   useEffect(() => {
     if (!open) { setSubmitted(false); return }
@@ -94,7 +94,9 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
       durationDays, deadline, color, icon, blueprints,
     }
     if (existing) {
-      isCatalogue ? updateCatalogueChallenge(existing.id, data) : updateCustomChallenge(existing.id, data)
+      isCatalogue
+        ? updateCatalogueChallenge(existing.id, data)
+        : updateCustomChallenge(existing.id, data)
     } else {
       addCustomChallenge(data)
     }
@@ -106,22 +108,20 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
     : 'Créer un challenge'
 
   return (
-    // max-w-2xl sur desktop → utilise toute la largeur disponible sans déborder
     <Modal open={open} onClose={onClose} title={modalTitle} className="max-w-2xl">
 
-      {/* ── Alerte catalogue ───────────────────────────────────────────── */}
+      {/* Alerte catalogue */}
       {isCatalogue && (
         <div className="text-[11px] bg-warning/10 border border-warning/30 text-warning rounded-xl px-3 py-2 mb-4">
           ⚠️ Modification du catalogue — visible uniquement sur votre compte.
         </div>
       )}
 
-      {/* ══ GRILLE 2 colonnes sur ≥ sm ══════════════════════════════════ */}
+      {/* ── Grille 2 colonnes sur sm+ ──────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5">
 
         {/* COL 1 : Titre + Description + Échéance + Aperçu */}
         <div>
-          {/* Titre */}
           <Field label="Titre du challenge *">
             <input
               className={cn(inputCls, submitted && titleMissing && 'border-danger focus:border-danger')}
@@ -137,7 +137,6 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
             )}
           </Field>
 
-          {/* Description */}
           <Field label="Description">
             <textarea
               className={cn(inputCls, 'resize-none h-16')}
@@ -147,7 +146,6 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
             />
           </Field>
 
-          {/* Échéance */}
           <Field label="Échéance">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -158,18 +156,24 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
                   onChange={(e) => setDeadline(e.target.value)}
                 />
               </div>
-              <div className="flex-shrink-0 text-center text-sm font-bold px-3 py-2 rounded-xl"
-                style={{ background: hexToRgba(color, 0.15), color }}>
+              <div
+                className="flex-shrink-0 text-center text-sm font-bold px-3 py-2 rounded-xl"
+                style={{ background: hexToRgba(color, 0.15), color }}
+              >
                 {durationDays}j
               </div>
             </div>
           </Field>
 
           {/* Aperçu */}
-          <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 border mb-4"
-            style={{ background: hexToRgba(color, 0.08), borderColor: color + '40' }}>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: hexToRgba(color, 0.2) }}>
+          <div
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 border mb-4"
+            style={{ background: hexToRgba(color, 0.08), borderColor: color + '40' }}
+          >
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: hexToRgba(color, 0.2) }}
+            >
               <DomainIcon name={icon} size={16} color={color} />
             </div>
             <div className="flex-1 min-w-0">
@@ -184,10 +188,10 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
         {/* COL 2 : Icône + Couleur */}
         <div>
           <Field label="Icône">
-            {/* 8 colonnes sur desktop, 7 sur mobile */}
             <div className="grid grid-cols-7 sm:grid-cols-8 gap-1">
               {DOMAIN_ICONS.map((key) => (
-                <button key={key} type="button" onClick={() => setIcon(key)}
+                <button
+                  key={key} type="button" onClick={() => setIcon(key)}
                   className={cn(
                     'w-8 h-8 rounded-xl flex items-center justify-center transition-all',
                     icon === key ? 'scale-110' : 'bg-bg-3 border border-border hover:bg-bg-4'
@@ -203,10 +207,13 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
           <Field label="Couleur">
             <div className="flex flex-wrap gap-2">
               {DOMAIN_COLORS.map((c) => (
-                <button key={c} type="button" onClick={() => setColor(c)}
+                <button
+                  key={c} type="button" onClick={() => setColor(c)}
                   className={cn(
                     'w-7 h-7 rounded-full transition-all',
-                    color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-2 scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'
+                    color === c
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-bg-2 scale-110'
+                      : 'opacity-60 hover:opacity-100 hover:scale-105'
                   )}
                   style={{ background: c }}
                 />
@@ -216,17 +223,18 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
         </div>
       </div>
 
-      {/* ══ Tâches récurrentes — pleine largeur ═════════════════════════ */}
+      {/* ── Tâches récurrentes — pleine largeur ──────────────────────── */}
       <Field label="Tâches récurrentes *">
         <div className="space-y-3">
           {blueprints.map((bp, i) => (
-            <div key={bp.id}
+            <div
+              key={bp.id}
               className={cn(
                 'bg-bg-3 border rounded-xl p-3 space-y-2.5 transition-colors',
                 submitted && bpErrors[i] ? 'border-danger/50' : 'border-border'
               )}
             >
-              {/* Titre tâche + durée + suppr */}
+              {/* Titre + durée + suppr */}
               <div className="flex items-center gap-2">
                 <GripVertical size={13} className="text-content-4 flex-shrink-0" />
                 <input
@@ -245,14 +253,16 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
                   placeholder="30min"
                 />
                 {blueprints.length > 1 && (
-                  <button type="button" onClick={() => removeBP(bp.id)}
-                    className="text-content-4 hover:text-danger transition-colors flex-shrink-0">
+                  <button
+                    type="button" onClick={() => removeBP(bp.id)}
+                    className="text-content-4 hover:text-danger transition-colors flex-shrink-0"
+                  >
                     <Trash2 size={13} />
                   </button>
                 )}
               </div>
 
-              {/* Domaine + Fréquence sur la même ligne */}
+              {/* Domaine + Fréquence + Objectif */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <div>
                   <p className="text-[10px] text-content-3 mb-1">Domaine</p>
@@ -277,7 +287,6 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
                   </select>
                 </div>
 
-                {/* Objectif lié — 3e colonne sur sm+ */}
                 <div className="col-span-2 sm:col-span-1">
                   <p className="text-[10px] text-content-3 mb-1 flex items-center gap-1">
                     <Target size={9} /> Objectif lié
@@ -289,7 +298,9 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
                   >
                     <option value="">— Aucun —</option>
                     {goalsForDomain(bp.domainId).map((g) => (
-                      <option key={g.id} value={g.id}>{g.title}{g.unit ? ` (${g.unit})` : ''}</option>
+                      <option key={g.id} value={g.id}>
+                        {g.title}{g.unit ? ` (${g.unit})` : ''}
+                      </option>
                     ))}
                   </select>
                   {bp.domainId && goalsForDomain(bp.domainId).length === 0 && (
@@ -304,9 +315,12 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
                   {DAY_LABELS.map((label, idx) => {
                     const active = (bp.customDays || []).includes(idx)
                     return (
-                      <button key={idx} type="button" onClick={() => toggleDay(bp.id, idx)}
-                        className={cn('px-2 py-1 rounded-lg text-[11px] font-bold border transition-all',
-                          active ? 'text-white border-transparent' : 'bg-bg-5 border-border text-content-3')}
+                      <button
+                        key={idx} type="button" onClick={() => toggleDay(bp.id, idx)}
+                        className={cn(
+                          'px-2 py-1 rounded-lg text-[11px] font-bold border transition-all',
+                          active ? 'text-white border-transparent' : 'bg-bg-5 border-border text-content-3'
+                        )}
                         style={active ? { background: color, borderColor: color } : {}}
                       >
                         {label}
@@ -318,15 +332,21 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
             </div>
           ))}
 
-          <button type="button" onClick={addBP}
-            className="w-full flex items-center justify-center gap-1.5 text-xs text-content-3 hover:text-content border border-dashed border-border-2 hover:border-border-3 rounded-xl py-2.5 transition-all">
+          <button
+            type="button" onClick={addBP}
+            className="w-full flex items-center justify-center gap-1.5 text-xs text-content-3 hover:text-content border border-dashed border-border-2 hover:border-border-3 rounded-xl py-2.5 transition-all"
+          >
             <Plus size={13} /> Ajouter une tâche
           </button>
         </div>
       </Field>
 
-      {/* ── Actions ──────────────────────────────────────────────────────── */}
-      <div className="flex gap-2 pt-1 sticky bottom-0 bg-bg-2 pb-1">
+      {/* ── Actions ─────────────────────────────────────────────────────
+           PAS de sticky ici — le scroll est géré par Modal.tsx (overflow-y-auto
+           sur le body du modal). sticky bottom-0 dans un parent scrollable
+           ne fonctionne pas correctement sur tous les navigateurs.
+      ─────────────────────────────────────────────────────────────────── */}
+      <div className="flex gap-2 pt-2 border-t border-border mt-2">
         <Button variant="outline" size="sm" className="flex-1" onClick={onClose}>
           Annuler
         </Button>
@@ -346,6 +366,7 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
           {existing ? 'Enregistrer' : 'Créer le challenge'}
         </button>
       </div>
+
     </Modal>
   )
 }
