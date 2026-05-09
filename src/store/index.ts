@@ -148,6 +148,7 @@ export const useStore = create<AppStore>()(
       userStats:        initialUserStats,
       badges:           ALL_BADGES.map((b) => ({ ...b })),
       focusSession:     null,
+      focusModalOpen:   false,
       activeChallenges: [],
       customChallenges:    [],
       deletedCatalogueIds: [],
@@ -277,6 +278,8 @@ export const useStore = create<AppStore>()(
         }),
       pauseFocus:   () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'paused'  } } : s),
       resumeFocus:  () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'running' } } : s),
+      openFocusModal:  () => set({ focusModalOpen: true }),
+      closeFocusModal: () => set({ focusModalOpen: false }),
       completeFocus: () => {
         const { focusSession, awardXP, toggleTask, checkAndAwardBadges } = get()
         if (!focusSession) return

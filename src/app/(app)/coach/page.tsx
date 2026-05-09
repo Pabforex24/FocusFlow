@@ -135,9 +135,17 @@ Réponds en français, de manière concise, motivante et pratique. Maximum 3 phr
         }),
       })
       const data = await resp.json()
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: data.reply }])
+      // Le serveur renvoie toujours un `reply` (même en 429 grâce au fallback)
+      // On affiche quand même le message mais on signale la limitation
+      if (resp.status === 429) {
+        setChatMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: data.reply || '⏳ Trop de messages envoyés. Attends quelques secondes avant de réessayer.' },
+        ])
+      } else {
+        setChatMessages((prev) => [...prev, { role: 'assistant', content: data.reply }])
+      }
     } catch {
-      // Fallback
       const fallback = getFallbackReply(msg, ctx)
       setChatMessages((prev) => [...prev, { role: 'assistant', content: fallback }])
     }

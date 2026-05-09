@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '@/store'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Task } from '@/types'
 import { hexToRgba, cn } from '@/lib/utils'
 import { Play, Pause, Square, CheckCircle2, X, Timer, Zap } from 'lucide-react'
@@ -20,6 +21,7 @@ export function FocusMode({ onClose, initialTask }: FocusModeProps) {
   } = useStore()
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>(initialTask?.id)
+  const [confirmAbandon, setConfirmAbandon]   = useState(false)
   const [selectedDuration, setSelectedDuration] = useState(25)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -59,12 +61,13 @@ export function FocusMode({ onClose, initialTask }: FocusModeProps) {
   const offset = circ - (pct / 100) * circ
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="relative w-full max-w-sm bg-bg-2 border border-border-2 rounded-3xl p-6 shadow-card animate-scale-in">
 
         {/* Close */}
         <button
-          onClick={() => { if (!isRunning || confirm('Abandonner la session ?')) { abandonFocus(); onClose() }}}
+          onClick={() => { if (!isRunning) { abandonFocus(); onClose() } else { setConfirmAbandon(true) }}}
           className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center bg-bg-3 text-content-3 hover:text-content transition-colors"
         >
           <X size={15} />
@@ -228,5 +231,14 @@ export function FocusMode({ onClose, initialTask }: FocusModeProps) {
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      open={confirmAbandon}
+      onClose={() => setConfirmAbandon(false)}
+      onConfirm={() => { abandonFocus(); onClose() }}
+      title="Abandonner la session ?"
+      description="Ta session Focus en cours sera annulée et tu ne recevras pas de XP. Es-tu sûr ?"
+      confirmLabel="Abandonner"
+    />
+    </>
   )
 }

@@ -150,7 +150,8 @@ export interface AppStore {
   onboarding: OnboardingState
   userStats: UserStats
   badges: Badge[]
-  focusSession: FocusSession | null
+  focusSession:    FocusSession | null
+  focusModalOpen:  boolean
   activeChallenges: ActiveChallenge[]
   customChallenges: Challenge[]
   deletedCatalogueIds: string[]
@@ -178,8 +179,10 @@ export interface AppStore {
 
   startFocus: (taskId?: string, durationMinutes?: number) => void
   tickFocus: () => void
-  pauseFocus: () => void
-  resumeFocus: () => void
+  pauseFocus:      () => void
+  resumeFocus:     () => void
+  openFocusModal:  () => void
+  closeFocusModal: () => void
   completeFocus: () => void
   abandonFocus: () => void
 

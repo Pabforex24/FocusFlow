@@ -10,6 +10,7 @@ import { ChallengeEditModal } from '@/components/challenge/ChallengeEditModal'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Zap, CheckCircle2, Plus, Pencil, Trash2 } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export default function ChallengesPage() {
   const {
@@ -22,6 +23,8 @@ export default function ChallengesPage() {
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null)
   const [editingChallenge,  setEditingChallenge]  = useState<Challenge | null | undefined>(undefined)
   const [showCreateModal,   setShowCreateModal]   = useState(false)
+  const [confirmCatalogue,  setConfirmCatalogue]  = useState<string | null>(null)
+  const [confirmCustom,     setConfirmCustom]     = useState<string | null>(null)
 
   // IDs des challenges actuellement actifs
   const activeIds = new Set(
@@ -37,15 +40,17 @@ export default function ChallengesPage() {
 
   const hiddenCatalogueIds = new Set(deletedCatalogueIds || [])
 
-  const handleDeleteCatalogue = (id: string) => {
-    if (!confirm('Masquer ce challenge du catalogue ?')) return
-    deleteCatalogueChallenge(id)
+  const handleDeleteCatalogue = (id: string) => setConfirmCatalogue(id)
+  const doDeleteCatalogue = () => {
+    if (!confirmCatalogue) return
+    deleteCatalogueChallenge(confirmCatalogue)
     toast('Challenge masqué', 'info')
   }
 
-  const handleDeleteCustom = (id: string) => {
-    if (!confirm('Supprimer ce challenge ? Les tâches en cours seront conservées.')) return
-    deleteCustomChallenge(id)
+  const handleDeleteCustom = (id: string) => setConfirmCustom(id)
+  const doDeleteCustom = () => {
+    if (!confirmCustom) return
+    deleteCustomChallenge(confirmCustom)
     toast('Challenge supprimé', 'info')
   }
 

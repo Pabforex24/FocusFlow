@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { DomainCard } from '@/components/domain/DomainCard'
 import { DomainModal } from '@/components/domain/DomainModal'
 import { useToast } from '@/components/ui/Toast'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export default function DomainsPage() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function DomainsPage() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Domain | null>(null)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
 
   const handleSave = (data: Omit<Domain, 'id' | 'createdAt'>) => {
     if (editing) {
@@ -35,9 +37,11 @@ export default function DomainsPage() {
     setModalOpen(true)
   }
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Supprimer ce domaine et tout son contenu ?')) return
-    deleteDomain(id)
+  const handleDelete = (id: string) => setConfirmId(id)
+
+  const doDelete = () => {
+    if (!confirmId) return
+    deleteDomain(confirmId)
     toast('Domaine supprimé', 'info')
   }
 
@@ -90,6 +94,15 @@ export default function DomainsPage() {
         onClose={() => { setModalOpen(false); setEditing(null) }}
         onSave={handleSave}
         existing={editing}
+      />
+
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={doDelete}
+        title="Supprimer le domaine"
+        description="Supprimer ce domaine supprimera également tous ses objectifs et tâches associées. Cette action est irréversible."
+        confirmLabel="Supprimer"
       />
     </div>
   )

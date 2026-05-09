@@ -11,6 +11,7 @@ import { DomainIcon } from '@/components/domain/DomainIcon'
 import { GoalModal } from '@/components/goal/GoalModal'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useToast } from '@/components/ui/Toast'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { hexToRgba, cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -255,6 +256,7 @@ function GoalsContent() {
   const [goalModalOpen, setGoalModalOpen] = useState(false)
   const [editingGoal,   setEditingGoal]   = useState<Goal | null>(null)
   const [tab,           setTab]           = useState<'all' | 'challenges' | 'free'>('all')
+  const [confirmId,     setConfirmId]     = useState<string | null>(null)
 
   // Objectifs liés à un challenge
   const challengeGoals = goals.filter((g) => !!g.challengeId && (!domainFilter || g.domainId === domainFilter))
@@ -279,9 +281,11 @@ function GoalsContent() {
     setEditingGoal(null)
   }
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Supprimer cet objectif et ses tâches non générées ?')) return
-    deleteGoal(id)
+  const handleDelete = (id: string) => setConfirmId(id)
+
+  const doDelete = () => {
+    if (!confirmId) return
+    deleteGoal(confirmId)
     toast('Objectif supprimé', 'info')
   }
 
@@ -391,6 +395,15 @@ function GoalsContent() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={doDelete}
+        title="Supprimer l'objectif"
+        description="Les tâches générées par un challenge seront conservées. Les tâches manuelles liées à cet objectif seront supprimées."
+        confirmLabel="Supprimer"
+      />
 
       <GoalModal
         open={goalModalOpen}
