@@ -358,30 +358,31 @@ export const useStore = create<AppStore>()(
           }],
         })),
       updateCustomChallenge: (id, data) =>
-        set((s) => ({ customChallenges: (s.customChallenges || []).map((c) => c.id === id ? { ...c, ...data } : c) })),
+        set((s) => ({ customChallenges: s.customChallenges.map((c) => c.id === id ? { ...c, ...data } : c) })),
       deleteCustomChallenge: (id) =>
-        set((s) => ({ customChallenges: (s.customChallenges || []).filter((c) => c.id !== id) })),
+        set((s) => ({ customChallenges: s.customChallenges.filter((c) => c.id !== id) })),
 
       updateCatalogueChallenge: (id, data) =>
         set((s) => ({
           catalogueOverrides: {
-            ...(s.catalogueOverrides || {}),
-            [id]: { ...((s.catalogueOverrides || {})[id] || {}), ...data },
+            ...s.catalogueOverrides,
+            [id]: { ...(s.catalogueOverrides[id] || {}), ...data },
           },
         })),
 
       deleteCatalogueChallenge: (id) =>
         set((s) => ({
-          deletedCatalogueIds: [...(s.deletedCatalogueIds || []), id],
+          deletedCatalogueIds: [...s.deletedCatalogueIds, id],
         })),
 
       getEffectiveChallenge: (id) => {
-        const { customChallenges, catalogueOverrides } = get()
-        const custom = (customChallenges || []).find((c) => c.id === id)
+        const { customChallenges, catalogueOverrides, deletedCatalogueIds } = get()
+        const custom = customChallenges.find((c) => c.id === id)
         if (custom) return custom
+        if (deletedCatalogueIds.includes(id)) return undefined
         const base = CHALLENGE_CATALOGUE.find((c) => c.id === id)
         if (!base) return undefined
-        const override = (catalogueOverrides || {})[id]
+        const override = catalogueOverrides[id]
         return override ? { ...base, ...override } : base
       },
 
