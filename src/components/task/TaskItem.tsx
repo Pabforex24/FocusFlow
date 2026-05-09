@@ -1,6 +1,6 @@
 'use client'
 
-import { Trash2, Timer } from 'lucide-react'
+import { Trash2, Timer, Pencil } from 'lucide-react'
 import { Task, Domain } from '@/types'
 import { hexToRgba, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -15,6 +15,7 @@ interface TaskItemProps {
   goalTitle?: string
   onToggle: () => void
   onDelete: () => void
+  onEdit?: () => void
   showFocusBtn?: boolean
 }
 
@@ -24,7 +25,7 @@ const PRIORITY_COLOR: Record<string, string> = {
   low:    '#2e3d5e',
 }
 
-export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, showFocusBtn = false }: TaskItemProps) {
+export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, showFocusBtn = false }: TaskItemProps) {
   const [showFocus, setShowFocus] = useState(false)
   const c = domain?.color || '#00E5B0'
 
@@ -75,8 +76,10 @@ export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, showFocu
         </button>
 
         {/* Title */}
-        <span className={cn('flex-1 text-sm font-medium min-w-0 truncate', task.done ? 'line-through' : 'text-content')}
-          style={task.done ? { color: '#3D4F6E', textDecoration: 'line-through' } : {}}>
+        <span
+          className={cn('flex-1 text-sm font-medium min-w-0 truncate', task.done ? 'line-through' : 'text-content')}
+          style={task.done ? { color: '#3D4F6E', textDecoration: 'line-through' } : {}}
+        >
           {task.title}
         </span>
 
@@ -113,6 +116,20 @@ export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, showFocu
             </span>
           )}
 
+          {/* Edit button */}
+          {onEdit && !task.done && (
+            <button
+              onClick={onEdit}
+              className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+              style={{ color: '#3D4F6E' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#C8865A' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#3D4F6E' }}
+            >
+              <Pencil size={12} strokeWidth={1.75} />
+            </button>
+          )}
+
+          {/* Focus button */}
           {showFocusBtn && !task.done && (
             <button
               onClick={() => setShowFocus(true)}

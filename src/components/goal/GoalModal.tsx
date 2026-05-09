@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Modal, Field, inputCls, selectCls } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { Domain, Goal } from '@/types'
+import { Domain, Goal, Challenge } from '@/types'
 import { DomainIcon } from '@/components/domain/DomainIcon'
 
 interface GoalModalProps {
@@ -13,12 +13,13 @@ interface GoalModalProps {
   domains: Domain[]
   existing?: Goal | null
   defaultDomainId?: string
+  challenges?: Challenge[]
 }
 
 const UNIT_SUGGESTIONS = ['heures', 'séances', 'km', 'pages', 'modules', 'projets', '']
 
 export function GoalModal({
-  open, onClose, onSave, domains, existing, defaultDomainId,
+  open, onClose, onSave, domains, existing, defaultDomainId, challenges = [],
 }: GoalModalProps) {
   const [title,       setTitle]       = useState('')
   const [description, setDescription] = useState('')

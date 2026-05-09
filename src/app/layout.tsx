@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Outfit } from 'next/font/google'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { ToastProvider } from '@/components/ui/Toast'
 import './globals.css'
 
@@ -16,17 +15,20 @@ export const metadata: Metadata = {
   description: 'Transformez vos objectifs long terme en actions quotidiennes concrètes.',
 }
 
+/**
+ * Layout racine — HTML shell uniquement.
+ * La Sidebar est gérée par src/app/(app)/layout.tsx (pages protégées).
+ * Les pages /auth/* utilisent src/app/auth/layout.tsx (sans Sidebar).
+ *
+ * ⚠️ Ne pas ajouter overflow-y-auto ici ni sur <main> — cela crée un BFC
+ * qui piège les modals en position:fixed hors de la viewport.
+ */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={outfit.variable}>
       <body className="bg-bg text-content font-body antialiased">
         <ToastProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 min-w-0 pb-20 md:pb-0">
-              {children}
-            </main>
-          </div>
+          {children}
         </ToastProvider>
       </body>
     </html>

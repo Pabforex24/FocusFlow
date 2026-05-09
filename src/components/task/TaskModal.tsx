@@ -15,6 +15,7 @@ interface TaskModalProps {
   domains: Domain[]
   goals: Goal[]
   defaultDate?: Date
+  existing?: Task | null
 }
 
 const FREQ_OPTIONS: { value: FrequencyType; label: string }[] = [
@@ -26,7 +27,7 @@ const FREQ_OPTIONS: { value: FrequencyType; label: string }[] = [
 
 const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
-export function TaskModal({ open, onClose, onSave, domains, goals, defaultDate }: TaskModalProps) {
+export function TaskModal({ open, onClose, onSave, domains, goals, defaultDate, existing }: TaskModalProps) {
   const [title,         setTitle]         = useState('')
   const [domainId,      setDomainId]      = useState('')
   const [goalId,        setGoalId]        = useState('')

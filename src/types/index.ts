@@ -18,8 +18,8 @@ export interface Goal {
   domainId: string
   title: string
   description?: string
-  unit?: string   // ex: "heures", "séances", "km" — optionnel, affiché dans la progression
-  // ❌ pas de deadline — un objectif est une cible globale permanente
+  unit?: string
+  challengeId?: string  // lié à un challenge (optionnel)
   createdAt: string
 }
 
@@ -154,6 +154,8 @@ export interface AppStore {
   activeChallenges: ActiveChallenge[]
   customChallenges: Challenge[]
   deletedCatalogueIds: string[]
+  catalogueOverrides: Record<string, Partial<Omit<Challenge, 'id'>>>
+  supabaseUserId: string | null
 
   addDomain: (domain: Omit<Domain, 'id' | 'createdAt'>) => void
   updateDomain: (id: string, data: Partial<Domain>) => void
@@ -166,6 +168,7 @@ export interface AppStore {
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void
   toggleTask: (id: string) => void
   deleteTask: (id: string) => void
+  updateTask: (id: string, data: Partial<Omit<Task, 'id' | 'createdAt'>>) => void
   bulkAddTasks: (tasks: Omit<Task, 'id' | 'createdAt'>[]) => void
 
   awardXP: (amount: number) => void
@@ -182,13 +185,24 @@ export interface AppStore {
 
   startChallenge: (challengeId: string, blueprintGoalMap?: Record<string, string>) => void
   stopChallenge: (activeChallengeId: string) => void
-  getChallengeProgress: (activeChallengeId: string, challengeId: string) => number
+  getChallengeProgress: (activeChallengeId: string) => number
   getTodayChallengeTaskCount: (activeChallengeId: string) => { total: number; done: number }
+  getEffectiveChallenge: (id: string) => Challenge | undefined
   addCustomChallenge: (data: Omit<Challenge, 'id'>) => void
   updateCustomChallenge: (id: string, data: Partial<Omit<Challenge, 'id'>>) => void
   deleteCustomChallenge: (id: string) => void
   updateCatalogueChallenge: (id: string, data: Partial<Omit<Challenge, 'id'>>) => void
   deleteCatalogueChallenge: (id: string) => void
+
+  setSupabaseUser: (userId: string | null) => void
+  hydrateFromSupabase: (data: {
+    profile: any
+    domains: Domain[]
+    goals: Goal[]
+    tasks: Task[]
+    customChallenges: Challenge[]
+    activeChallenges: ActiveChallenge[]
+  }) => void
 
   updateStreak: () => void
   getTasksForDate: (date: Date) => Task[]

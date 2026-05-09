@@ -149,8 +149,9 @@ export const useStore = create<AppStore>()(
       badges:           ALL_BADGES.map((b) => ({ ...b })),
       focusSession:     null,
       activeChallenges: [],
-      customChallenges: [],
+      customChallenges:    [],
       deletedCatalogueIds: [],
+      catalogueOverrides:  {},
 
       // ── Domain ───────────────────────────────────────────────────────────────
       addDomain: (data) =>
@@ -210,6 +211,8 @@ export const useStore = create<AppStore>()(
       },
       deleteTask: (id) =>
         set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+      updateTask: (id, data) =>
+        set((s) => ({ tasks: s.tasks.map((t) => t.id === id ? { ...t, ...data } : t) })),
 
       // ── Gamification ─────────────────────────────────────────────────────────
       awardXP: (amount) =>
@@ -368,6 +371,42 @@ export const useStore = create<AppStore>()(
         set((s) => ({
           deletedCatalogueIds: [...(s.deletedCatalogueIds || []), id],
         })),
+
+      getEffectiveChallenge: (id) => {
+        const { customChallenges, catalogueOverrides } = get()
+        const custom = (customChallenges || []).find((c) => c.id === id)
+        if (custom) return custom
+        const base = CHALLENGE_CATALOGUE.find((c) => c.id === id)
+        if (!base) return undefined
+        const override = (catalogueOverrides || {})[id]
+        return override ? { ...base, ...override } : base
+      },
+
+      // ── Supabase ──────────────────────────────────────────────────────────────
+      supabaseUserId: null,
+      setSupabaseUser: (userId) => set({ supabaseUserId: userId }),
+      hydrateFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
+        const patch: Partial<AppStore> = {}
+        if (domains.length)          patch.domains          = domains
+        if (goals.length)            patch.goals            = goals
+        if (tasks.length)            patch.tasks            = tasks
+        if (customChallenges.length) patch.customChallenges = customChallenges
+        if (activeChallenges.length) patch.activeChallenges = activeChallenges
+        if (profile) {
+          const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
+          patch.userStats = {
+            xp: profile.xp ?? 0, level, xpToNextLevel,
+            totalTasksDone:      profile.total_tasks_done  ?? 0,
+            challengesCompleted: profile.challenges_done   ?? 0,
+            longestStreak:       profile.longest_streak    ?? 0,
+            hardcoreMode:        profile.hardcore_mode     ?? false,
+          }
+          patch.streak     = profile.streak     ?? 0
+          patch.lastActive = profile.last_active ?? null
+          if (profile.onboarding_completed) patch.onboarding = { completed: true, step: 'done' }
+        }
+        set(patch as any)
+      },
 
       // ── Selectors ────────────────────────────────────────────────────────────
       updateStreak: () => {
