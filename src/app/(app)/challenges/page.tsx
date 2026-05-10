@@ -32,7 +32,7 @@ export default function ChallengesPage() {
   )
 
   const completedCount = activeChallenges.filter((ac) => {
-    const prog = getChallengeProgress(ac.id, ac.challengeId)
+    const prog = getChallengeProgress(ac.id)
     return prog === 100
   }).length
 
@@ -109,7 +109,7 @@ export default function ChallengesPage() {
                   key={ac.id}
                   challenge={challenge}
                   activeChallenge={ac}
-                  progress={getChallengeProgress(ac.id, ac.challengeId)}
+                  progress={getChallengeProgress(ac.id)}
                   onStart={() => setSelectedChallenge(challenge)}
                   onStop={() => stopChallenge(ac.id)}
                 />
@@ -133,7 +133,7 @@ export default function ChallengesPage() {
                   <ChallengeCard
                     challenge={challenge}
                     activeChallenge={pastAc}
-                    progress={pastAc ? getChallengeProgress(pastAc.id, challenge.id) : 0}
+                    progress={pastAc ? getChallengeProgress(pastAc.id) : 0}
                     onStart={() => setSelectedChallenge(challenge)}
                     onStop={() => pastAc && stopChallenge(pastAc.id)}
                   />
@@ -174,7 +174,7 @@ export default function ChallengesPage() {
                 <ChallengeCard
                   challenge={challenge}
                   activeChallenge={pastAc}
-                  progress={pastAc ? getChallengeProgress(pastAc.id, challenge.id) : 0}
+                  progress={pastAc ? getChallengeProgress(pastAc.id) : 0}
                   onStart={() => setSelectedChallenge(challenge)}
                   onStop={() => pastAc && stopChallenge(pastAc.id)}
                 />
