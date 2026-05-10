@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { Zap, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { signInWithEmail } from '@/lib/db'
@@ -9,7 +10,7 @@ import { isSupabaseConfigured } from '@/lib/supabase'
 import { inputCls } from '@/components/ui/Modal'
 import { cn } from '@/lib/utils'
 
-export default function LoginPage() {
+function LoginForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const nextPath     = searchParams.get('next') || '/dashboard'
@@ -151,5 +152,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

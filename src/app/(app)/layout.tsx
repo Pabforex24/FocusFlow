@@ -10,6 +10,8 @@ import { useNotifications } from '@/hooks/useNotifications'
  * FocusMode est ici — il survit à toutes les navigations.
  * L'état d'ouverture est dans le store Zustand, accessible partout.
  */
+export const dynamic = 'force-dynamic'
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   useNotifications() // Enregistre le SW et surveille streak + rappels
   const focusModalOpen  = useStore((s) => s.focusModalOpen)
