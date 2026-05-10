@@ -73,7 +73,7 @@ export function ChallengeDashboardWidget() {
           const challenge = allChallenges.find((c) => c.id === ac.challengeId)
           if (!challenge) return null
 
-          const progress = getChallengeProgress(ac.id, ac.challengeId)
+          const progress = getChallengeProgress(ac.id)
           const { total, done } = getTodayChallengeTaskCount(ac.id)
 
           const todayStr = new Date().toDateString()
