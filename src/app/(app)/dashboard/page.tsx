@@ -351,7 +351,7 @@ export default function DashboardPage() {
                 filter:  badge.unlockedAt ? 'none' : 'grayscale(1)',
               }}>
               <span className="text-xl">{badge.icon}</span>
-              <span className="text-[8px] text-center leading-tight font-semibold" style={{ color: badge.unlockedAt ? '#E8EDF7' : '#3D4F6E' }}>{badge.label}</span>
+              <span className="text-[8px] text-center leading-tight font-semibold" style={{ color: badge.unlockedAt ? '#E8EDF7' : '#3D4F6E' }}>{badge.title}</span>
             </div>
           ))}
         </div>
