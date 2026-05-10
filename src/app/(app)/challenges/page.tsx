@@ -210,6 +210,24 @@ export default function ChallengesPage() {
         onClose={() => { setShowCreateModal(false); setEditingChallenge(undefined) }}
         existing={editingChallenge ?? null}
       />
+
+      <ConfirmDialog
+        open={!!confirmCustom}
+        onClose={() => setConfirmCustom(null)}
+        onConfirm={doDeleteCustom}
+        title="Supprimer ce challenge"
+        description="Le challenge sera supprimé définitivement. Les tâches déjà générées seront conservées."
+        confirmLabel="Supprimer"
+      />
+
+      <ConfirmDialog
+        open={!!confirmCatalogue}
+        onClose={() => setConfirmCatalogue(null)}
+        onConfirm={doDeleteCatalogue}
+        title="Masquer ce challenge"
+        description="Ce challenge sera retiré de ton catalogue. Tes tâches en cours ne seront pas affectées."
+        confirmLabel="Masquer"
+      />
     </div>
   )
 }

@@ -66,8 +66,7 @@ export async function upsertProfile(userId: string, stats: UserStats, extra: {
     id:                     userId,
     xp:                     stats.xp,
     level:                  stats.level,
-    xp_to_next:             stats.xpToNextLevel,
-    streak:                 extra.streak,
+    streak_count:           extra.streak,
     last_active:            extra.lastActive,
     longest_streak:         stats.longestStreak,
     total_tasks_done:       stats.totalTasksDone,
@@ -76,8 +75,6 @@ export async function upsertProfile(userId: string, stats: UserStats, extra: {
     badges:                 extra.badges,
     catalogue_overrides:    extra.catalogueOverrides,
     deleted_catalogue_ids:  extra.deletedCatalogueIds,
-    onboarding_completed:   extra.onboardingCompleted,
-    updated_at:             new Date().toISOString(),
   }, { onConflict: 'id' })
 }
 
@@ -346,4 +343,111 @@ export async function updateActiveChallenge(id: string, patch: { isActive?: bool
   if (patch.isActive   !== undefined) dbPatch.is_active    = patch.isActive
   if (patch.currentDay !== undefined) dbPatch.current_day  = patch.currentDay
   await supabase.from('active_challenges').update(dbPatch).eq('id', id)
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Sync incrémentale — charge uniquement ce qui a changé depuis lastSyncedAt
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function loadDomainsSince(userId: string, since: string): Promise<Domain[]> {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('domains')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since)
+    .order('created_at')
+  return (data || []).map((row) => ({
+    id:        row.id,
+    userId:    row.user_id,
+    name:      row.name,
+    icon:      row.icon,
+    color:     row.color,
+    createdAt: row.created_at,
+  }))
+}
+
+export async function loadGoalsSince(userId: string, since: string): Promise<Goal[]> {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since)
+    .order('created_at')
+  return (data || []).map((row) => ({
+    id:          row.id,
+    domainId:    row.domain_id,
+    challengeId: row.challenge_id || undefined,
+    title:       row.title,
+    description: row.description || undefined,
+    unit:        row.unit || undefined,
+    createdAt:   row.created_at,
+  }))
+}
+
+export async function loadTasksSince(userId: string, since: string): Promise<Task[]> {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since)
+    .order('scheduled_at')
+  return (data || []).map((row) => ({
+    id:                row.id,
+    title:             row.title,
+    domainId:          row.domain_id           || undefined,
+    goalId:            row.goal_id             || undefined,
+    challengeActiveId: row.challenge_active_id || undefined,
+    duration:          row.duration            || undefined,
+    scheduledAt:       row.scheduled_at,
+    done:              row.done,
+    doneAt:            row.done_at             || undefined,
+    xpValue:           row.xp_value,
+    priority:          row.priority            || undefined,
+    frequency:         row.frequency           || undefined,
+    customDays:        row.custom_days         || undefined,
+    isGenerated:       row.is_generated,
+    createdAt:         row.created_at,
+  }))
+}
+
+export async function loadCustomChallengesSince(userId: string, since: string): Promise<Challenge[]> {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('custom_challenges')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since)
+    .order('created_at')
+  return (data || []).map((row) => ({
+    id:           row.id,
+    title:        row.title,
+    description:  row.description,
+    durationDays: row.duration_days,
+    deadline:     row.deadline || undefined,
+    color:        row.color,
+    icon:         row.icon,
+    blueprints:   row.blueprints || [],
+  }))
+}
+
+export async function loadActiveChallengesSince(userId: string, since: string): Promise<ActiveChallenge[]> {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('active_challenges')
+    .select('*')
+    .eq('user_id', userId)
+    .gt('updated_at', since)
+    .order('created_at')
+  return (data || []).map((row) => ({
+    id:          row.id,
+    challengeId: row.challenge_id,
+    startDate:   row.start_date,
+    endDate:     row.end_date,
+    isActive:    row.is_active,
+    currentDay:  row.current_day,
+    createdAt:   row.created_at,
+  }))
 }

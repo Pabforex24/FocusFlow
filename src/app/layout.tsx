@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Outfit } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/Toast'
+import { StoreHydrator } from '@/components/StoreHydrator'
 import './globals.css'
 
 const outfit = Outfit({
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={outfit.variable}>
       <body className="bg-bg text-content font-body antialiased">
+        <StoreHydrator />
         <ToastProvider>
           {children}
         </ToastProvider>

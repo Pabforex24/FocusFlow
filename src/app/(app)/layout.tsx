@@ -3,6 +3,7 @@
 import { Sidebar } from '@/components/layout/Sidebar'
 import { FocusMode } from '@/components/focus/FocusMode'
 import { useStore } from '@/store'
+import { useNotifications } from '@/hooks/useNotifications'
 
 /**
  * Layout global des pages protégées.
@@ -10,6 +11,7 @@ import { useStore } from '@/store'
  * L'état d'ouverture est dans le store Zustand, accessible partout.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  useNotifications() // Enregistre le SW et surveille streak + rappels
   const focusModalOpen  = useStore((s) => s.focusModalOpen)
   const openFocusModal  = useStore((s) => s.openFocusModal)
   const closeFocusModal = useStore((s) => s.closeFocusModal)

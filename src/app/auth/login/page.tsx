@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Zap, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { signInWithEmail } from '@/lib/db'
@@ -10,7 +10,9 @@ import { inputCls } from '@/components/ui/Modal'
 import { cn } from '@/lib/utils'
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const nextPath     = searchParams.get('next') || '/dashboard'
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [showPwd,  setShowPwd]  = useState(false)
@@ -24,7 +26,7 @@ export default function LoginPage() {
     try {
       const { error: authError } = await signInWithEmail(email, password)
       if (authError) { setError(authError.message); return }
-      router.push('/dashboard')
+      router.push(nextPath)
     } catch (err: any) {
       setError(err.message || 'Erreur de connexion')
     } finally {

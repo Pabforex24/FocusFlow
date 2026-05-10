@@ -152,6 +152,7 @@ export interface AppStore {
   badges: Badge[]
   focusSession:    FocusSession | null
   focusModalOpen:  boolean
+  lastSyncedAt:    string | null
   activeChallenges: ActiveChallenge[]
   customChallenges: Challenge[]
   deletedCatalogueIds: string[]
@@ -181,8 +182,9 @@ export interface AppStore {
   tickFocus: () => void
   pauseFocus:      () => void
   resumeFocus:     () => void
-  openFocusModal:  () => void
-  closeFocusModal: () => void
+  openFocusModal:   () => void
+  closeFocusModal:  () => void
+  setLastSyncedAt:  (ts: string) => void
   completeFocus: () => void
   abandonFocus: () => void
 
@@ -198,6 +200,14 @@ export interface AppStore {
   deleteCatalogueChallenge: (id: string) => void
 
   setSupabaseUser: (userId: string | null) => void
+  mergeFromSupabase: (data: {
+    profile:          any
+    domains:          Domain[]
+    goals:            Goal[]
+    tasks:            Task[]
+    customChallenges: Challenge[]
+    activeChallenges: ActiveChallenge[]
+  }) => void
   hydrateFromSupabase: (data: {
     profile: any
     domains: Domain[]

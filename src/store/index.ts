@@ -149,6 +149,7 @@ export const useStore = create<AppStore>()(
       badges:           ALL_BADGES.map((b) => ({ ...b })),
       focusSession:     null,
       focusModalOpen:   false,
+      lastSyncedAt:     null,
       activeChallenges: [],
       customChallenges:    [],
       deletedCatalogueIds: [],
@@ -279,6 +280,7 @@ export const useStore = create<AppStore>()(
       pauseFocus:   () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'paused'  } } : s),
       resumeFocus:  () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'running' } } : s),
       openFocusModal:  () => set({ focusModalOpen: true }),
+      setLastSyncedAt: (ts) => set({ lastSyncedAt: ts }),
       closeFocusModal: () => set({ focusModalOpen: false }),
       completeFocus: () => {
         const { focusSession, awardXP, toggleTask, checkAndAwardBadges } = get()
@@ -412,6 +414,52 @@ export const useStore = create<AppStore>()(
         set(patch as any)
       },
 
+
+      // ── mergeFromSupabase — delta sync (écrase par id, conserve le reste) ──
+      mergeFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
+        const s = get()
+        const patch: Partial<AppStore> = {}
+
+        // Merge par id : les entrées delta écrasent, les autres sont conservées
+        if (domains.length) {
+          const map = new Map(s.domains.map((d) => [d.id, d]))
+          domains.forEach((d) => map.set(d.id, d))
+          patch.domains = Array.from(map.values())
+        }
+        if (goals.length) {
+          const map = new Map(s.goals.map((g) => [g.id, g]))
+          goals.forEach((g) => map.set(g.id, g))
+          patch.goals = Array.from(map.values())
+        }
+        if (tasks.length) {
+          const map = new Map(s.tasks.map((t) => [t.id, t]))
+          tasks.forEach((t) => map.set(t.id, t))
+          patch.tasks = Array.from(map.values())
+        }
+        if (customChallenges.length) {
+          const map = new Map(s.customChallenges.map((c) => [c.id, c]))
+          customChallenges.forEach((c) => map.set(c.id, c))
+          patch.customChallenges = Array.from(map.values())
+        }
+        if (activeChallenges.length) {
+          const map = new Map(s.activeChallenges.map((c) => [c.id, c]))
+          activeChallenges.forEach((c) => map.set(c.id, c))
+          patch.activeChallenges = Array.from(map.values())
+        }
+        if (profile) {
+          const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
+          patch.userStats = {
+            xp: profile.xp ?? 0, level, xpToNextLevel,
+            totalTasksDone:      profile.total_tasks_done  ?? 0,
+            challengesCompleted: profile.challenges_done   ?? 0,
+            longestStreak:       profile.longest_streak    ?? 0,
+            hardcoreMode:        profile.hardcore_mode     ?? false,
+          }
+          patch.streak     = profile.streak     ?? 0
+          patch.lastActive = profile.last_active ?? null
+        }
+        set(patch as any)
+      },
       // ── Selectors ────────────────────────────────────────────────────────────
       updateStreak: () => {
         const { tasks, streak, lastActive, userStats } = get()
@@ -454,6 +502,6 @@ export const useStore = create<AppStore>()(
       completeOnboarding: () => set({ onboarding: { completed: true, step: 'done' } }),
       setOnboardingStep: (step) => set((s) => ({ onboarding: { ...s.onboarding, step } })),
     }),
-    { name: 'focusflow-store-v10' }
+    { name: 'focusflow-store-v10', skipHydration: true }
   )
 )

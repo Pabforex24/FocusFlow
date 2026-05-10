@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Globe, Target, CheckSquare,
-  Sparkles, Flame, Zap, Trophy,
+  Sparkles, Flame, Zap, Trophy, Timer
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStore } from '@/store'
@@ -18,11 +18,11 @@ const NAV_ITEMS = [
   { href: '/coach',      label: 'IA Coach',   icon: Sparkles        },
 ]
 
-const MOBILE_NAV = [NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]]
+const MOBILE_NAV = [NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]] // dashboard, tâches, challenges, objectifs, coach
 
-export function Sidebar() {
+export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const pathname = usePathname()
-  const { streak, tasks, userStats } = useStore()
+  const { streak, tasks, userStats, focusSession } = useStore()
 
   const today = new Date().toDateString()
   const pendingToday = tasks.filter(
@@ -31,7 +31,17 @@ export function Sidebar() {
 
   const xpMax     = userStats.level * 100 + 50
   const xpCurrent = xpMax - userStats.xpToNextLevel
-  const xpPct     = Math.min(100, Math.round((xpCurrent / xpMax) * 100))
+  const xpPct      = Math.min(100, Math.round((xpCurrent / xpMax) * 100))
+
+  const isFocusRunning = focusSession?.status === 'running'
+  const isFocusPaused  = focusSession?.status === 'paused'
+  const isFocusActive  = isFocusRunning || isFocusPaused
+  const focusElapsed   = focusSession?.elapsedSeconds ?? 0
+  const focusTotal     = (focusSession?.durationMinutes ?? 25) * 60
+  const focusRemaining = Math.max(0, focusTotal - focusElapsed)
+  const focusMM = String(Math.floor(focusRemaining / 60)).padStart(2, '0')
+  const focusSS = String(focusRemaining % 60).padStart(2, '0')
+
 
   return (
     <>
@@ -132,6 +142,36 @@ export function Sidebar() {
               <div className="text-[9px] mt-0.5" style={{ color: '#3D4F6E' }}>jours de suite</div>
             </div>
           </div>
+        </div>
+
+        {/* Focus button */}
+        <div className="p-3 pt-0">
+          <button
+            onClick={onOpenFocus}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={isFocusActive ? {
+              background: isFocusRunning ? 'rgba(0,229,176,0.12)' : 'rgba(123,94,167,0.12)',
+              border: isFocusRunning ? '1px solid rgba(0,229,176,0.28)' : '1px solid rgba(123,94,167,0.28)',
+              color: isFocusRunning ? '#00E5B0' : '#7B5EA7',
+              boxShadow: isFocusRunning ? '0 0 14px rgba(0,229,176,0.18)' : '0 0 14px rgba(123,94,167,0.18)',
+            } : {
+              background: 'rgba(123,94,167,0.07)',
+              border: '1px solid rgba(123,94,167,0.16)',
+              color: '#7B5EA7',
+            }}
+          >
+            <Timer size={14} strokeWidth={1.75} className="flex-shrink-0" />
+            {isFocusActive ? (
+              <span className="font-mono font-extrabold tracking-wider">
+                {focusMM}:{focusSS}
+              </span>
+            ) : (
+              <span>Mode Focus</span>
+            )}
+            {isFocusPaused && (
+              <span className="ml-auto text-[9px] opacity-60">En pause</span>
+            )}
+          </button>
         </div>
       </aside>
 
