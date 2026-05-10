@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useRef, useEffect } from 'react'
 import { Sparkles, Send, RefreshCw, MessageSquare } from 'lucide-react'
 import { useStore } from '@/store'

@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, Target, Trophy, Link2, ChevronDown, ChevronRight, Pencil, Trash2, CheckSquare } from 'lucide-react'
