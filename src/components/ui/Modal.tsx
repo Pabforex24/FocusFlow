@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from './Button'
@@ -14,15 +14,12 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     if (open) document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  // Bloquer le scroll du body quand le modal est ouvert
   useEffect(() => {
     if (open) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = ''
@@ -34,38 +31,34 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm animate-fade-in" />
+      <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/*
-        Wrapper fixed plein écran — centre le modal verticalement et gère le
-        scroll quand le contenu est plus grand que la viewport.
-        ⚠️ overflow-y-auto ICI (pas sur <main> du layout) — ce conteneur est
-        fixed donc il crée son propre contexte de formatage sans casser
-        les autres éléments fixed.
+        Wrapper de positionnement — fixed, centré, pointer-events-none
+        pour que le clic sur le backdrop (au-dessus) soit géré par le div backdrop.
+        PAS de overflow ici — le scroll est uniquement dans .modal-body.
       */}
-      <div
-        ref={overlayRef}
-        className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8"
-        onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
-      >
-        {/*
-          Modal box :
-          - my-auto : centrage vertical quand le contenu est court
-          - flex flex-col : permet au body de scroller indépendamment
-          - max-h : empêche le modal de dépasser 90vh — le body scrolle en interne
-        */}
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-14 sm:pt-16 px-4 sm:px-6 pb-6 pointer-events-none">
         <div
           className={cn(
-            'relative w-full bg-bg-2 border border-border-2 rounded-2xl shadow-card animate-scale-in',
-            'flex flex-col my-auto',
-            'max-h-[90vh]',
+            'relative w-full pointer-events-auto',
+            'bg-bg-2 border border-border-2 rounded-2xl shadow-card animate-scale-in',
+            /*
+              flex flex-col + max-h-[90vh] :
+              le modal ne dépasse jamais 90% de l'écran.
+
+              SANS min-h-0 sur le body enfant, flex-1 ne se contracte pas
+              et overflow-y-auto est ignoré → modal déborde.
+              min-h-0 est la clé qui rend le scroll interne opérationnel.
+            */
+            'flex flex-col max-h-[90vh]',
             'max-w-md',
             className
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header — sticky en haut */}
-          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border rounded-t-2xl flex-shrink-0">
+          {/* Header — ne scroll jamais, flex-shrink-0 */}
+          <div className="flex-shrink-0 flex items-center justify-between px-5 sm:px-6 py-4 border-b border-border rounded-t-2xl">
             <h2 className="font-heading font-bold text-base sm:text-lg">{title}</h2>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X size={16} />
@@ -73,11 +66,14 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
           </div>
 
           {/*
-            Body scrollable — c'est lui qui scroll, pas le document.
-            overflow-y-auto ici est safe car c'est un enfant du modal fixed,
-            pas le conteneur principal de la page.
+            Body scrollable.
+            flex-1   → prend tout l'espace restant après le header
+            min-h-0  → INDISPENSABLE : sans ça, un enfant flex ne peut pas
+                       se contracter en dessous de sa taille naturelle,
+                       donc overflow-y-auto n'a aucun effet
+            overflow-y-auto → scroll uniquement quand ça dépasse
           */}
-          <div className="overflow-y-auto flex-1 px-5 sm:px-6 py-5">
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-6 py-5">
             {children}
           </div>
         </div>
