@@ -16,10 +16,15 @@ html {
 /* Scroll fluide sur iOS */
 body {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: none;
+  overscroll-behavior-y: none;
 }
 
-/* Safe areas pour iPhone avec encoche/dynamic island */
+/* Safe area top — encoche / Dynamic Island iOS */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Safe area bottom */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -29,10 +34,16 @@ body {
   padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
 }
 
+/* Page content — éviter que la status bar ne cache le titre */
+.page-safe-top {
+  padding-top: max(1.25rem, env(safe-area-inset-top));
+}
+
 /* Désactiver la sélection de texte sur les éléments interactifs */
 button, a, [role="button"] {
   -webkit-user-select: none;
   user-select: none;
+  cursor: pointer;
 }
 
 /* Input et textarea gardent la sélection */
@@ -41,11 +52,10 @@ input, textarea {
   user-select: text;
 }
 
-/* Éviter le bounce scroll iOS sur le body */
+/* Overflow horizontal */
 html, body {
-  position: relative;
-  height: 100%;
   overflow-x: hidden;
+  max-width: 100vw;
 }
 
 
