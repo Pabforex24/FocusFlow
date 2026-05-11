@@ -139,11 +139,11 @@ function buildAllTasks(
 export const useStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      domains:          seedDomains,
-      goals:            seedGoals,
-      tasks:            seedTasks,
-      streak:           3,
-      lastActive:       new Date(Date.now() - 86400000).toDateString(),
+      domains:          [],
+      goals:            [],
+      tasks:            [],
+      streak:           0,
+      lastActive:       null,
       onboarding:       { completed: false, step: 'domains' },
       userStats:        initialUserStats,
       badges:           ALL_BADGES.map((b) => ({ ...b })),

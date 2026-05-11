@@ -36,7 +36,7 @@ body {
 
 /* Page content — éviter que la status bar ne cache le titre */
 .page-safe-top {
-  padding-top: max(1.25rem, env(safe-area-inset-top));
+  padding-top: max(3.5rem, calc(env(safe-area-inset-top) + 1rem));
 }
 
 /* Désactiver la sélection de texte sur les éléments interactifs */

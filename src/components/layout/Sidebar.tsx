@@ -192,7 +192,7 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl transition-all duration-150 relative"
+              className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all duration-150 relative"
               style={{ color: active ? '#00E5B0' : '#3D4F6E' }}
             >
               {active && (
@@ -201,8 +201,8 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
                   style={{ background: 'rgba(0,229,176,0.07)', border: '1px solid rgba(0,229,176,0.12)' }}
                 />
               )}
-              <item.icon size={18} strokeWidth={active ? 2 : 1.75} className="relative" />
-              <span className="text-[9px] font-semibold tracking-wide relative">{item.label}</span>
+              <item.icon size={20} strokeWidth={active ? 2 : 1.75} className="relative" />
+              <span className="text-[10px] font-semibold tracking-wide relative truncate max-w-full px-1">{item.label}</span>
               {item.href === '/tasks' && pendingToday > 0 && (
                 <span
                   className="absolute top-1 right-[18%] w-4 h-4 text-bg text-[9px] font-bold rounded-full flex items-center justify-center"
