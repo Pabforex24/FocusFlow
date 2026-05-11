@@ -34,9 +34,9 @@ body {
   padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
 }
 
-/* Page content — éviter que la status bar ne cache le titre */
+/* Safe area top appliqué via le layout (app)/layout.tsx */
 .page-safe-top {
-  padding-top: max(3.5rem, calc(env(safe-area-inset-top) + 1rem));
+  padding-top: env(safe-area-inset-top);
 }
 
 /* Désactiver la sélection de texte sur les éléments interactifs */

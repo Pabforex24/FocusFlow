@@ -22,7 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <Sidebar onOpenFocus={openFocusModal} />
 
-      <main className="flex-1 min-w-0 pb-20 md:pb-0">
+      <main className="flex-1 min-w-0 pb-20 md:pb-0" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         {children}
       </main>
 
