@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Outfit } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/Toast'
 import { StoreHydrator } from '@/components/StoreHydrator'
+import { PWAHandler } from '@/components/PWAHandler'
 import './globals.css'
 
 const outfit = Outfit({
@@ -14,6 +15,15 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: 'FocusFlow — Discipline Personnelle',
   description: 'Transformez vos objectifs long terme en actions quotidiennes concrètes.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'FocusFlow',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 /**
@@ -29,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={outfit.variable}>
       <body className="bg-bg text-content font-body antialiased">
         <StoreHydrator />
+        <PWAHandler />
         <ToastProvider>
           {children}
         </ToastProvider>
