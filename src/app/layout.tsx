@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/Toast'
 import { StoreHydrator } from '@/components/StoreHydrator'
@@ -11,6 +11,15 @@ const outfit = Outfit({
   variable: '--font-outfit',
   display: 'swap',
 })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#050812',
+}
 
 export const metadata: Metadata = {
   title: 'FocusFlow — Discipline Personnelle',

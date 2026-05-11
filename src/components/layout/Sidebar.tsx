@@ -177,7 +177,7 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
 
       {/* ── Mobile bottom nav ───────────────────────────────────────── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center px-1 py-1"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center px-1 pt-1 mobile-nav"
         style={{
           background: 'rgba(5,8,18,0.92)',
           backdropFilter: 'blur(20px)',

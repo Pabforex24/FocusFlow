@@ -2,6 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════════
+   PWA MOBILE — Touch, scroll, safe areas
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Désactiver le zoom au double-tap et le tap highlight */
+html {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Scroll fluide sur iOS */
+body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+/* Safe areas pour iPhone avec encoche/dynamic island */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Bottom nav respecte la safe area iOS */
+.mobile-nav {
+  padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
+}
+
+/* Désactiver la sélection de texte sur les éléments interactifs */
+button, a, [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Input et textarea gardent la sélection */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Éviter le bounce scroll iOS sur le body */
+html, body {
+  position: relative;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════════
