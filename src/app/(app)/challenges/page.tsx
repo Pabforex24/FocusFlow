@@ -57,7 +57,7 @@ export default function ChallengesPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto page-enter pb-24 md:pb-8">
+    <div className="px-4 pt-4 md:p-8 max-w-4xl mx-auto page-enter pb-24 md:pb-8 mt-[calc(env(safe-area-inset-top)+52px)] md:mt-0">
 
       {/* Header + Créer */}
       <div className="flex items-start justify-between gap-3 mb-6 flex-wrap">

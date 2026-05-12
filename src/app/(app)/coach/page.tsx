@@ -165,7 +165,7 @@ Réponds en français, de manière concise, motivante et pratique. Maximum 3 phr
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto page-enter">
+    <div className="px-4 pt-4 md:p-8 max-w-3xl mx-auto mt-[calc(env(safe-area-inset-top)+52px)] md:mt-0 page-enter">
       <PageHeader title="IA Coach" subtitle="Analyse · Suggestions · Motivation" />
 
       {/* Hero */}

@@ -45,7 +45,7 @@ export default function DashboardPage() {
   if (!onboarding.completed) return <Onboarding />
 
   return (
-    <div className="p-5 md:p-8 max-w-3xl mx-auto page-enter pb-24 md:pb-8 space-y-6">
+    <div className="p-5 md:p-8 max-w-3xl mx-auto page-enter pb-24 md:pb-8 space-y-5 pt-[calc(env(safe-area-inset-top)+60px)] md:pt-8">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3">
@@ -77,73 +77,31 @@ export default function DashboardPage() {
       {/* ── XP Bar ─────────────────────────────────────────────────── */}
       <XPBar compact />
 
-      {/* ── 4 KPI cards ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* KPI Cards — compact style TradeForge */}
+      <div className="grid grid-cols-2 gap-2.5">
         {[
-          {
-            label: "Aujourd'hui",
-            value: `${doneTasks.length}/${todayTasks.length}`,
-            sub: 'tâches',
-            icon: <CheckCircle2 size={15} strokeWidth={1.75} />,
-            color: '#00E5B0',
-            href: '/tasks',
-          },
-          {
-            label: 'Streak',
-            value: streak,
-            sub: 'jours consécutifs',
-            icon: <Flame size={15} strokeWidth={1.75} />,
-            color: '#C8865A',
-            href: null,
-          },
-          {
-            label: 'Niveau',
-            value: userStats.level,
-            sub: `${userStats.xp} XP`,
-            icon: <Zap size={15} strokeWidth={1.75} />,
-            color: '#7B5EA7',
-            href: null,
-          },
-          {
-            label: 'Global',
-            value: `${globalPct}%`,
-            sub: 'progression',
-            icon: <TrendingUp size={15} strokeWidth={1.75} />,
-            color: '#3DD8FA',
-            href: '/goals',
-          },
+          { label: "Aujourd'hui", value: `${doneTasks.length}/${todayTasks.length}`, sub: todayPct === 100 ? '✓ Tout fait' : `${100-todayPct}% restant`, icon: <CheckCircle2 size={13} />, color: '#00E5B0', href: '/tasks' },
+          { label: 'Streak',      value: `${streak}j`,   sub: `record ${userStats.longestStreak}j`, icon: <Flame size={13} />,       color: '#C8865A', href: null },
+          { label: 'Niveau',      value: `Nv.${userStats.level}`, sub: `${userStats.xp} XP`,       icon: <Zap size={13} />,          color: '#7B5EA7', href: null },
+          { label: 'Progression', value: `${globalPct}%`, sub: 'tous domaines',                    icon: <TrendingUp size={13} />,   color: '#3DD8FA', href: '/goals' },
         ].map((card) => {
           const inner = (
-            <div
-              className="rounded-2xl p-4 h-full transition-all"
-              style={{
-                background: `linear-gradient(145deg, rgba(14,18,36,0.90) 0%, rgba(9,13,26,0.95) 100%)`,
-                border: `1px solid ${hexToRgba(card.color, 0.18)}`,
-                boxShadow: `0 4px 24px rgba(0,0,0,0.45), inset 0 0 24px ${hexToRgba(card.color, 0.03)}`,
-              }}
-            >
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center mb-3"
-                style={{ background: hexToRgba(card.color, 0.14), color: card.color, boxShadow: `0 0 10px ${hexToRgba(card.color, 0.20)}` }}
-              >
+            <div className="rounded-xl p-3 h-full flex items-center gap-3"
+              style={{ background: `linear-gradient(145deg,rgba(14,18,36,0.95),rgba(9,13,26,0.98))`, border: `1px solid ${hexToRgba(card.color, 0.18)}` }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: hexToRgba(card.color, 0.14), color: card.color }}>
                 {card.icon}
               </div>
-              <div className="font-heading font-extrabold text-xl leading-none mb-1" style={{ color: card.color }}>
-                {card.value}
+              <div className="min-w-0">
+                <div className="font-heading font-extrabold text-lg leading-none" style={{ color: card.color }}>{card.value}</div>
+                <div className="text-[9px] font-bold uppercase tracking-wider mt-0.5 truncate" style={{ color: '#3D4F6E' }}>{card.label}</div>
+                <div className="text-[9px] truncate" style={{ color: '#1E2A40' }}>{card.sub}</div>
               </div>
-              <div className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: '#3D4F6E' }}>
-                {card.label}
-              </div>
-              <div className="text-[10px] mt-0.5" style={{ color: '#1E2A40' }}>{card.sub}</div>
             </div>
           )
-          return card.href ? (
-            <Link key={card.label} href={card.href} className="block group hover:scale-[1.02] transition-transform">
-              {inner}
-            </Link>
-          ) : (
-            <div key={card.label}>{inner}</div>
-          )
+          return card.href
+            ? <Link key={card.label} href={card.href} className="block hover:scale-[1.01] transition-transform">{inner}</Link>
+            : <div key={card.label}>{inner}</div>
         })}
       </div>
 

@@ -58,7 +58,7 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="p-5 md:p-8 max-w-2xl mx-auto page-enter pb-24 md:pb-8">
+    <div className="px-4 pt-4 md:p-8 max-w-2xl mx-auto page-enter pb-24 md:pb-8 mt-[calc(env(safe-area-inset-top)+52px)] md:mt-0">
       <PageHeader
         title="Tâches"
         action={

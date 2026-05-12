@@ -297,7 +297,7 @@ function GoalsContent() {
   const totalGoals = goals.filter((g) => !domainFilter || g.domainId === domainFilter).length
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-3xl mx-auto page-enter pb-24 md:pb-8">
+    <div className="px-4 pt-4 md:p-8 max-w-3xl mx-auto mt-[calc(env(safe-area-inset-top)+52px)] md:mt-0 page-enter pb-24 md:pb-8">
       <PageHeader
         title="Objectifs"
         subtitle="Cibles globales — progression calculée depuis vos tâches"

@@ -48,7 +48,7 @@ export default function DomainsPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto page-enter">
+    <div className="px-4 pt-4 md:p-8 max-w-4xl mx-auto mt-[calc(env(safe-area-inset-top)+52px)] md:mt-0 page-enter">
       <PageHeader
         title="Domaines"
         subtitle="Organisez votre vie en grandes catégories"
