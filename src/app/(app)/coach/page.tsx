@@ -225,6 +225,9 @@ Réponds en français, de manière concise, motivante et pratique. Maximum 3 phr
         </div>
       </div>
 
+      {/* Notifications */}
+      <NotificationSettings />
+
       {/* Chat section */}
       <div id="chat-section" className="bg-bg-2 border border-border rounded-2xl p-5">
         <h2 className="font-heading font-bold text-base mb-4 flex items-center gap-2">
