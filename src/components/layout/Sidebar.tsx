@@ -9,6 +9,7 @@ import {
   Bell, User, LogOut, ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { NotificationPanel } from '@/components/NotificationPanel'
 import { useStore } from '@/store'
 import * as db from '@/lib/db'
 

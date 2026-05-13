@@ -9,7 +9,6 @@ import { getRandomQuote, getWeekActivity, hexToRgba } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { InsightCard } from '@/components/coach/InsightCard'
-import { NotificationSettings } from '@/components/NotificationSettings'
 import { WeekChart } from '@/components/coach/WeekChart'
 import { inputCls } from '@/components/ui/Modal'
 
@@ -224,9 +223,6 @@ Réponds en français, de manière concise, motivante et pratique. Maximum 3 phr
           </div>
         </div>
       </div>
-
-      {/* Notifications */}
-      <NotificationSettings />
 
       {/* Chat section */}
       <div id="chat-section" className="bg-bg-2 border border-border rounded-2xl p-5">
