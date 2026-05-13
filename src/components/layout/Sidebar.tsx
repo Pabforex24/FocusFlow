@@ -19,7 +19,6 @@ const NAV_ITEMS = [
   { href: '/goals',      label: 'Objectifs',  icon: Target          },
   { href: '/tasks',      label: 'Tâches',     icon: CheckSquare     },
   { href: '/challenges', label: 'Challenges', icon: Trophy          },
-  { href: '/coach',      label: 'IA Coach',   icon: Sparkles        },
 ]
 
 // Mobile : Dashboard, Tâches, Domaines, Challenges, Objectifs
@@ -108,12 +107,7 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
             </button>
           )}
 
-          {/* Notification bell */}
-          <Link href="/coach"
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <Bell size={15} strokeWidth={1.75} style={{ color: '#7A8BAD' }} />
-          </Link>
+          <NotificationPanel />
 
           {/* Account dropdown */}
           <div ref={menuRef} className="relative">
@@ -133,12 +127,6 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
                   <div className="text-xs font-semibold text-content">Mon compte</div>
                   <div className="text-[10px] mt-0.5" style={{ color: '#3D4F6E' }}>Nv.{userStats.level} · {userStats.xp} XP</div>
                 </div>
-                <Link href="/coach" onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium hover:bg-white/5 transition-all"
-                  style={{ color: '#E8EDF7' }}>
-                  <Bell size={13} style={{ color: '#7A8BAD' }} /> Notifications
-                </Link>
-                <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
                 <button onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium hover:bg-white/5 transition-all"
                   style={{ color: '#FF5E7A' }}>
@@ -172,20 +160,14 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
         {/* Nav links */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
           <p className="text-[9px] font-bold tracking-[0.18em] uppercase text-content-4 px-3 mb-2 mt-1">Principal</p>
-          {NAV_ITEMS.slice(0, 5).map((item) => (
+          {NAV_ITEMS.map((item) => (
             <NavLink key={item.href} href={item.href} active={pathname.startsWith(item.href)}
               icon={<item.icon size={15} strokeWidth={1.75} />}
               badge={item.href === '/tasks' && pendingToday > 0 ? pendingToday : undefined}>
               {item.label}
             </NavLink>
           ))}
-          <p className="text-[9px] font-bold tracking-[0.18em] uppercase text-content-4 px-3 mb-2 mt-5">Intelligence</p>
-          {NAV_ITEMS.slice(5).map((item) => (
-            <NavLink key={item.href} href={item.href} active={pathname.startsWith(item.href)}
-              icon={<item.icon size={15} strokeWidth={1.75} />}>
-              {item.label}
-            </NavLink>
-          ))}
+
         </nav>
 
         {/* Footer */}
@@ -225,12 +207,6 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
             {menuOpen && (
               <div className="absolute bottom-11 left-0 right-0 rounded-2xl overflow-hidden z-50 animate-scale-in"
                 style={{ background: 'rgba(14,18,36,0.98)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 -8px 32px rgba(0,0,0,0.60)' }}>
-                <Link href="/coach" onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium hover:bg-white/5 transition-all"
-                  style={{ color: '#E8EDF7' }}>
-                  <Bell size={13} style={{ color: '#7A8BAD' }} /> Notifications
-                </Link>
-                <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
                 <button onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium hover:bg-white/5 transition-all"
                   style={{ color: '#FF5E7A' }}>
@@ -239,6 +215,16 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Coach IA floating button */}
+        <div className="px-3 pb-1">
+          <Link href="/coach"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{ background: 'rgba(61,216,250,0.07)', border: '1px solid rgba(61,216,250,0.15)', color: '#3DD8FA' }}>
+            <Sparkles size={14} strokeWidth={1.75} className="flex-shrink-0" />
+            <span>IA Coach</span>
+          </Link>
         </div>
 
         {/* Focus button */}
@@ -258,6 +244,22 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
           </button>
         </div>
       </aside>
+
+      {/* ══ MOBILE COACH FLOATING BUTTON ════════════════════════════════ */}
+      <Link href="/coach"
+        className="md:hidden fixed z-40 flex items-center justify-center rounded-2xl shadow-lg transition-all"
+        style={{
+          right: '16px',
+          bottom: 'calc(env(safe-area-inset-bottom) + 72px)',
+          width: '48px',
+          height: '48px',
+          background: 'linear-gradient(135deg, rgba(61,216,250,0.20), rgba(123,94,167,0.20))',
+          border: '1px solid rgba(61,216,250,0.30)',
+          boxShadow: '0 4px 20px rgba(61,216,250,0.20)',
+          backdropFilter: 'blur(12px)',
+        }}>
+        <Sparkles size={20} strokeWidth={1.75} style={{ color: '#3DD8FA' }} />
+      </Link>
 
       {/* ══ MOBILE BOTTOM NAV ══════════════════════════════════════════ */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center px-1 pt-1 mobile-nav"
