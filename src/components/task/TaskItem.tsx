@@ -1,6 +1,6 @@
 'use client'
 
-import { Trash2, Timer, Pencil } from 'lucide-react'
+import { Trash2, Timer, Pencil, CornerDownRight } from 'lucide-react'
 import { Task, Domain } from '@/types'
 import { hexToRgba, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -16,6 +16,7 @@ interface TaskItemProps {
   onToggle: () => void
   onDelete: () => void
   onEdit?: () => void
+  onPostpone?: () => void
   showFocusBtn?: boolean
 }
 
@@ -25,7 +26,7 @@ const PRIORITY_COLOR: Record<string, string> = {
   low:    '#2e3d5e',
 }
 
-export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, showFocusBtn = false }: TaskItemProps) {
+export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, onPostpone, showFocusBtn = false }: TaskItemProps) {
   const [showFocus, setShowFocus] = useState(false)
   const c = domain?.color || '#00E5B0'
 
@@ -142,6 +143,14 @@ export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, 
             </button>
           )}
 
+          {onPostpone && !task.done && (
+            <Button variant="ghost" size="icon"
+              className="opacity-0 group-hover:opacity-100 w-7 h-7"
+              title="Reporter à demain"
+              onClick={onPostpone}>
+              <CornerDownRight size={13} style={{ color: '#3DD8FA' }} />
+            </Button>
+          )}
           <Button variant="danger" size="icon" className="opacity-0 group-hover:opacity-100 w-7 h-7" onClick={onDelete}>
             <Trash2 size={12} strokeWidth={1.75} />
           </Button>

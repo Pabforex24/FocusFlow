@@ -15,8 +15,9 @@ import { TaskModal } from '@/components/task/TaskModal'
 import { useToast } from '@/components/ui/Toast'
 
 export default function TasksPage() {
-  const { domains, goals, tasks, addTask, updateTask, toggleTask, deleteTask, getTasksForDate } = useStore()
+  const { domains, goals, tasks, addTask, updateTask, toggleTask, deleteTask, getTasksForDate, postponeTask, declareRestDay, restDays, restDayUsedThisWeek } = useStore()
   const { toast } = useToast()
+  const isRestDay = restDays.includes(new Date().toDateString())
 
   const [currentDate,  setCurrentDate]  = useState(new Date())
   const [modalOpen,    setModalOpen]    = useState(false)
@@ -172,6 +173,10 @@ export default function TasksPage() {
                       onToggle={() => {
                         toggleTask(task.id)
                         if (!task.done) toast('Tâche complétée ! ✓', 'success')
+                      }}
+                      onPostpone={() => {
+                        postponeTask(task.id)
+                        toast('Tâche reportée à demain 📅', 'info')
                       }}
                       onDelete={() => {
                         deleteTask(task.id)

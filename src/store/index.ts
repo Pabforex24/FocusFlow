@@ -149,7 +149,9 @@ export const useStore = create<AppStore>()(
       badges:           ALL_BADGES.map((b) => ({ ...b })),
       focusSession:     null,
       focusModalOpen:   false,
-      lastSyncedAt:     null,
+      lastSyncedAt:        null,
+      restDays:            [],
+      restDayUsedThisWeek: false,
       activeChallenges: [],
       customChallenges:    [],
       deletedCatalogueIds: [],
@@ -251,9 +253,46 @@ export const useStore = create<AppStore>()(
           }))
         }
       },
+      postponeTask: (taskId) => {
+        const task = get().tasks.find((t) => t.id === taskId)
+        if (!task) return
+        const tomorrow = new Date(Date.now() + 86400000)
+        const original  = new Date(task.scheduledAt)
+        tomorrow.setHours(original.getHours(), original.getMinutes(), 0, 0)
+        set((s) => ({
+          tasks: s.tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, scheduledAt: tomorrow.toISOString(), postponed: true }
+              : t
+          ),
+        }))
+      },
+
+      declareRestDay: () => {
+        const { restDays, restDayUsedThisWeek } = get()
+        const today = new Date().toDateString()
+
+        // Already declared today
+        if (restDays.includes(today)) {
+          return { success: false, message: 'Imprévu déjà déclaré pour aujourd'hui.' }
+        }
+        // Max 1 per week
+        if (restDayUsedThisWeek) {
+          return { success: false, message: 'Tu as déjà utilisé ton imprévu cette semaine. Maximum 1 par semaine.' }
+        }
+
+        set((s) => ({
+          restDays: [...s.restDays, today],
+          restDayUsedThisWeek: true,
+        }))
+        return { success: true, message: 'Imprévu déclaré. Ton streak est protégé pour aujourd'hui.' }
+      },
+
       applyDailyPenalty: () => {
-        const { userStats, streak, tasks } = get()
+        const { userStats, streak, tasks, restDays } = get()
         const yesterday = new Date(Date.now() - 86400000).toDateString()
+        // No penalty if yesterday was a declared rest day
+        if (restDays.includes(yesterday)) return
         const had = tasks.some((t) => t.done && new Date(t.doneAt || '').toDateString() === yesterday)
         if (!had && streak > 0) {
           const pen = userStats.hardcoreMode ? 30 : 15
@@ -461,6 +500,14 @@ export const useStore = create<AppStore>()(
         set(patch as any)
       },
       // ── Selectors ────────────────────────────────────────────────────────────
+      resetRestDayWeekly: () => {
+        // Called on app load — reset restDayUsedThisWeek every Monday
+        const today = new Date()
+        if (today.getDay() === 1) { // Monday
+          set({ restDayUsedThisWeek: false })
+        }
+      },
+
       updateStreak: () => {
         const { tasks, streak, lastActive, userStats } = get()
         const todayStr     = new Date().toDateString()

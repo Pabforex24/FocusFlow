@@ -75,6 +75,7 @@ export interface Task {
   frequency?: FrequencyType
   customDays?: number[]
   isGenerated?: boolean
+  postponed?: boolean
   createdAt: string
 }
 
@@ -153,6 +154,8 @@ export interface AppStore {
   focusSession:    FocusSession | null
   focusModalOpen:  boolean
   lastSyncedAt:    string | null
+  restDays:        string[]  // dates ISO où l'utilisateur a déclaré un imprévu
+  restDayUsedThisWeek: boolean
   activeChallenges: ActiveChallenge[]
   customChallenges: Challenge[]
   deletedCatalogueIds: string[]
@@ -184,7 +187,9 @@ export interface AppStore {
   resumeFocus:     () => void
   openFocusModal:   () => void
   closeFocusModal:  () => void
-  setLastSyncedAt:  (ts: string) => void
+  setLastSyncedAt:   (ts: string) => void
+  postponeTask:      (taskId: string) => void
+  declareRestDay:    () => { success: boolean; message: string }
   completeFocus: () => void
   abandonFocus: () => void
 
