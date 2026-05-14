@@ -21,8 +21,8 @@ const NAV_ITEMS = [
   { href: '/challenges', label: 'Challenges', icon: Trophy          },
 ]
 
-const MOBILE_LEFT  = [NAV_ITEMS[0], NAV_ITEMS[3]]  // Dashboard, Taches
-const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[1]]  // Challenges, Domaines
+const MOBILE_LEFT  = [NAV_ITEMS[0], NAV_ITEMS[3]]           // Dashboard, Taches
+const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[1], NAV_ITEMS[2]] // Challenges, Domaines, Objectifs
 
 export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const pathname = usePathname()
