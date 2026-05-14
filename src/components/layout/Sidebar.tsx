@@ -21,8 +21,8 @@ const NAV_ITEMS = [
   { href: '/challenges', label: 'Challenges', icon: Trophy          },
 ]
 
-const MOBILE_LEFT  = [NAV_ITEMS[0], NAV_ITEMS[3]]
-const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[2]]
+const MOBILE_LEFT  = [NAV_ITEMS[0], NAV_ITEMS[3]]  // Dashboard, Taches
+const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[1]]  // Challenges, Domaines
 
 export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const pathname = usePathname()
@@ -379,14 +379,14 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
 
         {/* + Button */}
         <button onClick={() => setQuickOpen(!quickOpen)}
-          className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center -mt-5 transition-all active:scale-95"
+          className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center -mt-4 transition-all active:scale-95"
           style={{
             background: quickOpen ? 'linear-gradient(135deg,#FF5E7A,#C8865A)' : 'linear-gradient(135deg,#00E5B0,#3DD8FA)',
             boxShadow: quickOpen ? '0 4px 20px rgba(255,94,122,0.40)' : '0 4px 20px rgba(0,229,176,0.40)',
           }}>
           {quickOpen
-            ? <X size={22} strokeWidth={2.5} style={{ color: '#fff' }} />
-            : <Plus size={22} strokeWidth={2.5} style={{ color: '#050812' }} />}
+            ? <X size={19} strokeWidth={2.5} style={{ color: '#fff' }} />
+            : <Plus size={19} strokeWidth={2.5} style={{ color: '#050812' }} />}
         </button>
 
         {MOBILE_RIGHT.map((item) => {
