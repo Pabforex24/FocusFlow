@@ -274,7 +274,7 @@ export const useStore = create<AppStore>()(
 
         // Already declared today
         if (restDays.includes(today)) {
-          return { success: false, message: 'Imprévu déjà déclaré pour aujourd'hui.' }
+          return { success: false, message: "Imprévu déjà déclaré pour aujourd'hui." }
         }
         // Max 1 per week
         if (restDayUsedThisWeek) {
@@ -285,7 +285,7 @@ export const useStore = create<AppStore>()(
           restDays: [...s.restDays, today],
           restDayUsedThisWeek: true,
         }))
-        return { success: true, message: 'Imprévu déclaré. Ton streak est protégé pour aujourd'hui.' }
+        return { success: true, message: "Imprévu déclaré. Ton streak est protégé pour aujourd'hui." }
       },
 
       applyDailyPenalty: () => {
