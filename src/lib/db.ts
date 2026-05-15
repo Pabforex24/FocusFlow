@@ -300,6 +300,40 @@ export async function upsertCustomChallenge(userId: string, challenge: Challenge
   }, { onConflict: 'id' })
 }
 
+
+export async function insertCustomChallenge(userId: string, challenge: Challenge) {
+  if (!supabase) return
+  await supabase.from('custom_challenges').insert({
+    id:            challenge.id,
+    user_id:       userId,
+    title:         challenge.title,
+    description:   challenge.description,
+    duration_days: challenge.durationDays,
+    deadline:      challenge.deadline || null,
+    color:         challenge.color,
+    icon:          challenge.icon,
+    blueprints:    challenge.blueprints,
+  })
+}
+
+export async function updateCustomChallenge(challenge: Partial<Challenge> & { id: string }) {
+  if (!supabase) return
+  await supabase.from('custom_challenges').update({
+    title:         challenge.title,
+    description:   challenge.description,
+    duration_days: challenge.durationDays,
+    deadline:      challenge.deadline || null,
+    color:         challenge.color,
+    icon:          challenge.icon,
+    blueprints:    challenge.blueprints,
+  }).eq('id', challenge.id)
+}
+
+export async function deleteGoalsByDomain(domainId: string) {
+  if (!supabase) return
+  await supabase.from('goals').delete().eq('domain_id', domainId)
+}
+
 export async function deleteCustomChallenge(id: string) {
   if (!supabase) return
   await supabase.from('custom_challenges').delete().eq('id', id)

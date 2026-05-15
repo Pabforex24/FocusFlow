@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import * as db from '@/lib/db'
 import { persist } from 'zustand/middleware'
 import {
   AppStore, Domain, Goal, Task, Challenge, ActiveChallenge,
@@ -158,30 +159,46 @@ export const useStore = create<AppStore>()(
       catalogueOverrides:  {},
 
       // ── Domain ───────────────────────────────────────────────────────────────
-      addDomain: (data) =>
-        set((s) => ({ domains: [...s.domains, { ...data, id: uid(), createdAt: new Date().toISOString() }] })),
-      updateDomain: (id, data) =>
-        set((s) => ({ domains: s.domains.map((d) => (d.id === id ? { ...d, ...data } : d)) })),
-      deleteDomain: (id) =>
-        set((s) => {
-          const gIds = s.goals.filter((g) => g.domainId === id).map((g) => g.id)
-          return {
-            domains: s.domains.filter((d) => d.id !== id),
-            goals:   s.goals.filter((g) => g.domainId !== id),
-            tasks:   s.tasks.filter((t) => t.domainId !== id && !gIds.includes(t.goalId || '')),
-          }
-        }),
+      addDomain: (data) => {
+        const newDomain = { ...data, id: uid(), createdAt: new Date().toISOString() }
+        set((s) => ({ domains: [...s.domains, newDomain] }))
+        const userId = get().supabaseUserId
+        if (userId) db.insertDomain(userId, newDomain).catch(console.error)
+      },
+      updateDomain: (id, data) => {
+        set((s) => ({ domains: s.domains.map((d) => (d.id === id ? { ...d, ...data } : d)) }))
+        const updated = get().domains.find((d) => d.id === id)
+        if (updated && get().supabaseUserId) db.updateDomain(updated).catch(console.error)
+      },
+      deleteDomain: (id) => {
+        const gIds = get().goals.filter((g) => g.domainId === id).map((g) => g.id)
+        set((s) => ({
+          domains: s.domains.filter((d) => d.id !== id),
+          goals:   s.goals.filter((g) => g.domainId !== id),
+          tasks:   s.tasks.filter((t) => t.domainId !== id && !gIds.includes(t.goalId || '')),
+        }))
+        if (get().supabaseUserId) db.deleteDomain(id).catch(console.error)
+      },
 
       // ── Goal ─────────────────────────────────────────────────────────────────
-      addGoal: (data) =>
-        set((s) => ({ goals: [...s.goals, { ...data, id: uid(), createdAt: new Date().toISOString() }] })),
-      updateGoal: (id, data) =>
-        set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...data } : g)) })),
-      deleteGoal: (id) =>
+      addGoal: (data) => {
+        const newGoal = { ...data, id: uid(), createdAt: new Date().toISOString() }
+        set((s) => ({ goals: [...s.goals, newGoal] }))
+        const userId = get().supabaseUserId
+        if (userId) db.insertGoal(userId, newGoal).catch(console.error)
+      },
+      updateGoal: (id, data) => {
+        set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...data } : g)) }))
+        const updated = get().goals.find((g) => g.id === id)
+        if (updated && get().supabaseUserId) db.updateGoal(updated).catch(console.error)
+      },
+      deleteGoal: (id) => {
         set((s) => ({
           goals: s.goals.filter((g) => g.id !== id),
           tasks: s.tasks.filter((t) => t.goalId !== id),
-        })),
+        }))
+        if (get().supabaseUserId) db.deleteGoal(id).catch(console.error)
+      },
 
       // ── Task ─────────────────────────────────────────────────────────────────
       addTask: (data) =>
@@ -415,9 +432,15 @@ export const useStore = create<AppStore>()(
           }],
         })),
       updateCustomChallenge: (id, data) =>
-        set((s) => ({ customChallenges: s.customChallenges.map((c) => c.id === id ? { ...c, ...data } : c) })),
+        (() => {
+        set((s) => ({ customChallenges: s.customChallenges.map((c) => c.id === id ? { ...c, ...data } : c) }))
+        if (get().supabaseUserId) db.updateCustomChallenge({ id, ...data }).catch(console.error)
+      })(),
       deleteCustomChallenge: (id) =>
-        set((s) => ({ customChallenges: s.customChallenges.filter((c) => c.id !== id) })),
+        (() => {
+        set((s) => ({ customChallenges: s.customChallenges.filter((c) => c.id !== id) }))
+        if (get().supabaseUserId) db.deleteCustomChallenge(id).catch(console.error)
+      })(),
 
       updateCatalogueChallenge: (id, data) =>
         set((s) => ({
