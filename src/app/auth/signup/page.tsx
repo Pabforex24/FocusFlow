@@ -25,10 +25,16 @@ export default function SignupPage() {
     if (password.length < 6) { setError('Le mot de passe doit faire au moins 6 caractères.'); return }
     setLoading(true); setError(null)
     try {
-      const { error: authError } = await signUpWithEmail(email, password, name)
+      const { data, error: authError } = await signUpWithEmail(email, password, name)
       if (authError) { setError(authError.message); return }
       setDone(true)
-      setTimeout(() => router.push('/dashboard'), 2500)
+      // Si Supabase confirme la session directement (pas d'email de confirmation),
+      // on attend un court instant pour que onAuthStateChange déclenche la sync
+      // avant de rediriger. Si email de confirmation requis, on reste sur la page.
+      if (data?.session) {
+        setTimeout(() => router.push('/dashboard'), 1500)
+      }
+      // Sinon l'utilisateur doit confirmer son email — le message "Vérifiez votre email" s'affiche
     } catch (err: any) {
       setError(err.message || "Erreur lors de l'inscription")
     } finally {
