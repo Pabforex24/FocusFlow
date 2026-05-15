@@ -305,19 +305,35 @@ export const useStore = create<AppStore>()(
         set((s) => ({ userStats: { ...s.userStats, hardcoreMode: !s.userStats.hardcoreMode } })),
 
       // ── Focus ─────────────────────────────────────────────────────────────────
-      startFocus: (taskId, durationMinutes = 25) =>
-        set({ focusSession: { id: uid(), taskId, durationMinutes, elapsedSeconds: 0, status: 'running', startedAt: new Date().toISOString(), xpEarned: 0 } }),
+      startFocus: (taskId, durationMinutes = 25) => {
+        const now = Date.now()
+        set({ focusSession: {
+          id: uid(), taskId, durationMinutes,
+          elapsedSeconds: 0, elapsedBeforePause: 0,
+          runningStartedAt: now,
+          status: 'running', startedAt: new Date(now).toISOString(), xpEarned: 0,
+        }})
+      },
       tickFocus: () =>
         set((s) => {
           if (!s.focusSession || s.focusSession.status !== 'running') return s
-          const elapsed = s.focusSession.elapsedSeconds + 1
+          const now     = Date.now()
+          const elapsed = Math.floor(s.focusSession.elapsedBeforePause + (now - s.focusSession.runningStartedAt) / 1000)
           const target  = s.focusSession.durationMinutes * 60
           if (elapsed >= target)
             return { focusSession: { ...s.focusSession, elapsedSeconds: target, status: 'done', completedAt: new Date().toISOString(), xpEarned: 30 } }
           return { focusSession: { ...s.focusSession, elapsedSeconds: elapsed } }
         }),
-      pauseFocus:   () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'paused'  } } : s),
-      resumeFocus:  () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'running' } } : s),
+      pauseFocus: () => set((s) => {
+        if (!s.focusSession) return s
+        const now = Date.now()
+        const elapsed = Math.floor(s.focusSession.elapsedBeforePause + (now - s.focusSession.runningStartedAt) / 1000)
+        return { focusSession: { ...s.focusSession, status: 'paused', elapsedSeconds: elapsed, elapsedBeforePause: elapsed } }
+      }),
+      resumeFocus: () => set((s) => {
+        if (!s.focusSession) return s
+        return { focusSession: { ...s.focusSession, status: 'running', runningStartedAt: Date.now() } }
+      }),
       openFocusModal:  () => set({ focusModalOpen: true }),
       setLastSyncedAt: (ts) => set({ lastSyncedAt: ts }),
       closeFocusModal: () => set({ focusModalOpen: false }),

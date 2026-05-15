@@ -115,7 +115,9 @@ export interface FocusSession {
   id: string
   taskId?: string
   durationMinutes: number
-  elapsedSeconds: number
+  elapsedSeconds: number      // total secondes écoulées (calculé dynamiquement)
+  elapsedBeforePause: number  // secondes accumulées avant la dernière pause
+  runningStartedAt: number    // Date.now() au moment du dernier start/resume
   status: FocusStatus
   startedAt?: string
   completedAt?: string

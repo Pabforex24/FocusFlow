@@ -31,13 +31,27 @@ export function FocusMode({ onClose, initialTask }: FocusModeProps) {
   )
 
   // Tick every second when running
+  // On utilise Date.now() dans le store pour survivre à la mise en veille
   useEffect(() => {
     if (focusSession?.status === 'running') {
+      // Tick immédiat pour rattraper le temps écoulé en veille
+      tickFocus()
       intervalRef.current = setInterval(() => tickFocus(), 1000)
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [focusSession?.status])
+
+  // Rattrapage au retour de veille (visibilitychange)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && focusSession?.status === 'running') {
+        tickFocus() // recalcule immédiatement avec Date.now()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [focusSession?.status])
 
   const session = focusSession
