@@ -59,7 +59,8 @@ export function useSupabaseSync() {
         if (event === 'SIGNED_OUT') {
           setSupabaseUser(null)
           // Reset lastSyncedAt → le prochain login fera un full sync
-          setLastSyncedAt(null)
+          // On utilise '' comme sentinel car le type n'accepte pas null
+          setLastSyncedAt('')
           // Purger le store persisté
           if (typeof window !== 'undefined') {
             localStorage.removeItem('focusflow-store-v10')
