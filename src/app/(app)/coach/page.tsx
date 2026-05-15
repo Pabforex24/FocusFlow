@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Sparkles, Send, RefreshCw, MessageSquare } from 'lucide-react'
 import { useStore } from '@/store'
 import { getRandomQuote, getWeekActivity, hexToRgba } from '@/lib/utils'
@@ -24,7 +24,8 @@ export default function CoachPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatEndRef   = useRef<HTMLDivElement>(null)
+  const textareaRef  = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -112,6 +113,16 @@ export default function CoachPage() {
     )
     setInsightsLoading(false)
   }
+
+  // Auto-resize textarea
+  const resizeTextarea = useCallback(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+  }, [])
+
+  useEffect(() => { resizeTextarea() }, [chatInput])
 
   const sendChat = async () => {
     const msg = chatInput.trim()
@@ -267,13 +278,21 @@ Réponds en français, de manière concise, motivante et pratique. Maximum 3 phr
 
         {/* Input */}
         <div className="flex gap-2">
-          <input
-            className={inputCls + ' flex-1'}
+          <textarea
+            ref={textareaRef}
+            className={inputCls + ' flex-1 resize-none overflow-hidden leading-relaxed'}
             value={chatInput}
+            rows={1}
             onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && sendChat()}
-            placeholder="Posez une question à votre coach…"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                sendChat()
+              }
+            }}
+            placeholder="Écrivez votre message… (Shift+Entrée pour sauter une ligne)"
             disabled={chatLoading}
+            style={{ minHeight: '40px', maxHeight: '160px' }}
           />
           <Button variant="primary" onClick={sendChat} disabled={!chatInput.trim() || chatLoading}>
             <Send size={15} />
