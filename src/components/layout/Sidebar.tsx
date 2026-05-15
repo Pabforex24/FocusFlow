@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Globe, Target, CheckSquare,
   Flame, Zap, Trophy, Timer,
-  User, LogOut, ChevronLeft, ChevronRight, Plus, X, Sparkles,
+  User, LogOut, ChevronLeft, ChevronRight, Plus, X, Sparkles, BarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStore } from '@/store'
@@ -19,10 +19,11 @@ const NAV_ITEMS = [
   { href: '/goals',      label: 'Objectifs',  icon: Target          },
   { href: '/tasks',      label: 'Taches',     icon: CheckSquare     },
   { href: '/challenges', label: 'Challenges', icon: Trophy          },
+  { href: '/mensuel',    label: 'Mensuel',    icon: BarChart2       },
 ]
 
-const MOBILE_LEFT  = [NAV_ITEMS[0], NAV_ITEMS[3]]           // Dashboard, Taches
-const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[1], NAV_ITEMS[2]] // Challenges, Domaines, Objectifs
+const MOBILE_LEFT  = [NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[1]] // Dashboard, Taches, Domaines
+const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]]  // Challenges, Objectifs, Mensuel
 
 export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const pathname = usePathname()
