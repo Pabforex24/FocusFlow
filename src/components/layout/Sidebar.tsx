@@ -60,6 +60,10 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
     setMenuOpen(false)
     await db.signOut()
     setSupabaseUser(null)
+    // Purge le store persisté pour éviter la ré-hydratation au prochain login
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('focusflow-store-v10')
+    }
     router.push('/auth/login')
   }
 

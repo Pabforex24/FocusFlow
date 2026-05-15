@@ -19,10 +19,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const closeFocusModal = useStore((s) => s.closeFocusModal)
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar onOpenFocus={openFocusModal} />
 
-      <main className="flex-1 min-w-0 pb-20 md:pb-0">
+      <main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-0">
         {children}
       </main>
 
