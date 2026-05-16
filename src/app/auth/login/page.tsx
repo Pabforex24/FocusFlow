@@ -25,9 +25,25 @@ function LoginForm() {
     if (!email || !password) return
     setLoading(true); setError(null)
     try {
-      const { error: authError } = await signInWithEmail(email, password)
-      if (authError) { setError(authError.message); return }
-      router.push(nextPath)
+      const { data, error: authError } = await signInWithEmail(email, password)
+      if (authError) {
+        // Traduire les erreurs Supabase en français
+        const msg = authError.message.includes('Invalid login credentials')
+          ? 'Email ou mot de passe incorrect.'
+          : authError.message.includes('Email not confirmed')
+          ? 'Email non confirmé. Vérifie ta boîte mail.'
+          : authError.message.includes('Too many requests')
+          ? 'Trop de tentatives. Réessaie dans quelques minutes.'
+          : authError.message
+        setError(msg)
+        return
+      }
+      // Session établie — attendre un tick pour que onAuthStateChange se déclenche
+      if (data?.session) {
+        setTimeout(() => router.push(nextPath), 100)
+      } else {
+        router.push(nextPath)
+      }
     } catch (err: any) {
       setError(err.message || 'Erreur de connexion')
     } finally {
