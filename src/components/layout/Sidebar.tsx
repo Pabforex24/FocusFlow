@@ -28,7 +28,7 @@ const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]]  // Challenges, 
 export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const pathname = usePathname()
   const router   = useRouter()
-  const { streak, tasks, userStats, focusSession, setSupabaseUser } = useStore()
+  const { streak, tasks, userStats, focusSession, setSupabaseUser, userEmail } = useStore()
 
   const [collapsed, setCollapsed] = useState(false)
   const [menuOpen,  setMenuOpen]  = useState(false)
@@ -60,10 +60,6 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
     setMenuOpen(false)
     await db.signOut()
     setSupabaseUser(null)
-    // Purge le store persisté pour éviter la ré-hydratation au prochain login
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('focusflow-store-v10')
-    }
     router.push('/auth/login')
   }
 
@@ -144,8 +140,27 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
               <div className="absolute right-0 top-10 w-44 rounded-2xl overflow-hidden z-50"
                 style={{ background: 'rgba(14,18,36,0.98)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 16px 48px rgba(0,0,0,0.65)' }}>
                 <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                  <p className="text-xs font-bold text-content">Mon compte</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: '#3D4F6E' }}>Nv.{userStats.level} · {userStats.xp} XP</p>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg,#00E5B0,#3DD8FA)' }}>
+                      <User size={12} style={{ color: '#050812' }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-content truncate">
+                        {userEmail ? userEmail.split('@')[0] : 'Mode offline'}
+                      </p>
+                      {userEmail && (
+                        <p className="text-[10px] truncate" style={{ color: '#3D4F6E' }}>{userEmail}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'rgba(0,229,176,0.12)', color: '#00E5B0', border: '1px solid rgba(0,229,176,0.20)' }}>
+                      Nv.{userStats.level}
+                    </span>
+                    <span className="text-[9px]" style={{ color: '#3D4F6E' }}>{userStats.xp} XP · {streak}j 🔥</span>
+                  </div>
                 </div>
                 <button onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"
@@ -296,8 +311,27 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
               <div className={cn('absolute rounded-2xl overflow-hidden z-50', collapsed ? 'left-16 bottom-0' : 'bottom-10 left-0 right-0')}
                 style={{ width: collapsed ? '180px' : undefined, background: 'rgba(14,18,36,0.98)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 -8px 32px rgba(0,0,0,0.65)' }}>
                 <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                  <p className="text-xs font-bold text-content">Mon compte</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: '#3D4F6E' }}>Nv.{userStats.level} · {userStats.xp} XP</p>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg,#00E5B0,#3DD8FA)' }}>
+                      <User size={12} style={{ color: '#050812' }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-content truncate">
+                        {userEmail ? userEmail.split('@')[0] : 'Mode offline'}
+                      </p>
+                      {userEmail && (
+                        <p className="text-[10px] truncate" style={{ color: '#3D4F6E' }}>{userEmail}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'rgba(0,229,176,0.12)', color: '#00E5B0', border: '1px solid rgba(0,229,176,0.20)' }}>
+                      Nv.{userStats.level}
+                    </span>
+                    <span className="text-[9px]" style={{ color: '#3D4F6E' }}>{userStats.xp} XP · {streak}j 🔥</span>
+                  </div>
                 </div>
                 <button onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"

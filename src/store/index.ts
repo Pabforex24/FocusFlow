@@ -431,14 +431,16 @@ export const useStore = create<AppStore>()(
             blueprints: data.blueprints.map((bp) => ({ ...bp, id: bp.id || uid() })),
           }],
         })),
-      updateCustomChallenge: (id, data) => {
+      updateCustomChallenge: (id, data) =>
+        (() => {
         set((s) => ({ customChallenges: s.customChallenges.map((c) => c.id === id ? { ...c, ...data } : c) }))
         if (get().supabaseUserId) db.updateCustomChallenge({ id, ...data }).catch(console.error)
-      },
-      deleteCustomChallenge: (id) => {
+      })(),
+      deleteCustomChallenge: (id) =>
+        (() => {
         set((s) => ({ customChallenges: s.customChallenges.filter((c) => c.id !== id) }))
         if (get().supabaseUserId) db.deleteCustomChallenge(id).catch(console.error)
-      },
+      })(),
 
       updateCatalogueChallenge: (id, data) =>
         set((s) => ({
@@ -466,15 +468,16 @@ export const useStore = create<AppStore>()(
 
       // ── Supabase ──────────────────────────────────────────────────────────────
       supabaseUserId: null,
+      userEmail: null,
       setSupabaseUser: (userId) => set({ supabaseUserId: userId }),
+      setUserEmail:    (email) => set({ userEmail: email }),
       hydrateFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
         const patch: Partial<AppStore> = {}
-        // Always apply arrays from full sync — empty array means "user deleted everything", not "no data"
-        patch.domains          = domains
-        patch.goals            = goals
-        patch.tasks            = tasks
-        patch.customChallenges = customChallenges
-        patch.activeChallenges = activeChallenges
+        if (domains.length)          patch.domains          = domains
+        if (goals.length)            patch.goals            = goals
+        if (tasks.length)            patch.tasks            = tasks
+        if (customChallenges.length) patch.customChallenges = customChallenges
+        if (activeChallenges.length) patch.activeChallenges = activeChallenges
         if (profile) {
           const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
           patch.userStats = {
@@ -493,9 +496,6 @@ export const useStore = create<AppStore>()(
 
 
       // ── mergeFromSupabase — delta sync (écrase par id, conserve le reste) ──
-      // Note: le delta sync ne peut pas détecter les suppressions distantes.
-      // Les suppressions sont propagées uniquement via hydrateFromSupabase (full sync au login).
-      // Pour forcer un full sync après des suppressions desktop, appeler hydrateFromSupabase.
       mergeFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
         const s = get()
         const patch: Partial<AppStore> = {}
