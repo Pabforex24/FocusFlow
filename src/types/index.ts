@@ -163,6 +163,7 @@ export interface AppStore {
   deletedCatalogueIds: string[]
   catalogueOverrides: Record<string, Partial<Omit<Challenge, 'id'>>>
   supabaseUserId: string | null
+  userEmail:      string | null
 
   addDomain: (domain: Omit<Domain, 'id' | 'createdAt'>) => void
   updateDomain: (id: string, data: Partial<Domain>) => void
@@ -207,6 +208,7 @@ export interface AppStore {
   deleteCatalogueChallenge: (id: string) => void
 
   setSupabaseUser: (userId: string | null) => void
+  setUserEmail:    (email: string | null) => void
   mergeFromSupabase: (data: {
     profile:          any
     domains:          Domain[]
