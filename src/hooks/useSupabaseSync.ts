@@ -17,6 +17,7 @@ import * as db from '@/lib/db'
  */
 export function useSupabaseSync() {
   const setSupabaseUser    = useStore((s) => s.setSupabaseUser)
+  const setUserEmail       = useStore((s: any) => s.setUserEmail as (email: string | null) => void)
   const hydrateFromSupabase = useStore((s) => s.hydrateFromSupabase)
   const [loading, setLoading] = useState(false)
   const initialized = useRef(false)
