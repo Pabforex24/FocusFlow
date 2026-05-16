@@ -28,7 +28,8 @@ const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]]  // Challenges, 
 export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const pathname = usePathname()
   const router   = useRouter()
-  const { streak, tasks, userStats, focusSession, setSupabaseUser, userEmail } = useStore()
+  const { streak, tasks, userStats, focusSession, setSupabaseUser } = useStore()
+  const userEmail = useStore((s: any) => s.userEmail as string | null)
 
   const [collapsed, setCollapsed] = useState(false)
   const [menuOpen,  setMenuOpen]  = useState(false)
