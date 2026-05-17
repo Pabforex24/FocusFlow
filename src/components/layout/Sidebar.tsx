@@ -68,10 +68,9 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const handleSignOut = async () => {
     setMenuOpen(false)
     await db.signOut()
+    // La purge du localStorage est gérée par SIGNED_OUT dans useSupabaseSync
+    // pour garantir que le cookie Supabase est posé avant la suppression du store
     setSupabaseUser(null)
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('focusflow-store-v10')
-    }
     router.push('/auth/login')
   }
 

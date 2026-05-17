@@ -35,11 +35,12 @@ export function useSupabaseSync() {
     const bootSync = async () => {
       const { data: { session } } = await supabase!.auth.getSession()
       if (session?.user) {
-        bootDoneRef.current = true  // signale à SIGNED_IN qu'il ne doit pas re-syncer
+        // Mettre userEmail immédiatement pour éviter le flash "Mode offline"
         setUserEmail(session.user.email ?? null)
+        setSupabaseUser(session.user.id)
+        bootDoneRef.current = true
         setLoading(true)
         try {
-          // Boot = reconnexion existante → delta sync (pas d'upload offline)
           await syncUserData(session.user.id, false)
         } finally {
           setLoading(false)
@@ -71,9 +72,9 @@ export function useSupabaseSync() {
           setSupabaseUser(null)
           setUserEmail(null)
           bootDoneRef.current = false
-          // Reset → prochain login fera un full sync
           setLastSyncedAt('')
-          // Purger le store persisté pour éviter session fantôme
+          // Purger le store Zustand persisté APRÈS que Supabase a effacé son cookie
+          // (SIGNED_OUT est déclenché après signOut(), donc le cookie est déjà effacé)
           if (typeof window !== 'undefined') {
             localStorage.removeItem('focusflow-store-v10')
           }
