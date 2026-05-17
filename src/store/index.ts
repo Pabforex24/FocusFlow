@@ -201,25 +201,35 @@ export const useStore = create<AppStore>()(
       },
 
       // ── Task ─────────────────────────────────────────────────────────────────
-      addTask: (data) =>
-        set((s) => ({ tasks: [...s.tasks, { ...data, id: uid(), createdAt: new Date().toISOString() }] })),
-      bulkAddTasks: (list) =>
-        set((s) => ({
-          tasks: [...s.tasks, ...list.map((d) => ({ ...d, id: uid(), createdAt: new Date().toISOString() }))],
-        })),
+      addTask: (data) => {
+        const newTask = { ...data, id: uid(), createdAt: new Date().toISOString() }
+        set((s) => ({ tasks: [...s.tasks, newTask] }))
+        const userId = get().supabaseUserId
+        if (userId) db.insertTask(userId, newTask).catch(console.error)
+      },
+      bulkAddTasks: (list) => {
+        const newTasks = list.map((d) => ({ ...d, id: uid(), createdAt: new Date().toISOString() }))
+        set((s) => ({ tasks: [...s.tasks, ...newTasks] }))
+        const userId = get().supabaseUserId
+        if (userId) db.insertTasks(userId, newTasks).catch(console.error)
+      },
       toggleTask: (id) => {
         const { tasks, awardXP, checkAndAwardBadges, updateStreak } = get()
         const task = tasks.find((t) => t.id === id)
         if (!task) return
         const nowDone = !task.done
+        const doneAt = nowDone ? new Date().toISOString() : undefined
         set((s) => ({
           tasks: s.tasks.map((t) =>
-            t.id === id ? { ...t, done: nowDone, doneAt: nowDone ? new Date().toISOString() : undefined } : t
+            t.id === id ? { ...t, done: nowDone, doneAt } : t
           ),
           userStats: nowDone
             ? { ...s.userStats, totalTasksDone: s.userStats.totalTasksDone + 1 }
             : { ...s.userStats, totalTasksDone: Math.max(0, s.userStats.totalTasksDone - 1) },
         }))
+        // Sync Supabase
+        const userId = get().supabaseUserId
+        if (userId) db.updateTask({ id, done: nowDone, doneAt }).catch(console.error)
         if (nowDone) {
           awardXP(task.xpValue ?? 10)
           updateStreak()
@@ -230,10 +240,14 @@ export const useStore = create<AppStore>()(
           if (todayAll.length > 0 && todayAll.every((t) => t.done)) awardXP(50)
         }
       },
-      deleteTask: (id) =>
-        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
-      updateTask: (id, data) =>
-        set((s) => ({ tasks: s.tasks.map((t) => t.id === id ? { ...t, ...data } : t) })),
+      deleteTask: (id) => {
+        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
+        if (get().supabaseUserId) db.deleteTask(id).catch(console.error)
+      },
+      updateTask: (id, data) => {
+        set((s) => ({ tasks: s.tasks.map((t) => t.id === id ? { ...t, ...data } : t) }))
+        if (get().supabaseUserId) db.updateTask({ id, ...data }).catch(console.error)
+      },
 
       // ── Gamification ─────────────────────────────────────────────────────────
       awardXP: (amount) =>
@@ -276,13 +290,14 @@ export const useStore = create<AppStore>()(
         const tomorrow = new Date(Date.now() + 86400000)
         const original  = new Date(task.scheduledAt)
         tomorrow.setHours(original.getHours(), original.getMinutes(), 0, 0)
+        const scheduledAt = tomorrow.toISOString()
         set((s) => ({
           tasks: s.tasks.map((t) =>
-            t.id === taskId
-              ? { ...t, scheduledAt: tomorrow.toISOString(), postponed: true }
-              : t
+            t.id === taskId ? { ...t, scheduledAt, postponed: true } : t
           ),
         }))
+        const userId = get().supabaseUserId
+        if (userId) db.updateTask({ id: taskId, scheduledAt }).catch(console.error)
       },
 
       declareRestDay: () => {
@@ -382,8 +397,9 @@ export const useStore = create<AppStore>()(
           ? new Date(challenge.deadline)
           : new Date(Date.now() + challenge.durationDays * 86400000)
 
-        const acId    = uid()
-        const allTasks = buildAllTasks(challenge, acId, startDate, endDate, blueprintGoalMap as Record<string, string>)
+        const acId     = uid()
+        const rawTasks = buildAllTasks(challenge, acId, startDate, endDate, blueprintGoalMap as Record<string, string>)
+        const newTasks = rawTasks.map((t) => ({ ...t, id: uid(), createdAt: new Date().toISOString() }))
 
         const newAC: ActiveChallenge = {
           id: acId, challengeId,
@@ -394,20 +410,33 @@ export const useStore = create<AppStore>()(
         }
 
         set((s) => ({
-          tasks: [...s.tasks, ...allTasks.map((t) => ({ ...t, id: uid(), createdAt: new Date().toISOString() }))],
+          tasks: [...s.tasks, ...newTasks],
           activeChallenges: [...s.activeChallenges, newAC],
         }))
+
+        // ── Sync Supabase ────────────────────────────────────────────────────
+        const userId = get().supabaseUserId
+        if (userId) {
+          db.insertActiveChallenge(userId, newAC).catch(console.error)
+          db.insertTasks(userId, newTasks).catch(console.error)
+        }
       },
 
 
-      stopChallenge: (acId) =>
+      stopChallenge: (acId) => {
         set((s) => ({
           activeChallenges: s.activeChallenges.map((ac) => ac.id === acId ? { ...ac, isActive: false } : ac),
           tasks: s.tasks.filter((t) => {
             if (t.challengeActiveId !== acId) return true
             return t.done || new Date(t.scheduledAt) < new Date()
           }),
-        })),
+        }))
+        const userId = get().supabaseUserId
+        if (userId) {
+          db.updateActiveChallenge(acId, { isActive: false }).catch(console.error)
+          db.deleteTasksByChallenge(acId).catch(console.error)
+        }
+      },
 
       getChallengeProgress: (acId) => {
         const { tasks } = get()
@@ -423,24 +452,24 @@ export const useStore = create<AppStore>()(
         return { total: ct.length, done: ct.filter((t) => t.done).length }
       },
 
-      addCustomChallenge: (data) =>
-        set((s) => ({
-          customChallenges: [...(s.customChallenges || []), {
-            ...data,
-            id: 'custom-' + uid(),
-            blueprints: data.blueprints.map((bp) => ({ ...bp, id: bp.id || uid() })),
-          }],
-        })),
-      updateCustomChallenge: (id, data) =>
-        (() => {
+      addCustomChallenge: (data) => {
+        const newChallenge = {
+          ...data,
+          id: 'custom-' + uid(),
+          blueprints: data.blueprints.map((bp) => ({ ...bp, id: bp.id || uid() })),
+        }
+        set((s) => ({ customChallenges: [...(s.customChallenges || []), newChallenge] }))
+        const userId = get().supabaseUserId
+        if (userId) db.upsertCustomChallenge(userId, newChallenge).catch(console.error)
+      },
+      updateCustomChallenge: (id, data) => {
         set((s) => ({ customChallenges: s.customChallenges.map((c) => c.id === id ? { ...c, ...data } : c) }))
         if (get().supabaseUserId) db.updateCustomChallenge({ id, ...data }).catch(console.error)
-      })(),
-      deleteCustomChallenge: (id) =>
-        (() => {
+      },
+      deleteCustomChallenge: (id) => {
         set((s) => ({ customChallenges: s.customChallenges.filter((c) => c.id !== id) }))
         if (get().supabaseUserId) db.deleteCustomChallenge(id).catch(console.error)
-      })(),
+      },
 
       updateCatalogueChallenge: (id, data) =>
         set((s) => ({
@@ -473,11 +502,12 @@ export const useStore = create<AppStore>()(
       setUserEmail:    (email) => set({ userEmail: email }),
       hydrateFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
         const patch: Partial<AppStore> = {}
-        if (domains.length)          patch.domains          = domains
-        if (goals.length)            patch.goals            = goals
-        if (tasks.length)            patch.tasks            = tasks
-        if (customChallenges.length) patch.customChallenges = customChallenges
-        if (activeChallenges.length) patch.activeChallenges = activeChallenges
+        // Full sync → toujours appliquer, même tableau vide (= tout supprimé sur un autre appareil)
+        patch.domains          = domains
+        patch.goals            = goals
+        patch.tasks            = tasks
+        patch.customChallenges = customChallenges
+        patch.activeChallenges = activeChallenges
         if (profile) {
           const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
           patch.userStats = {
