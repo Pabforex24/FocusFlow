@@ -34,7 +34,8 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const [collapsed, setCollapsed] = useState(false)
   const [menuOpen,  setMenuOpen]  = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuRef       = useRef<HTMLDivElement>(null)
+  const menuRefMobile = useRef<HTMLDivElement>(null)
 
   const isFocusActive  = focusSession?.status === 'running' || focusSession?.status === 'paused'
   const isFocusRunning = focusSession?.status === 'running'
@@ -50,11 +51,18 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
   const xpPct  = Math.min(100, Math.round(((xpMax - userStats.xpToNextLevel) / xpMax) * 100))
 
   useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    const h = (e: MouseEvent | TouchEvent | PointerEvent) => {
+      const target = e.target as Node
+      const inMobile  = menuRefMobile.current?.contains(target)
+      const inDesktop = menuRef.current?.contains(target)
+      if (!inMobile && !inDesktop) setMenuOpen(false)
     }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
+    document.addEventListener('mousedown',  h as any)
+    document.addEventListener('touchstart', h as any, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown',  h as any)
+      document.removeEventListener('touchstart', h as any)
+    }
   }, [])
 
   const handleSignOut = async () => {
@@ -131,7 +139,7 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
             </button>
           )}
           <NotificationPanel />
-          <div ref={menuRef} className="relative">
+          <div ref={menuRefMobile} className="relative">
             <button onClick={() => setMenuOpen(!menuOpen)}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
               style={{
@@ -166,9 +174,11 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
                     <span className="text-[9px]" style={{ color: '#3D4F6E' }}>{userStats.xp} XP · {streak}j 🔥</span>
                   </div>
                 </div>
-                <button onClick={handleSignOut}
+                <button
+                  onClick={handleSignOut}
+                  onPointerUp={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"
-                  style={{ color: '#FF5E7A' }}>
+                  style={{ color: '#FF5E7A', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
                   <LogOut size={13} /> Deconnexion
                 </button>
               </div>
