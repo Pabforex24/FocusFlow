@@ -61,6 +61,9 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
     setMenuOpen(false)
     await db.signOut()
     setSupabaseUser(null)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('focusflow-store-v10')
+    }
     router.push('/auth/login')
   }
 
