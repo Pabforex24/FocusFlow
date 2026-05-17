@@ -25,7 +25,8 @@ export function useSupabaseSync() {
   const getLastSyncedAt = () => useStore.getState().lastSyncedAt
 
   const [loading, setLoading] = useState(false)
-  const syncingRef = useRef(false) // bloque les syncs concurrentes, pas les re-syncs légitimes
+  const syncingRef   = useRef(false) // bloque les syncs concurrentes
+  const bootDoneRef  = useRef(false) // évite que SIGNED_IN redouble le bootSync
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return
@@ -34,10 +35,11 @@ export function useSupabaseSync() {
     const bootSync = async () => {
       const { data: { session } } = await supabase!.auth.getSession()
       if (session?.user) {
+        bootDoneRef.current = true  // signale à SIGNED_IN qu'il ne doit pas re-syncer
         setUserEmail(session.user.email ?? null)
         setLoading(true)
         try {
-          // Boot = reconnexion → delta sync (pas d'upload offline)
+          // Boot = reconnexion existante → delta sync (pas d'upload offline)
           await syncUserData(session.user.id, false)
         } finally {
           setLoading(false)
@@ -50,10 +52,15 @@ export function useSupabaseSync() {
     const { data: { subscription } } = supabase!.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
+          // Si bootSync a déjà géré cette session, on skip pour éviter le double sync
+          if (bootDoneRef.current) {
+            bootDoneRef.current = false
+            return
+          }
           setUserEmail(session.user.email ?? null)
           setLoading(true)
           try {
-            // SIGNED_IN = vrai login → upload offline + full sync
+            // Vrai login utilisateur → upload offline + full sync
             await syncUserData(session.user.id, true)
           } finally {
             setLoading(false)
@@ -63,6 +70,7 @@ export function useSupabaseSync() {
         if (event === 'SIGNED_OUT') {
           setSupabaseUser(null)
           setUserEmail(null)
+          bootDoneRef.current = false
           // Reset → prochain login fera un full sync
           setLastSyncedAt('')
           // Purger le store persisté pour éviter session fantôme
@@ -82,7 +90,13 @@ export function useSupabaseSync() {
    * @param forceFullSync - true sur SIGNED_IN (vrai login), false au boot
    */
   async function syncUserData(userId: string, forceFullSync: boolean) {
-    if (syncingRef.current) return
+    // Attendre si une sync est en cours (max 3s pour éviter deadlock)
+    if (syncingRef.current) {
+      await new Promise<void>((resolve) => {
+        const t = setInterval(() => { if (!syncingRef.current) { clearInterval(t); resolve() } }, 100)
+        setTimeout(() => { clearInterval(t); resolve() }, 3000)
+      })
+    }
     syncingRef.current = true
 
     try {
