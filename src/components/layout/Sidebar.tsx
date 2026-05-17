@@ -174,6 +174,12 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
                   </div>
                 </div>
                 <button
+                  onClick={() => { setMenuOpen(false); router.push('/profile') }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"
+                  style={{ color: '#C8D6F0' }}>
+                  <User size={13} /> Mon profil
+                </button>
+                <button
                   onClick={handleSignOut}
                   onPointerUp={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"
@@ -346,6 +352,11 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
                     <span className="text-[9px]" style={{ color: '#3D4F6E' }}>{userStats.xp} XP · {streak}j 🔥</span>
                   </div>
                 </div>
+                <button onClick={() => { setMenuOpen(false); router.push('/profile') }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"
+                  style={{ color: '#C8D6F0' }}>
+                  <User size={13} /> Mon profil
+                </button>
                 <button onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"
                   style={{ color: '#FF5E7A' }}>
