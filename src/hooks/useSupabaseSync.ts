@@ -6,17 +6,8 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import * as db from '@/lib/db'
 import type { Domain, Goal, Task, Challenge, ActiveChallenge } from '@/types'
 
-const POLL_INTERVAL_MS = 30_000 // sync delta toutes les 30 secondes
+const POLL_INTERVAL_MS = 30_000
 
-/**
- * useSupabaseSync — Sync complète desktop ↔ mobile
- * ──────────────────────────────────────────────────
- * - Boot : vérifie session existante → delta sync (ou full si lastSyncedAt vide)
- * - SIGNED_IN (vrai login) : upload données offline + full sync
- * - SIGNED_OUT : reset lastSyncedAt + purge localStorage
- * - Polling : delta sync toutes les 30s pour récupérer les changements cross-device
- * - syncingRef : bloque les syncs concurrentes SANS bloquer les re-syncs PWA
- */
 export function useSupabaseSync() {
   const setSupabaseUser     = useStore((s) => s.setSupabaseUser)
   const setUserEmail        = useStore((s: any) => s.setUserEmail as (email: string | null) => void)
@@ -29,32 +20,49 @@ export function useSupabaseSync() {
   const [loading, setLoading] = useState(false)
   const syncingRef  = useRef(false)
   const bootDoneRef = useRef(false)
-  const userIdRef   = useRef<string | null>(null) // pour le polling
+  const userIdRef   = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return
+    console.log('🔵 useSupabaseSync monté')
+    console.log('📋 isSupabaseConfigured:', isSupabaseConfigured)
+    console.log('📋 supabase client:', supabase ? 'OK' : 'NULL')
 
-    // ── Boot : vérifier la session existante ───────────────────────────────
+    if (!isSupabaseConfigured || !supabase) {
+      console.log('❌ Supabase non configuré — sync désactivée')
+      return
+    }
+
     const bootSync = async () => {
-      const { data: { session } } = await supabase!.auth.getSession()
-      if (session?.user) {
-        setUserEmail(session.user.email ?? null)
-        setSupabaseUser(session.user.id)
-        userIdRef.current = session.user.id
-        bootDoneRef.current = true
-        setLoading(true)
-        try {
-          await syncUserData(session.user.id, false)
-        } finally {
-          setLoading(false)
+      console.log('🔍 bootSync lancé')
+      try {
+        const { data: { session }, error } = await supabase!.auth.getSession()
+        console.log('📦 getSession error:', error)
+        console.log('📦 session user id:', session?.user?.id ?? 'null')
+
+        if (session?.user) {
+          setUserEmail(session.user.email ?? null)
+          setSupabaseUser(session.user.id)
+          userIdRef.current = session.user.id
+          bootDoneRef.current = true
+          setLoading(true)
+          try {
+            await syncUserData(session.user.id, false)
+          } finally {
+            setLoading(false)
+          }
+        } else {
+          console.log('⚠️ Pas de session active au boot')
         }
+      } catch (err) {
+        console.error('💥 bootSync erreur:', err)
       }
     }
     bootSync()
 
-    // ── Écouter les changements d'état auth ────────────────────────────────
     const { data: { subscription } } = supabase!.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 onAuthStateChange event:', event, 'user:', session?.user?.id ?? 'null')
+
         if (event === 'SIGNED_IN' && session?.user) {
           if (bootDoneRef.current) {
             bootDoneRef.current = false
@@ -83,18 +91,17 @@ export function useSupabaseSync() {
       }
     )
 
-    // ── Polling delta sync toutes les 30s ──────────────────────────────────
     const pollInterval = setInterval(async () => {
       const userId = userIdRef.current
       if (!userId) return
-      // Sync silencieuse — pas de setLoading pour ne pas flasher l'UI
+      console.log('⏱️ Poll sync pour userId:', userId)
       await syncUserData(userId, false)
     }, POLL_INTERVAL_MS)
 
-    // ── Sync au retour en foreground (reprise depuis arrière-plan PWA) ─────
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
         const userId = userIdRef.current
+        console.log('👁️ Retour foreground — userId:', userId ?? 'null')
         if (userId) await syncUserData(userId, false)
       }
     }
@@ -107,12 +114,9 @@ export function useSupabaseSync() {
     }
   }, [])
 
-  /**
-   * syncUserData
-   * @param userId        - ID Supabase de l'utilisateur
-   * @param forceFullSync - true sur SIGNED_IN (vrai login), false au boot/polling
-   */
   async function syncUserData(userId: string, forceFullSync: boolean) {
+    console.log('🔄 syncUserData userId:', userId, 'forceFullSync:', forceFullSync)
+
     if (syncingRef.current) {
       await new Promise<void>((resolve) => {
         const t = setInterval(() => { if (!syncingRef.current) { clearInterval(t); resolve() } }, 100)
@@ -127,16 +131,18 @@ export function useSupabaseSync() {
       const lastSyncedAt = getLastSyncedAt()
       const isFirstSync  = !lastSyncedAt || forceFullSync
 
+      console.log('📅 lastSyncedAt:', lastSyncedAt, '— isFirstSync:', isFirstSync)
+
       if (isFirstSync) {
-        // ── Upload données offline ───────────────────────────────────────────
         const local = useStore.getState()
         const hasLocalData = local.domains.length > 0 || local.tasks.length > 0 ||
           local.goals.length > 0 || local.customChallenges?.length > 0
+        console.log('📤 hasLocalData à uploader:', hasLocalData, '— domains:', local.domains.length, 'tasks:', local.tasks.length)
         if (hasLocalData) {
           await uploadLocalData(userId, local)
         }
 
-        // ── Full sync depuis Supabase ────────────────────────────────────────
+        console.log('📥 Full sync depuis Supabase...')
         const [profile, domains, goals, tasks, customChallenges, activeChallenges] =
           await Promise.all([
             db.loadProfile(userId),
@@ -146,12 +152,13 @@ export function useSupabaseSync() {
             db.loadCustomChallenges(userId),
             db.loadActiveChallenges(userId),
           ])
+        console.log('✅ Full sync résultat — domains:', domains.length, 'goals:', goals.length, 'tasks:', tasks.length)
         hydrateFromSupabase({ profile, domains, goals, tasks, customChallenges, activeChallenges })
         setLastSyncedAt(syncStart)
         return
       }
 
-      // ── Delta sync — uniquement ce qui a changé depuis lastSyncedAt ────────
+      console.log('📥 Delta sync depuis lastSyncedAt:', lastSyncedAt)
       const [profile, domains, goals, tasks, customChallenges, activeChallenges] =
         await Promise.all([
           db.loadProfile(userId),
@@ -161,17 +168,12 @@ export function useSupabaseSync() {
           db.loadCustomChallengesSince(userId, lastSyncedAt),
           db.loadActiveChallengesSince(userId, lastSyncedAt),
         ])
-
-      mergeFromSupabase({
-        profile,
-        domains,
-        goals,
-        tasks,
-        customChallenges,
-        activeChallenges,
-      })
+      console.log('✅ Delta sync résultat — domains:', domains.length, 'goals:', goals.length, 'tasks:', tasks.length)
+      mergeFromSupabase({ profile, domains, goals, tasks, customChallenges, activeChallenges })
       setLastSyncedAt(syncStart)
 
+    } catch (err) {
+      console.error('💥 syncUserData erreur:', err)
     } finally {
       syncingRef.current = false
     }
