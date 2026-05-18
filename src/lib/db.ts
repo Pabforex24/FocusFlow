@@ -99,11 +99,13 @@ export async function loadDomains(userId: string): Promise<Domain[]> {
 
 export async function insertDomain(userId: string, domain: Domain) {
   if (!supabase) return
-  await supabase.from('domains').insert({
+  const { error } = await supabase.from('domains').insert({
     id: domain.id, user_id: userId,
     name: domain.name, icon: domain.icon, color: domain.color,
     created_at: domain.createdAt,
   })
+  if (error && error.code !== '23505') console.error('[db] insertDomain:', error.message, domain.id)
+  return error
 }
 
 export async function updateDomain(domain: Domain) {
@@ -140,7 +142,7 @@ export async function loadGoals(userId: string): Promise<Goal[]> {
 
 export async function insertGoal(userId: string, goal: Goal) {
   if (!supabase) return
-  await supabase.from('goals').insert({
+  const { error } = await supabase.from('goals').insert({
     id: goal.id, user_id: userId,
     domain_id:    goal.domainId,
     challenge_id: goal.challengeId || null,
@@ -149,6 +151,8 @@ export async function insertGoal(userId: string, goal: Goal) {
     unit:         goal.unit || null,
     created_at:   goal.createdAt,
   })
+  if (error && error.code !== '23505') console.error('[db] insertGoal:', error.message, goal.id)
+  return error
 }
 
 export async function updateGoal(goal: Partial<Goal> & { id: string }) {
@@ -197,7 +201,7 @@ export async function loadTasks(userId: string): Promise<Task[]> {
 
 export async function insertTask(userId: string, task: Task) {
   if (!supabase) return
-  await supabase.from('tasks').insert({
+  const { error } = await supabase.from('tasks').insert({
     id: task.id, user_id: userId,
     domain_id:           task.domainId           || null,
     goal_id:             task.goalId             || null,
@@ -214,6 +218,8 @@ export async function insertTask(userId: string, task: Task) {
     is_generated:        task.isGenerated        ?? false,
     created_at:          task.createdAt,
   })
+  if (error && error.code !== '23505') console.error('[db] insertTask:', error.message, task.id)
+  return error
 }
 
 export async function insertTasks(userId: string, tasks: Task[]) {

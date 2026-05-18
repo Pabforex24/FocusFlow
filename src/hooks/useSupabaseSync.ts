@@ -84,9 +84,10 @@ export function useSupabaseSync() {
           userIdRef.current = null
           bootDoneRef.current = false
           setLastSyncedAt('')
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('focusflow-store-v10')
-          }
+          // ⚠️ NE PAS purger le localStorage ici
+          // Les données locales doivent survivre à la déconnexion pour être
+          // uploadées lors de la prochaine reconnexion via uploadLocalData()
+          // On purge UNIQUEMENT après un upload réussi dans syncUserData()
         }
       }
     )
@@ -180,13 +181,73 @@ export function useSupabaseSync() {
   }
 
   async function uploadLocalData(userId: string, local: ReturnType<typeof useStore.getState>) {
-    await Promise.allSettled([
-      ...local.domains.map((d: Domain) => db.insertDomain(userId, d).catch(() => {})),
-      ...local.goals.map((g: Goal) => db.insertGoal(userId, g).catch(() => {})),
-      ...(local.customChallenges || []).map((c: Challenge) => db.upsertCustomChallenge(userId, c).catch(() => {})),
-      ...(local.activeChallenges || []).map((ac: ActiveChallenge) => db.insertActiveChallenge(userId, ac).catch(() => {})),
-      ...local.tasks.map((t: Task) => db.insertTask(userId, t).catch(() => {})),
+    console.log('📤 uploadLocalData — domains:', local.domains.length, 'goals:', local.goals.length, 'tasks:', local.tasks.length)
+
+    // Ordre important : domains → goals → tasks (FK dependencies)
+    const results = await Promise.allSettled([
+      ...local.domains.map((d: Domain) =>
+        supabase!.from('domains').upsert({
+          id: d.id, user_id: userId,
+          name: d.name, icon: d.icon, color: d.color,
+          created_at: d.createdAt,
+        }, { onConflict: 'id' })
+      ),
     ])
+
+    // Goals après domains
+    await Promise.allSettled([
+      ...local.goals.map((g: Goal) =>
+        supabase!.from('goals').upsert({
+          id: g.id, user_id: userId,
+          domain_id: g.domainId,
+          title: g.title,
+          description: g.description || null,
+          unit: g.unit || null,
+          challenge_id: g.challengeId || null,
+          created_at: g.createdAt,
+        }, { onConflict: 'id' })
+      ),
+    ])
+
+    // Tasks après goals
+    await Promise.allSettled([
+      ...local.tasks.map((t: Task) =>
+        supabase!.from('tasks').upsert({
+          id: t.id, user_id: userId,
+          domain_id: t.domainId || null,
+          goal_id: t.goalId || null,
+          challenge_active_id: t.challengeActiveId || null,
+          title: t.title,
+          duration: t.duration || null,
+          scheduled_at: t.scheduledAt,
+          done: t.done,
+          done_at: t.doneAt || null,
+          xp_value: t.xpValue,
+          priority: t.priority || null,
+          frequency: t.frequency || null,
+          custom_days: t.customDays || null,
+          is_generated: t.isGenerated ?? false,
+          created_at: t.createdAt,
+        }, { onConflict: 'id' })
+      ),
+    ])
+
+    // Custom challenges et active challenges
+    await Promise.allSettled([
+      ...(local.customChallenges || []).map((c: Challenge) =>
+        db.upsertCustomChallenge(userId, c).catch(() => {})
+      ),
+      ...(local.activeChallenges || []).map((ac: ActiveChallenge) =>
+        db.insertActiveChallenge(userId, ac).catch(() => {})
+      ),
+    ])
+
+    const errors = results.filter((r) => r.status === 'rejected')
+    if (errors.length > 0) {
+      console.warn('[sync] uploadLocalData — quelques erreurs:', errors.length)
+    } else {
+      console.log('✅ uploadLocalData terminé sans erreur')
+    }
   }
 
   return {
