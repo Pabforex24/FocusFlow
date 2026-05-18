@@ -27,7 +27,6 @@ function LoginForm() {
     try {
       const { data, error: authError } = await signInWithEmail(email, password)
       if (authError) {
-        // Traduire les erreurs Supabase en français
         const msg = authError.message.includes('Invalid login credentials')
           ? 'Email ou mot de passe incorrect.'
           : authError.message.includes('Email not confirmed')
@@ -38,11 +37,13 @@ function LoginForm() {
         setError(msg)
         return
       }
-      // Session établie — attendre un tick pour que onAuthStateChange se déclenche
+      // Supabase pose le cookie via onAuthStateChange — on attend que la session
+      // soit confirmée avant de rediriger. Sans session, le middleware bloque.
       if (data?.session) {
-        setTimeout(() => router.push(nextPath), 100)
-      } else {
         router.push(nextPath)
+      } else {
+        // Pas de session immédiate (ex: confirmation email requise)
+        setError('Vérifie ta boîte mail pour confirmer ton compte avant de te connecter.')
       }
     } catch (err: any) {
       setError(err.message || 'Erreur de connexion')

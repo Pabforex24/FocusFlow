@@ -1,6 +1,7 @@
 'use client'
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL  || ''
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
@@ -12,16 +13,12 @@ const isValidUrl = (s: string) => {
 
 export const isSupabaseConfigured = isValidUrl(url) && key.length > 10
 
+// ✅ createBrowserClient (@supabase/ssr) — stocke la session dans les COOKIES
+// ✅ Le middleware (createServerClient) peut lire ces cookies côté serveur
+// ❌ createClient (@supabase/supabase-js) stockait en localStorage → invisible du middleware
 export const supabase: SupabaseClient | null =
   isSupabaseConfigured
-    ? createClient(url, key, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-          storageKey: 'sb-focusflow-auth',
-        },
-      })
+    ? createBrowserClient(url, key)
     : null
 
 export function toCamel<T extends Record<string, any>>(row: T): any {
