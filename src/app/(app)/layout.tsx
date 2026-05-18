@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { FocusMode } from '@/components/focus/FocusMode'
 import { useStore } from '@/store'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useSupabaseSync } from '@/hooks/useSupabaseSync'
 
 /**
  * Layout global des pages protégées.
@@ -13,7 +14,8 @@ import { useNotifications } from '@/hooks/useNotifications'
 export const dynamic = 'force-dynamic'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  useNotifications() // Enregistre le SW et surveille streak + rappels
+  useNotifications()
+  useSupabaseSync() // ← Sync Supabase desktop ↔ mobile
   const focusModalOpen  = useStore((s) => s.focusModalOpen)
   const openFocusModal  = useStore((s) => s.openFocusModal)
   const closeFocusModal = useStore((s) => s.closeFocusModal)
@@ -25,7 +27,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-0">
         {children}
       </main>
-
 
       {/* Modal Focus — persiste entre toutes les navigations */}
       {focusModalOpen && <FocusMode onClose={closeFocusModal} />}
