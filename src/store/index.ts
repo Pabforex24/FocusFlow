@@ -8,8 +8,6 @@ import {
 } from '@/types'
 
 // ─── Challenge catalogue ──────────────────────────────────────────────────────
-// Les blueprints du catalogue référencent des goalId "seed" — ils seront
-// remplacés par les vrais goalId de l'utilisateur au moment du lancement.
 export const CHALLENGE_CATALOGUE: Challenge[] = [
   {
     id: 'ch-trading-30',
@@ -66,7 +64,6 @@ const seedDomains: Domain[] = [
   { id: 'seed-d3', name: 'Études',  icon: 'BookOpen',   color: '#4EA8DE', createdAt: new Date().toISOString() },
 ]
 
-// Seed goals — sans deadline, sans unit obligatoire
 const seedGoals: Goal[] = [
   { id: 'seed-g1', domainId: 'seed-d1', title: '30h de backtest',          unit: 'heures',  createdAt: new Date().toISOString() },
   { id: 'seed-g2', domainId: 'seed-d2', title: '20 séances de sport',       unit: 'séances', createdAt: new Date().toISOString() },
@@ -97,17 +94,12 @@ function computeLevel(xp: number): { level: number; xpToNextLevel: number } {
   return { level, xpToNextLevel: xpForLevel(level) - (xp - cumulative) }
 }
 
-/**
- * Génère TOUTES les occurrences de tâches d'un challenge.
- * Chaque blueprint produit des tâches liées à son goalId.
- * blueprintGoalMap : { blueprintId → goalId réel de l'utilisateur }
- */
 function buildAllTasks(
   challenge: Challenge,
   acId: string,
   startDate: Date,
   endDate: Date,
-  blueprintGoalMap: Record<string, string>   // bp.id → goalId utilisateur
+  blueprintGoalMap: Record<string, string>
 ): Omit<Task, 'id' | 'createdAt'>[] {
   const tasks: Omit<Task, 'id' | 'createdAt'>[] = []
 
@@ -133,6 +125,25 @@ function buildAllTasks(
     }
   }
   return tasks
+}
+
+// ─── Storage SSR-safe ─────────────────────────────────────────────────────────
+const ssrSafeStorage = {
+  getItem: (key: string) => {
+    if (typeof window === 'undefined') return null
+    try {
+      const str = localStorage.getItem(key)
+      return str ? JSON.parse(str) : null
+    } catch { return null }
+  },
+  setItem: (key: string, value: unknown) => {
+    if (typeof window === 'undefined') return
+    try { localStorage.setItem(key, JSON.stringify(value)) } catch {}
+  },
+  removeItem: (key: string) => {
+    if (typeof window === 'undefined') return
+    try { localStorage.removeItem(key) } catch {}
+  },
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -301,16 +312,12 @@ export const useStore = create<AppStore>()(
       declareRestDay: () => {
         const { restDays, restDayUsedThisWeek } = get()
         const today = new Date().toDateString()
-
-        // Already declared today
         if (restDays.includes(today)) {
           return { success: false, message: "Imprévu déjà déclaré pour aujourd'hui." }
         }
-        // Max 1 per week
         if (restDayUsedThisWeek) {
           return { success: false, message: 'Tu as déjà utilisé ton imprévu cette semaine. Maximum 1 par semaine.' }
         }
-
         set((s) => ({
           restDays: [...s.restDays, today],
           restDayUsedThisWeek: true,
@@ -321,7 +328,6 @@ export const useStore = create<AppStore>()(
       applyDailyPenalty: () => {
         const { userStats, streak, tasks, restDays } = get()
         const yesterday = new Date(Date.now() - 86400000).toDateString()
-        // No penalty if yesterday was a declared rest day
         if (restDays.includes(yesterday)) return
         const had = tasks.some((t) => t.done && new Date(t.doneAt || '').toDateString() === yesterday)
         if (!had && streak > 0) {
@@ -378,11 +384,6 @@ export const useStore = create<AppStore>()(
       abandonFocus: () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } } : s),
 
       // ── Challenge ─────────────────────────────────────────────────────────────
-      /**
-       * Démarre un challenge.
-       * blueprintGoalMap : { blueprintId → goalId } — renseigné par ChallengeStartModal
-       * après que l'utilisateur a associé ses objectifs à chaque blueprint.
-       */
       startChallenge: (challengeId, blueprintGoalMap = {}) => {
         const { customChallenges } = get()
         const challenge =
@@ -418,7 +419,6 @@ export const useStore = create<AppStore>()(
           db.insertTasks(userId, newTasks).catch(console.error)
         }
       },
-
 
       stopChallenge: (acId) => {
         set((s) => ({
@@ -501,7 +501,6 @@ export const useStore = create<AppStore>()(
       setUserEmail:    (email) => set({ userEmail: email }),
       hydrateFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
         const patch: Partial<AppStore> = {}
-        // Full sync → toujours appliquer même si tableau vide (= tout supprimé sur un autre appareil)
         patch.domains          = domains
         patch.goals            = goals
         patch.tasks            = tasks
@@ -523,13 +522,11 @@ export const useStore = create<AppStore>()(
         set(patch as any)
       },
 
-
-      // ── mergeFromSupabase — delta sync (écrase par id, conserve le reste) ──
+      // ── mergeFromSupabase — delta sync ────────────────────────────────────────
       mergeFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
         const s = get()
         const patch: Partial<AppStore> = {}
 
-        // Merge par id : les entrées delta écrasent, les autres sont conservées
         if (domains.length) {
           const map = new Map(s.domains.map((d) => [d.id, d]))
           domains.forEach((d) => map.set(d.id, d))
@@ -569,11 +566,11 @@ export const useStore = create<AppStore>()(
         }
         set(patch as any)
       },
+
       // ── Selectors ────────────────────────────────────────────────────────────
       resetRestDayWeekly: () => {
-        // Called on app load — reset restDayUsedThisWeek every Monday
         const today = new Date()
-        if (today.getDay() === 1) { // Monday
+        if (today.getDay() === 1) {
           set({ restDayUsedThisWeek: false })
         }
       },
@@ -619,6 +616,10 @@ export const useStore = create<AppStore>()(
       completeOnboarding: () => set({ onboarding: { completed: true, step: 'done' } }),
       setOnboardingStep: (step) => set((s) => ({ onboarding: { ...s.onboarding, step } })),
     }),
-    { name: 'focusflow-store-v10', skipHydration: true }
+    {
+      name: 'focusflow-store-v10',
+      skipHydration: true,
+      storage: ssrSafeStorage,
+    }
   )
 )
