@@ -7,29 +7,22 @@ import { useStore } from '@/store'
  * StoreHydrator
  * ─────────────
  * Zustand persist est configuré avec skipHydration: true pour éviter
- * les erreurs d'hydratation SSR.
+ * les erreurs d'hydratation SSR (mismatch server/client).
  *
- * IMPORTANT : rehydrate() est appelé en dernier dans le cycle de vie
- * pour ne PAS écraser les données Supabase si useSupabaseSync a déjà
- * chargé des données fraîches depuis le serveur.
+ * Séquence correcte :
+ * 1. StoreHydrator → rehydrate() IMMÉDIATEMENT depuis localStorage
+ *    (les données locales sont visibles sans attendre Supabase)
+ * 2. useSupabaseSync bootSync → charge depuis Supabase → écrase le store
+ *    avec les données fraîches du serveur
  *
- * La logique est :
- * 1. useSupabaseSync boot → charge depuis Supabase → set() dans le store
- * 2. StoreHydrator → rehydrate() depuis localStorage UNIQUEMENT si le
- *    store est encore vide (pas de données Supabase reçues)
+ * Résultat : pas de flash "page vide" au rechargement, données Supabase
+ * chargées dès que disponibles.
  */
 export function StoreHydrator() {
   useEffect(() => {
-    // Attendre que useSupabaseSync ait eu le temps de faire son bootSync
-    // avant de rehydrater depuis localStorage (évite l'écrasement)
-    const timer = setTimeout(() => {
-      const state = useStore.getState()
-      // Ne rehydrater que si le store est encore vide (pas de sync Supabase)
-      if (!state.supabaseUserId) {
-        useStore.persist.rehydrate()
-      }
-    }, 100)
-    return () => clearTimeout(timer)
+    // Réhydrater immédiatement — c'est useSupabaseSync qui écrasera
+    // ensuite avec les données Supabase si l'utilisateur est connecté
+    useStore.persist.rehydrate()
   }, [])
 
   return null
