@@ -146,6 +146,79 @@ const ssrSafeStorage = {
   },
 }
 
+// ─── Write-behind queue ───────────────────────────────────────────────────────
+// Si supabaseUserId est null au moment d'une action (bootSync pas encore terminé),
+// on stocke les opérations en attente et on les exécute dès que le userId arrive.
+
+type PendingOp =
+  | { type: 'insertDomain';   payload: Domain }
+  | { type: 'insertGoal';     payload: Goal }
+  | { type: 'insertTask';     payload: Task }
+  | { type: 'updateTask';     payload: Partial<Task> & { id: string } }
+  | { type: 'deleteTask';     payload: string }
+  | { type: 'updateDomain';   payload: Domain }
+  | { type: 'deleteDomain';   payload: string }
+  | { type: 'updateGoal';     payload: Goal }
+  | { type: 'deleteGoal';     payload: string }
+
+const pendingQueue: PendingOp[] = []
+let flushScheduled = false
+
+async function flushQueue(userId: string) {
+  if (flushScheduled) return
+  flushScheduled = true
+  // Petite attente pour regrouper les opérations simultanées
+  await new Promise((r) => setTimeout(r, 50))
+  flushScheduled = false
+
+  const ops = [...pendingQueue]
+  pendingQueue.length = 0
+  if (!ops.length) return
+
+  console.log(`[queue] flush ${ops.length} opérations pour userId:`, userId)
+  for (const op of ops) {
+    try {
+      if (op.type === 'insertDomain')  await db.insertDomain(userId, op.payload)
+      if (op.type === 'insertGoal')    await db.insertGoal(userId, op.payload)
+      if (op.type === 'insertTask')    await db.insertTask(userId, op.payload)
+      if (op.type === 'updateTask')    await db.updateTask(op.payload)
+      if (op.type === 'deleteTask')    await db.deleteTask(op.payload)
+      if (op.type === 'updateDomain')  await db.updateDomain(op.payload)
+      if (op.type === 'deleteDomain')  await db.deleteDomain(op.payload)
+      if (op.type === 'updateGoal')    await db.updateGoal(op.payload)
+      if (op.type === 'deleteGoal')    await db.deleteGoal(op.payload)
+    } catch (e: any) {
+      console.error('[queue] erreur op:', op.type, e?.message)
+    }
+  }
+}
+
+// Helper : push immédiat si userId connu, sinon mise en queue
+function dbPush(userId: string | null, op: PendingOp) {
+  if (userId) {
+    flushQueue(userId) // flush éventuelles ops en attente
+    const exec = async () => {
+      try {
+        if (op.type === 'insertDomain')  await db.insertDomain(userId, op.payload)
+        if (op.type === 'insertGoal')    await db.insertGoal(userId, op.payload)
+        if (op.type === 'insertTask')    await db.insertTask(userId, op.payload)
+        if (op.type === 'updateTask')    await db.updateTask(op.payload)
+        if (op.type === 'deleteTask')    await db.deleteTask(op.payload)
+        if (op.type === 'updateDomain')  await db.updateDomain(op.payload)
+        if (op.type === 'deleteDomain')  await db.deleteDomain(op.payload)
+        if (op.type === 'updateGoal')    await db.updateGoal(op.payload)
+        if (op.type === 'deleteGoal')    await db.deleteGoal(op.payload)
+      } catch (e: any) {
+        console.error('[db] erreur:', op.type, e?.message)
+      }
+    }
+    exec()
+  } else {
+    console.log('[queue] userId null — mise en attente:', op.type)
+    pendingQueue.push(op)
+  }
+}
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useStore = create<AppStore>()(
@@ -173,13 +246,12 @@ export const useStore = create<AppStore>()(
       addDomain: (data) => {
         const newDomain = { ...data, id: uid(), createdAt: new Date().toISOString() }
         set((s) => ({ domains: [...s.domains, newDomain] }))
-        const userId = get().supabaseUserId
-        if (userId) db.insertDomain(userId, newDomain).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'insertDomain', payload: newDomain })
       },
       updateDomain: (id, data) => {
         set((s) => ({ domains: s.domains.map((d) => (d.id === id ? { ...d, ...data } : d)) }))
         const updated = get().domains.find((d) => d.id === id)
-        if (updated && get().supabaseUserId) db.updateDomain(updated).catch(console.error)
+        if (updated) dbPush(get().supabaseUserId, { type: 'updateDomain', payload: updated })
       },
       deleteDomain: (id) => {
         const gIds = get().goals.filter((g) => g.domainId === id).map((g) => g.id)
@@ -188,41 +260,40 @@ export const useStore = create<AppStore>()(
           goals:   s.goals.filter((g) => g.domainId !== id),
           tasks:   s.tasks.filter((t) => t.domainId !== id && !gIds.includes(t.goalId || '')),
         }))
-        if (get().supabaseUserId) db.deleteDomain(id).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'deleteDomain', payload: id })
       },
 
       // ── Goal ─────────────────────────────────────────────────────────────────
       addGoal: (data) => {
         const newGoal = { ...data, id: uid(), createdAt: new Date().toISOString() }
         set((s) => ({ goals: [...s.goals, newGoal] }))
-        const userId = get().supabaseUserId
-        if (userId) db.insertGoal(userId, newGoal).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'insertGoal', payload: newGoal })
       },
       updateGoal: (id, data) => {
         set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...data } : g)) }))
         const updated = get().goals.find((g) => g.id === id)
-        if (updated && get().supabaseUserId) db.updateGoal(updated).catch(console.error)
+        if (updated) dbPush(get().supabaseUserId, { type: 'updateGoal', payload: updated })
       },
       deleteGoal: (id) => {
         set((s) => ({
           goals: s.goals.filter((g) => g.id !== id),
           tasks: s.tasks.filter((t) => t.goalId !== id),
         }))
-        if (get().supabaseUserId) db.deleteGoal(id).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'deleteGoal', payload: id })
       },
 
       // ── Task ─────────────────────────────────────────────────────────────────
       addTask: (data) => {
         const newTask = { ...data, id: uid(), createdAt: new Date().toISOString() }
         set((s) => ({ tasks: [...s.tasks, newTask] }))
-        const userId = get().supabaseUserId
-        if (userId) db.insertTask(userId, newTask).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'insertTask', payload: newTask })
       },
       bulkAddTasks: (list) => {
         const newTasks = list.map((d) => ({ ...d, id: uid(), createdAt: new Date().toISOString() }))
         set((s) => ({ tasks: [...s.tasks, ...newTasks] }))
         const userId = get().supabaseUserId
         if (userId) db.insertTasks(userId, newTasks).catch(console.error)
+        else newTasks.forEach((t) => pendingQueue.push({ type: 'insertTask', payload: t }))
       },
       toggleTask: (id) => {
         const { tasks, awardXP, checkAndAwardBadges, updateStreak } = get()
@@ -238,8 +309,7 @@ export const useStore = create<AppStore>()(
             ? { ...s.userStats, totalTasksDone: s.userStats.totalTasksDone + 1 }
             : { ...s.userStats, totalTasksDone: Math.max(0, s.userStats.totalTasksDone - 1) },
         }))
-        const userId = get().supabaseUserId
-        if (userId) db.updateTask({ id, done: nowDone, doneAt }).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'updateTask', payload: { id, done: nowDone, doneAt } })
         if (nowDone) {
           awardXP(task.xpValue ?? 10)
           updateStreak()
@@ -252,11 +322,11 @@ export const useStore = create<AppStore>()(
       },
       deleteTask: (id) => {
         set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
-        if (get().supabaseUserId) db.deleteTask(id).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'deleteTask', payload: id })
       },
       updateTask: (id, data) => {
         set((s) => ({ tasks: s.tasks.map((t) => t.id === id ? { ...t, ...data } : t) }))
-        if (get().supabaseUserId) db.updateTask({ id, ...data }).catch(console.error)
+        dbPush(get().supabaseUserId, { type: 'updateTask', payload: { id, ...data } })
       },
 
       // ── Gamification ─────────────────────────────────────────────────────────
