@@ -43,13 +43,14 @@ export function useSupabaseSync() {
           setUserEmail(session.user.email ?? null)
           setSupabaseUser(session.user.id)
           userIdRef.current = session.user.id
-          bootDoneRef.current = true
           setLoading(true)
           try {
             await syncUserData(session.user.id, false)
           } finally {
             setLoading(false)
           }
+          // APRÈS la sync — signale à SIGNED_IN que le boot est terminé
+          bootDoneRef.current = true
         } else {
           console.log('⚠️ Pas de session active au boot')
         }
@@ -84,10 +85,9 @@ export function useSupabaseSync() {
           userIdRef.current = null
           bootDoneRef.current = false
           setLastSyncedAt('')
-          // ⚠️ NE PAS purger le localStorage ici
-          // Les données locales doivent survivre à la déconnexion pour être
-          // uploadées lors de la prochaine reconnexion via uploadLocalData()
-          // On purge UNIQUEMENT après un upload réussi dans syncUserData()
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('focusflow-store-v10')
+          }
         }
       }
     )
@@ -130,9 +130,12 @@ export function useSupabaseSync() {
       setSupabaseUser(userId)
       const syncStart    = new Date().toISOString()
       const lastSyncedAt = getLastSyncedAt()
-      const isFirstSync  = !lastSyncedAt || forceFullSync
 
-      console.log('📅 lastSyncedAt:', lastSyncedAt, '— isFirstSync:', isFirstSync)
+      // Force full sync si : jamais syncé OU login explicite OU dernière sync > 24h
+      const syncAge = lastSyncedAt ? Date.now() - new Date(lastSyncedAt).getTime() : Infinity
+      const isFirstSync = !lastSyncedAt || forceFullSync || syncAge > 24 * 60 * 60 * 1000
+
+      console.log('📅 lastSyncedAt:', lastSyncedAt, '— isFirstSync:', isFirstSync, '— age(min):', Math.round(syncAge / 60000))
 
       if (isFirstSync) {
         const local = useStore.getState()
@@ -159,15 +162,17 @@ export function useSupabaseSync() {
         return
       }
 
-      console.log('📥 Delta sync depuis lastSyncedAt:', lastSyncedAt)
+      // Buffer de 5s sur le since pour éviter de manquer les changements concurrents
+      const sinceSafe = new Date(new Date(lastSyncedAt).getTime() - 5000).toISOString()
+      console.log('📥 Delta sync depuis sinceSafe:', sinceSafe)
       const [profile, domains, goals, tasks, customChallenges, activeChallenges] =
         await Promise.all([
           db.loadProfile(userId),
-          db.loadDomainsSince(userId, lastSyncedAt),
-          db.loadGoalsSince(userId, lastSyncedAt),
-          db.loadTasksSince(userId, lastSyncedAt),
-          db.loadCustomChallengesSince(userId, lastSyncedAt),
-          db.loadActiveChallengesSince(userId, lastSyncedAt),
+          db.loadDomainsSince(userId, sinceSafe),
+          db.loadGoalsSince(userId, sinceSafe),
+          db.loadTasksSince(userId, sinceSafe),
+          db.loadCustomChallengesSince(userId, sinceSafe),
+          db.loadActiveChallengesSince(userId, sinceSafe),
         ])
       console.log('✅ Delta sync résultat — domains:', domains.length, 'goals:', goals.length, 'tasks:', tasks.length)
       mergeFromSupabase({ profile, domains, goals, tasks, customChallenges, activeChallenges })
@@ -181,73 +186,13 @@ export function useSupabaseSync() {
   }
 
   async function uploadLocalData(userId: string, local: ReturnType<typeof useStore.getState>) {
-    console.log('📤 uploadLocalData — domains:', local.domains.length, 'goals:', local.goals.length, 'tasks:', local.tasks.length)
-
-    // Ordre important : domains → goals → tasks (FK dependencies)
-    const results = await Promise.allSettled([
-      ...local.domains.map((d: Domain) =>
-        supabase!.from('domains').upsert({
-          id: d.id, user_id: userId,
-          name: d.name, icon: d.icon, color: d.color,
-          created_at: d.createdAt,
-        }, { onConflict: 'id' })
-      ),
-    ])
-
-    // Goals après domains
     await Promise.allSettled([
-      ...local.goals.map((g: Goal) =>
-        supabase!.from('goals').upsert({
-          id: g.id, user_id: userId,
-          domain_id: g.domainId,
-          title: g.title,
-          description: g.description || null,
-          unit: g.unit || null,
-          challenge_id: g.challengeId || null,
-          created_at: g.createdAt,
-        }, { onConflict: 'id' })
-      ),
+      ...local.domains.map((d: Domain) => db.insertDomain(userId, d).catch(() => {})),
+      ...local.goals.map((g: Goal) => db.insertGoal(userId, g).catch(() => {})),
+      ...(local.customChallenges || []).map((c: Challenge) => db.upsertCustomChallenge(userId, c).catch(() => {})),
+      ...(local.activeChallenges || []).map((ac: ActiveChallenge) => db.insertActiveChallenge(userId, ac).catch(() => {})),
+      ...local.tasks.map((t: Task) => db.insertTask(userId, t).catch(() => {})),
     ])
-
-    // Tasks après goals
-    await Promise.allSettled([
-      ...local.tasks.map((t: Task) =>
-        supabase!.from('tasks').upsert({
-          id: t.id, user_id: userId,
-          domain_id: t.domainId || null,
-          goal_id: t.goalId || null,
-          challenge_active_id: t.challengeActiveId || null,
-          title: t.title,
-          duration: t.duration || null,
-          scheduled_at: t.scheduledAt,
-          done: t.done,
-          done_at: t.doneAt || null,
-          xp_value: t.xpValue,
-          priority: t.priority || null,
-          frequency: t.frequency || null,
-          custom_days: t.customDays || null,
-          is_generated: t.isGenerated ?? false,
-          created_at: t.createdAt,
-        }, { onConflict: 'id' })
-      ),
-    ])
-
-    // Custom challenges et active challenges
-    await Promise.allSettled([
-      ...(local.customChallenges || []).map((c: Challenge) =>
-        db.upsertCustomChallenge(userId, c).catch(() => {})
-      ),
-      ...(local.activeChallenges || []).map((ac: ActiveChallenge) =>
-        db.insertActiveChallenge(userId, ac).catch(() => {})
-      ),
-    ])
-
-    const errors = results.filter((r) => r.status === 'rejected')
-    if (errors.length > 0) {
-      console.warn('[sync] uploadLocalData — quelques erreurs:', errors.length)
-    } else {
-      console.log('✅ uploadLocalData terminé sans erreur')
-    }
   }
 
   return {
