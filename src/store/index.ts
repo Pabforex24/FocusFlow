@@ -170,7 +170,7 @@ export const useStore = create<AppStore>()(
       catalogueOverrides:  {},
 
       // ── Domain ───────────────────────────────────────────────────────────────
-      addDomain: (data) => {
+      addDomain: (data: Omit<Domain, 'id' | 'createdAt'>) => {
         const newDomain = { ...data, id: uid(), createdAt: new Date().toISOString() }
         set((s) => ({ domains: [...s.domains, newDomain] }))
         const userId = get().supabaseUserId
@@ -192,7 +192,7 @@ export const useStore = create<AppStore>()(
       },
 
       // ── Goal ─────────────────────────────────────────────────────────────────
-      addGoal: (data) => {
+      addGoal: (data: Omit<Goal, 'id' | 'createdAt'>) => {
         const newGoal = { ...data, id: uid(), createdAt: new Date().toISOString() }
         set((s) => ({ goals: [...s.goals, newGoal] }))
         const userId = get().supabaseUserId
@@ -212,7 +212,7 @@ export const useStore = create<AppStore>()(
       },
 
       // ── Task ─────────────────────────────────────────────────────────────────
-      addTask: (data) => {
+      addTask: (data: Omit<Task, 'id' | 'createdAt'>) => {
         const newTask = { ...data, id: uid(), createdAt: new Date().toISOString() }
         set((s) => ({ tasks: [...s.tasks, newTask] }))
         const userId = get().supabaseUserId
@@ -451,7 +451,7 @@ export const useStore = create<AppStore>()(
         return { total: ct.length, done: ct.filter((t) => t.done).length }
       },
 
-      addCustomChallenge: (data) => {
+      addCustomChallenge: (data: Omit<Challenge, 'id'>) => {
         const newChallenge = {
           ...data,
           id: 'custom-' + uid(),
