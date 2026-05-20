@@ -623,7 +623,7 @@ export const useStore = create<AppStore>()(
       storage: ssrSafeStorage,
       // tasks, goals, domains sont des données serveur → jamais persistées localement
       // Seules les préférences UI et l'état de session sont gardés
-      partialize: (state: any) => {
+      partialize: (state: AppStore) => {
         const {
           tasks: _t,
           goals: _g,
