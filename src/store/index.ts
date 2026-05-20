@@ -170,11 +170,18 @@ export const useStore = create<AppStore>()(
       catalogueOverrides:  {},
 
       // ── Domain ───────────────────────────────────────────────────────────────
-      addDomain: (data: Omit<Domain, 'id' | 'createdAt'>) => {
+      addDomain: async (data: Omit<Domain, 'id' | 'createdAt'>) => {
         const newDomain = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ domains: [...s.domains, newDomain] }))
         const userId = get().supabaseUserId
-        if (userId) db.insertDomain(userId, newDomain).catch(console.error)
+        if (userId) {
+          try {
+            await db.insertDomain(userId, newDomain)
+          } catch (err) {
+            console.error('[store] addDomain insert failed:', err)
+            return
+          }
+        }
+        set((s: AppStore) => ({ domains: [...s.domains, newDomain] }))
       },
       updateDomain: (id, data) => {
         set((s) => ({ domains: s.domains.map((d) => (d.id === id ? { ...d, ...data } : d)) }))
@@ -192,11 +199,18 @@ export const useStore = create<AppStore>()(
       },
 
       // ── Goal ─────────────────────────────────────────────────────────────────
-      addGoal: (data: Omit<Goal, 'id' | 'createdAt'>) => {
+      addGoal: async (data: Omit<Goal, 'id' | 'createdAt'>) => {
         const newGoal = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ goals: [...s.goals, newGoal] }))
         const userId = get().supabaseUserId
-        if (userId) db.insertGoal(userId, newGoal).catch(console.error)
+        if (userId) {
+          try {
+            await db.insertGoal(userId, newGoal)
+          } catch (err) {
+            console.error('[store] addGoal insert failed:', err)
+            return
+          }
+        }
+        set((s: AppStore) => ({ goals: [...s.goals, newGoal] }))
       },
       updateGoal: (id, data) => {
         set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...data } : g)) }))
@@ -212,11 +226,18 @@ export const useStore = create<AppStore>()(
       },
 
       // ── Task ─────────────────────────────────────────────────────────────────
-      addTask: (data: Omit<Task, 'id' | 'createdAt'>) => {
+      addTask: async (data: Omit<Task, 'id' | 'createdAt'>) => {
         const newTask = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ tasks: [...s.tasks, newTask] }))
         const userId = get().supabaseUserId
-        if (userId) db.insertTask(userId, newTask).catch(console.error)
+        if (userId) {
+          try {
+            await db.insertTask(userId, newTask)
+          } catch (err) {
+            console.error('[store] addTask insert failed:', err)
+            return
+          }
+        }
+        set((s: AppStore) => ({ tasks: [...s.tasks, newTask] }))
       },
       bulkAddTasks: (list) => {
         const newTasks = list.map((d) => ({ ...d, id: uid(), createdAt: new Date().toISOString() }))
