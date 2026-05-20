@@ -5,7 +5,7 @@ import { useStore } from '@/store'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import * as db from '@/lib/db'
 
-const POLL_INTERVAL_MS = 30_000
+const POLL_INTERVAL_MS = 60_000   // 60s — assez fréquent sans risquer la race condition
 
 export function useSupabaseSync() {
   const setSupabaseUser     = useStore((s) => s.setSupabaseUser)
@@ -14,15 +14,21 @@ export function useSupabaseSync() {
   const setLastSyncedAt     = useStore((s) => s.setLastSyncedAt)
 
   const [loading, setLoading] = useState(false)
-  const syncingRef  = useRef(false)
-  const bootDoneRef = useRef(false)
-  const userIdRef   = useRef<string | null>(null)
+  const syncingRef   = useRef(false)
+  const mutatingRef  = useRef(false)   // true pendant addTask/addGoal/addDomain
+  const bootDoneRef  = useRef(false)
+  const userIdRef    = useRef<string | null>(null)
 
-  // ── Full sync — source unique de vérité : Supabase ──────────────────────
+  // Exposé pour que le store puisse bloquer le sync pendant une mutation
+  useEffect(() => {
+    ;(window as any).__focusflowMutating = mutatingRef
+  }, [])
+
+  // ── Full sync — Supabase = source de vérité ──────────────────────────────
   const fullSync = useCallback(async (userId: string) => {
-    if (syncingRef.current) return
+    // Ne jamais écraser le store pendant une mutation en cours
+    if (syncingRef.current || mutatingRef.current) return
     syncingRef.current = true
-    console.log('🔄 fullSync userId:', userId)
     try {
       const [profile, domains, goals, tasks, customChallenges, activeChallenges] =
         await Promise.all([
@@ -33,7 +39,11 @@ export function useSupabaseSync() {
           db.loadCustomChallenges(userId),
           db.loadActiveChallenges(userId),
         ])
-      console.log('✅ fullSync — domains:', domains.length, 'goals:', goals.length, 'tasks:', tasks.length)
+      // Vérifier une dernière fois qu'aucune mutation n'a démarré pendant le fetch
+      if (mutatingRef.current) {
+        console.log('⚠️ fullSync annulé — mutation en cours')
+        return
+      }
       hydrateFromSupabase({ profile, domains, goals, tasks, customChallenges, activeChallenges })
       setLastSyncedAt(new Date().toISOString())
     } catch (err) {
@@ -43,7 +53,7 @@ export function useSupabaseSync() {
     }
   }, [hydrateFromSupabase, setLastSyncedAt])
 
-  // ── Sync publique (bouton Resynchroniser) ─────────────────────────────────
+  // ── Sync manuelle (bouton Resynchroniser) ────────────────────────────────
   const manualSync = useCallback(async () => {
     const userId = userIdRef.current
     if (!userId) return
@@ -56,28 +66,20 @@ export function useSupabaseSync() {
   }, [fullSync])
 
   useEffect(() => {
-    console.log('🔵 useSupabaseSync monté')
-    if (!isSupabaseConfigured || !supabase) {
-      console.log('❌ Supabase non configuré — sync désactivée')
-      return
-    }
+    if (!isSupabaseConfigured || !supabase) return
 
     // ── Boot ────────────────────────────────────────────────────────────────
     const bootSync = async () => {
       try {
         const { data: { session }, error } = await supabase!.auth.getSession()
-        console.log('📦 session user id:', session?.user?.id ?? 'null', 'error:', error)
         if (session?.user) {
           setUserEmail(session.user.email ?? null)
           setSupabaseUser(session.user.id)
           userIdRef.current = session.user.id
           bootDoneRef.current = true
           setLoading(true)
-          try {
-            await fullSync(session.user.id)
-          } finally {
-            setLoading(false)
-          }
+          try { await fullSync(session.user.id) }
+          finally { setLoading(false) }
         }
       } catch (err) {
         console.error('💥 bootSync erreur:', err)
@@ -88,51 +90,37 @@ export function useSupabaseSync() {
     // ── Auth state changes ───────────────────────────────────────────────────
     const { data: { subscription } } = supabase!.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 onAuthStateChange event:', event, 'user:', session?.user?.id ?? 'null')
-
         if (event === 'SIGNED_IN' && session?.user) {
-          if (bootDoneRef.current) {
-            bootDoneRef.current = false
-            return
-          }
+          if (bootDoneRef.current) { bootDoneRef.current = false; return }
           setUserEmail(session.user.email ?? null)
           setSupabaseUser(session.user.id)
           userIdRef.current = session.user.id
           setLoading(true)
-          try {
-            await fullSync(session.user.id)
-          } finally {
-            setLoading(false)
-          }
+          try { await fullSync(session.user.id) }
+          finally { setLoading(false) }
         }
-
         if (event === 'SIGNED_OUT') {
           setSupabaseUser(null)
           setUserEmail(null)
           userIdRef.current = null
           bootDoneRef.current = false
           setLastSyncedAt('')
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('focusflow-store-v10')
-          }
+          if (typeof window !== 'undefined') localStorage.removeItem('focusflow-store-v10')
         }
       }
     )
 
-    // ── Polling 30s ─────────────────────────────────────────────────────────
-    const pollInterval = setInterval(async () => {
+    // ── Polling 60s ─────────────────────────────────────────────────────────
+    const pollInterval = setInterval(() => {
       const userId = userIdRef.current
-      if (!userId) return
-      console.log('⏱️ Poll sync userId:', userId)
-      await fullSync(userId)
+      if (userId) fullSync(userId)
     }, POLL_INTERVAL_MS)
 
-    // ── Retour foreground (mobile) ───────────────────────────────────────────
-    const handleVisibilityChange = async () => {
+    // ── Retour foreground mobile ─────────────────────────────────────────────
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const userId = userIdRef.current
-        console.log('👁️ Retour foreground — userId:', userId ?? 'null')
-        if (userId) await fullSync(userId)
+        if (userId) fullSync(userId)
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -144,9 +132,12 @@ export function useSupabaseSync() {
     }
   }, [fullSync, setLastSyncedAt, setSupabaseUser, setUserEmail])
 
-  return {
-    loading,
-    isOnline: isSupabaseConfigured,
-    manualSync,
+  return { loading, isOnline: isSupabaseConfigured, manualSync }
+}
+
+// Helper exporté pour que le store puisse signaler une mutation
+export function setMutating(val: boolean) {
+  if (typeof window !== 'undefined' && (window as any).__focusflowMutating) {
+    (window as any).__focusflowMutating.current = val
   }
 }
