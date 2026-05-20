@@ -144,7 +144,7 @@ export async function insertGoal(userId: string, goal: Goal) {
   if (!supabase) return
   const { error } = await supabase.from('goals').insert({
     id: goal.id, user_id: userId,
-    domain_id:    goal.domainId,
+    domain_id:    goal.domainId    || null,
     challenge_id: goal.challengeId || null,
     title:        goal.title,
     description:  goal.description || null,

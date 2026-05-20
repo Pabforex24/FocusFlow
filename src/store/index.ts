@@ -51,7 +51,7 @@ export const CHALLENGE_CATALOGUE: Challenge[] = [
   },
 ]
 
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+const uid = () => crypto.randomUUID()
 
 const today    = new Date().toISOString().split('T')[0]
 const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
