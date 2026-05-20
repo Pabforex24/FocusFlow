@@ -621,6 +621,20 @@ export const useStore = create<AppStore>()(
       name: 'focusflow-store-v10',
       skipHydration: true,
       storage: ssrSafeStorage,
+      // tasks, goals, domains sont des données serveur → jamais persistées localement
+      // Seules les préférences UI et l'état de session sont gardés
+      partialize: (state: any) => {
+        const {
+          tasks: _t,
+          goals: _g,
+          domains: _d,
+          activeChallenges: _ac,
+          customChallenges: _cc,
+          lastSyncedAt: _ls,
+          ...uiState
+        } = state
+        return uiState
+      },
     }
   )
 )

@@ -25,7 +25,11 @@ const NAV_ITEMS = [
 const MOBILE_LEFT  = [NAV_ITEMS[0], NAV_ITEMS[3], NAV_ITEMS[1]] // Dashboard, Taches, Domaines
 const MOBILE_RIGHT = [NAV_ITEMS[4], NAV_ITEMS[2], NAV_ITEMS[5]]  // Challenges, Objectifs, Mensuel
 
-export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
+export function Sidebar({ onOpenFocus, onManualSync, syncLoading }: {
+  onOpenFocus?: () => void
+  onManualSync?: () => void
+  syncLoading?: boolean
+}) {
   const pathname = usePathname()
   const router   = useRouter()
   const { streak, tasks, userStats, focusSession, setSupabaseUser } = useStore()
@@ -179,6 +183,16 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
                   style={{ color: '#C8D6F0' }}>
                   <User size={13} /> Mon profil
                 </button>
+                {onManualSync && (
+                  <button
+                    onClick={() => { setMenuOpen(false); onManualSync() }}
+                    disabled={syncLoading}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all disabled:opacity-50"
+                    style={{ color: '#3DD8FA', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
+                    <span style={{ display: 'inline-block', animation: syncLoading ? 'spin 1s linear infinite' : 'none' }}>↻</span>
+                    {syncLoading ? 'Synchronisation…' : 'Resynchroniser'}
+                  </button>
+                )}
                 <button
                   onClick={handleSignOut}
                   onPointerUp={handleSignOut}
@@ -357,6 +371,15 @@ export function Sidebar({ onOpenFocus }: { onOpenFocus?: () => void }) {
                   style={{ color: '#C8D6F0' }}>
                   <User size={13} /> Mon profil
                 </button>
+                {onManualSync && (
+                  <button onClick={() => { setMenuOpen(false); onManualSync() }}
+                    disabled={syncLoading}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all disabled:opacity-50"
+                    style={{ color: '#3DD8FA' }}>
+                    <span style={{ display: 'inline-block', animation: syncLoading ? 'spin 1s linear infinite' : 'none' }}>↻</span>
+                    {syncLoading ? 'Synchronisation…' : 'Resynchroniser'}
+                  </button>
+                )}
                 <button onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium hover:bg-white/5 transition-all"
                   style={{ color: '#FF5E7A' }}>

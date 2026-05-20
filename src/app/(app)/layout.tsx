@@ -15,14 +15,14 @@ export const dynamic = 'force-dynamic'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   useNotifications()
-  useSupabaseSync() // ← Sync Supabase desktop ↔ mobile
+  const { manualSync, loading: syncLoading } = useSupabaseSync()
   const focusModalOpen  = useStore((s) => s.focusModalOpen)
   const openFocusModal  = useStore((s) => s.openFocusModal)
   const closeFocusModal = useStore((s) => s.closeFocusModal)
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar onOpenFocus={openFocusModal} />
+      <Sidebar onOpenFocus={openFocusModal} onManualSync={manualSync} syncLoading={syncLoading} />
 
       <main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-0">
         {children}
