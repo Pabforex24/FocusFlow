@@ -238,8 +238,8 @@ export async function insertTask(userId: string, task: Task) {
 }
 
 export async function insertTasks(userId: string, tasks: Task[]) {
-  if (!supabase || !tasks.length) return
-  await supabase.from('tasks').insert(
+  if (!supabase || !tasks.length) return null
+  const { error } = await supabase.from('tasks').insert(
     tasks.map((task) => ({
       id: task.id, user_id: userId,
       domain_id:           task.domainId           || null,
@@ -258,6 +258,11 @@ export async function insertTasks(userId: string, tasks: Task[]) {
       created_at:          task.createdAt,
     }))
   )
+  if (error && error.code !== '23505') {
+    console.error('[db] insertTasks FAILED:', error.message)
+    return error
+  }
+  return null
 }
 
 export async function updateTask(task: Partial<Task> & { id: string }) {
