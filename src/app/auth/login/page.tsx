@@ -40,9 +40,11 @@ function LoginForm() {
       // Supabase pose le cookie via onAuthStateChange — on attend que la session
       // soit confirmée avant de rediriger. Sans session, le middleware bloque.
       if (data?.session) {
+        // router.refresh() invalide le cache de routes Next.js
+        // pour que le middleware relise la session fraîche au prochain push
+        router.refresh()
         router.push(nextPath)
       } else {
-        // Pas de session immédiate (ex: confirmation email requise)
         setError('Vérifie ta boîte mail pour confirmer ton compte avant de te connecter.')
       }
     } catch (err: any) {
