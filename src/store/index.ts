@@ -179,6 +179,7 @@ export const useStore = create<AppStore>()(
       restDayUsedThisWeek: false,
       activeChallenges:    [],
       customChallenges:    [],
+      recurringTemplates:  [],
       deletedCatalogueIds: [],
       catalogueOverrides:  {},
       supabaseUserId:      null,
@@ -612,6 +613,90 @@ export const useStore = create<AppStore>()(
         if (!base) return undefined
         const override = catalogueOverrides[id]
         return override ? { ...base, ...override } : base
+      },
+
+
+      // ── Recurring Templates ───────────────────────────────────────────────
+      addRecurringTemplate: (data) => {
+        const newTemplate = { ...data, id: uid(), createdAt: new Date().toISOString() }
+        set((s) => ({ recurringTemplates: [...s.recurringTemplates, newTemplate] }))
+        // Générer immédiatement la tâche du jour si la date correspond
+        get().generateRecurringTasksForDate(new Date())
+      },
+
+      updateRecurringTemplate: (id, data) => {
+        set((s) => ({
+          recurringTemplates: s.recurringTemplates.map((t) => t.id === id ? { ...t, ...data } : t),
+        }))
+      },
+
+      deleteRecurringTemplate: (id) => {
+        // Supprimer le template ET les tâches futures non faites liées
+        set((s) => ({
+          recurringTemplates: s.recurringTemplates.filter((t) => t.id !== id),
+          tasks: s.tasks.filter((t) => {
+            if (t.templateId !== id) return true
+            // Garder les tâches déjà faites, supprimer les futures
+            return t.done || new Date(t.scheduledAt) < new Date()
+          }),
+        }))
+      },
+
+      generateRecurringTasksForDate: (date: Date) => {
+        const { recurringTemplates, tasks, supabaseUserId } = get()
+        if (!recurringTemplates.length) return
+
+        const dateStr  = date.toDateString()
+        const dateISO  = date.toISOString().split('T')[0]
+        const dayOfWeek = date.getDay()  // 0=Dim, 1=Lun, ..., 6=Sam
+        const newTasks: Task[] = []
+
+        for (const template of recurringTemplates) {
+          if (!template.active) continue
+
+          // Vérifier la plage de dates
+          if (template.startDate > dateISO) continue
+          if (template.endDate && template.endDate < dateISO) continue
+
+          // Vérifier la fréquence
+          let match = false
+          if      (template.frequency === 'daily')    match = true
+          else if (template.frequency === 'workdays') match = dayOfWeek >= 1 && dayOfWeek <= 5
+          else if (template.frequency === 'weekend')  match = dayOfWeek === 0 || dayOfWeek === 6
+          else if (template.frequency === 'custom')   match = (template.customDays ?? []).includes(dayOfWeek)
+          if (!match) continue
+
+          // Ne pas régénérer si une tâche de ce template existe déjà ce jour
+          const alreadyExists = tasks.some(
+            (t) => t.templateId === template.id &&
+                   new Date(t.scheduledAt).toDateString() === dateStr
+          )
+          if (alreadyExists) continue
+
+          const newTask = {
+            id:         uid(),
+            title:      template.title,
+            domainId:   template.domainId,
+            goalId:     template.goalId,
+            duration:   template.duration,
+            scheduledAt: dateISO + 'T' + template.timeOfDay + ':00.000Z',
+            done:        false,
+            xpValue:     template.xpValue,
+            priority:    template.priority || 'medium' as const,
+            frequency:   template.frequency,
+            customDays:  template.customDays,
+            templateId:  template.id,
+            isGenerated: true,
+            createdAt:   new Date().toISOString(),
+          }
+          newTasks.push(newTask)
+        }
+
+        if (!newTasks.length) return
+        set((s) => ({ tasks: [...s.tasks, ...newTasks] }))
+        if (supabaseUserId) {
+          db.insertTasks(supabaseUserId, newTasks).catch(console.error)
+        }
       },
 
       // ── Selectors ─────────────────────────────────────────────────────────

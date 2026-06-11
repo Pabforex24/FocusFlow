@@ -5,6 +5,7 @@ import { FocusMode } from '@/components/focus/FocusMode'
 import { useStore } from '@/store'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useSupabaseSync } from '@/hooks/useSupabaseSync'
+import { useDailyTaskGeneration } from '@/hooks/useDailyTaskGeneration'
 
 /**
  * Layout global des pages protégées.
@@ -15,6 +16,7 @@ export const dynamic = 'force-dynamic'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   useNotifications()
+  useDailyTaskGeneration()
   const { manualSync, loading: syncLoading } = useSupabaseSync()
   const focusModalOpen  = useStore((s) => s.focusModalOpen)
   const openFocusModal  = useStore((s) => s.openFocusModal)

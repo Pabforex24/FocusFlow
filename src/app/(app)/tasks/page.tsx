@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useMemo } from 'react'
 import { Plus, CheckSquare, ChevronLeft, ChevronRight, Search, X, SlidersHorizontal } from 'lucide-react'
 import { useStore } from '@/store'
-import { Task } from '@/types'
+import { Task, RecurringTemplate } from '@/types'
 import { formatTaskDate } from '@/lib/utils'
 import { PageHeader }  from '@/components/layout/PageHeader'
 import { Button }      from '@/components/ui/Button'
@@ -25,7 +25,7 @@ export default function TasksPage() {
     domains, goals, tasks,
     addTask, updateTask, toggleTask, deleteTask,
     getTasksForDate, postponeTask,
-    restDays,
+    addRecurringTemplate,
   } = useStore()
   const { toast } = useToast()
 
@@ -94,6 +94,11 @@ export default function TasksPage() {
       addTask(data)
       toast('Tâche ajoutée ✓', 'success')
     }
+  }
+
+  const handleSaveRecurring = (data: Parameters<typeof addRecurringTemplate>[0]) => {
+    addRecurringTemplate(data)
+    toast('Tâche récurrente créée 🔁', 'success')
   }
 
   return (
@@ -386,6 +391,7 @@ export default function TasksPage() {
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditingTask(null) }}
         onSave={handleSave}
+        onSaveRecurring={handleSaveRecurring}
         domains={domains}
         goals={goals}
         defaultDate={currentDate}
