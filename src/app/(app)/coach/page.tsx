@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Sparkles, Send, RefreshCw, MessageSquare } from 'lucide-react'
+import { Sparkles, Send, RefreshCw, MessageSquare, Trash2 } from 'lucide-react'
 import { useStore } from '@/store'
 import { useGlobalProgress, useAllDomainProgress } from '@/store/selectors'
 import { getRandomQuote } from '@/lib/utils'
@@ -26,9 +26,34 @@ export default function CoachPage() {
 
   const [insights,        setInsights]        = useState<React.ReactNode | null>(null)
   const [insightsLoading, setInsightsLoading] = useState(false)
-  const [chatMessages,    setChatMessages]    = useState<ChatMessage[]>([])
   const [chatInput,       setChatInput]       = useState('')
   const [chatLoading,     setChatLoading]     = useState(false)
+
+  // ── Historique persisté dans localStorage (20 derniers messages) ──────────
+  const STORAGE_KEY = 'focusflow-coach-history'
+  const MAX_HISTORY = 20
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
+
+  // Sauvegarde l'historique à chaque changement (hors messages en streaming)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const toSave = chatMessages
+      .filter((m) => !m.streaming)
+      .slice(-MAX_HISTORY)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)) } catch {}
+  }, [chatMessages])
+
+  const clearHistory = () => {
+    setChatMessages([])
+    try { localStorage.removeItem(STORAGE_KEY) } catch {}
+  }
 
   const chatEndRef  = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -230,6 +255,13 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
     return `Je suis votre coach de discipline. ${getRandomQuote()}`
   }
 
+  // Groupe les messages par date pour afficher un séparateur
+  const getMessageDate = (idx: number) => {
+    // On ne peut pas stocker la date dans ChatMessage sans changer le type,
+    // donc on se base sur le premier message pour estimer — simplifié
+    return null
+  }
+
   return (
     <div className="px-4 pt-4 md:p-8 max-w-3xl mx-auto mt-[calc(env(safe-area-inset-top)+52px)] md:mt-0 page-enter">
       <PageHeader title="IA Coach" subtitle="Analyse · Suggestions · Motivation" />
@@ -249,6 +281,11 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
           <Button variant="outline" onClick={() => document.getElementById('chat-section')?.scrollIntoView({ behavior: 'smooth' })}>
             <MessageSquare size={14} />
             Poser une question
+            {chatMessages.length > 0 && (
+              <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(123,94,167,0.3)', color: 'var(--color-accent)' }}>
+                {chatMessages.length}
+              </span>
+            )}
           </Button>
         </div>
       </div>
@@ -283,15 +320,29 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
 
       {/* Chat */}
       <div id="chat-section" className="bg-bg-2 border border-border rounded-2xl p-5">
-        <h2 className="font-heading font-bold text-base mb-4 flex items-center gap-2">
-          <MessageSquare size={16} className="text-accent" />
-          Discuter avec votre coach
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading font-bold text-base flex items-center gap-2">
+            <MessageSquare size={16} className="text-accent" />
+            Discuter avec votre coach
+          </h2>
+          {chatMessages.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg transition-all opacity-60 hover:opacity-100"
+              style={{ color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)' }}
+              title="Effacer l'historique"
+            >
+              <Trash2 size={11} /> Effacer
+            </button>
+          )}
+        </div>
 
         <div className="min-h-[100px] max-h-[360px] overflow-y-auto flex flex-col gap-3 mb-4">
           {chatMessages.length === 0 && (
-            <div className="text-center py-8 text-content-3 text-sm">
-              Posez une question sur votre productivité, votre discipline ou vos objectifs…
+            <div className="text-center py-8 text-content-3 text-sm space-y-1">
+              <MessageSquare size={28} className="mx-auto mb-3 opacity-20" />
+              <p>Posez une question sur votre productivité,</p>
+              <p>votre discipline ou vos objectifs…</p>
             </div>
           )}
 
