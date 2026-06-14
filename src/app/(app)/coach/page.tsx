@@ -79,9 +79,9 @@ export default function CoachPage() {
     return {
       todayDone:    todayDone.length,
       totalToday:   todayTasks.length,
-      globalPct:    getGlobalProgress(),
+      globalPct,
       streak,
-      domainsData:  domains.map((d) => ({ name: d.name, pct: getDomainProgress(d.id) })),
+      domainsData:  domains.map((d) => ({ name: d.name, pct: domainProgress[d.id] ?? 0 })),
       // Contexte enrichi pour le coach
       pendingTasks: tasks
         .filter((t) => !t.done && new Date(t.scheduledAt).toDateString() === todayStr)
