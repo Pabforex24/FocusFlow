@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Globe } from 'lucide-react'
 import { useStore } from '@/store'
+import { useAllDomainProgress } from '@/store/selectors'
 import { Domain } from '@/types'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -16,7 +17,8 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export default function DomainsPage() {
   const router = useRouter()
-  const { domains, goals, addDomain, updateDomain, deleteDomain, getDomainProgress } = useStore()
+  const { domains, goals, addDomain, updateDomain, deleteDomain } = useStore()
+  const domainProgress = useAllDomainProgress()
   const { toast } = useToast()
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -81,7 +83,7 @@ export default function DomainsPage() {
             <DomainCard
               key={domain.id}
               domain={domain}
-              progress={getDomainProgress(domain.id)}
+              progress={domainProgress[domain.id] ?? 0}
               goalCount={goals.filter((g) => g.domainId === domain.id).length}
               onClick={() => router.push(`/goals?domain=${domain.id}`)}
               onEdit={() => handleEdit(domain)}

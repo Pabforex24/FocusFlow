@@ -1,22 +1,25 @@
 'use client'
 
-import { Trash2, Timer, Pencil, CornerDownRight } from 'lucide-react'
+import { memo, useState } from 'react'
+import { Trash2, Timer, Pencil, CornerDownRight, Repeat } from 'lucide-react'
 import { Task, Domain } from '@/types'
 import { hexToRgba, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
-import { useState } from 'react'
 import dynamic from 'next/dynamic'
 
-const FocusMode = dynamic(() => import('@/components/focus/FocusMode').then(m => ({ default: m.FocusMode })), { ssr: false })
+const FocusMode = dynamic(
+  () => import('@/components/focus/FocusMode').then((m) => ({ default: m.FocusMode })),
+  { ssr: false }
+)
 
 interface TaskItemProps {
-  task: Task
-  domain?: Domain
-  goalTitle?: string
-  onToggle: () => void
-  onDelete: () => void
-  onEdit?: () => void
-  onPostpone?: () => void
+  task:         Task
+  domain?:      Domain
+  goalTitle?:   string
+  onToggle:     () => void
+  onDelete:     () => void
+  onEdit?:      () => void
+  onPostpone?:  () => void
   showFocusBtn?: boolean
 }
 
@@ -26,7 +29,10 @@ const PRIORITY_COLOR: Record<string, string> = {
   low:    '#2e3d5e',
 }
 
-export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, onPostpone, showFocusBtn = false }: TaskItemProps) {
+// React.memo : le composant ne se re-rend que si ses props changent réellement
+export const TaskItem = memo(function TaskItem({
+  task, domain, goalTitle, onToggle, onDelete, onEdit, onPostpone, showFocusBtn = false
+}: TaskItemProps) {
   const [showFocus, setShowFocus] = useState(false)
   const c = domain?.color || '#00E5B0'
 
@@ -43,12 +49,8 @@ export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, 
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
         }}
-        onMouseEnter={(e) => {
-          if (!task.done) (e.currentTarget as HTMLElement).style.borderColor = `rgba(255,255,255,0.10)`
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = `rgba(255,255,255,${task.done ? '0.03' : '0.06'})`
-        }}
+        onMouseEnter={(e) => { if (!task.done) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.10)' }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `rgba(255,255,255,${task.done ? '0.03' : '0.06'})` }}
       >
         {/* Priority dot */}
         {task.priority && !task.done && (
@@ -77,19 +79,26 @@ export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, 
         </button>
 
         {/* Title */}
-        <span
-          className={cn('flex-1 text-sm font-medium min-w-0 truncate', task.done ? 'line-through' : 'text-content')}
-          style={task.done ? { color: '#3D4F6E', textDecoration: 'line-through' } : {}}
-        >
-          {task.title}
-        </span>
+        <div className="flex-1 min-w-0">
+          <span
+            className={cn('text-sm font-medium truncate block', task.done ? 'line-through' : 'text-content')}
+            style={task.done ? { color: '#3D4F6E' } : {}}
+          >
+            {task.title}
+          </span>
+          {/* Indicateur récurrence */}
+          {task.templateId && !task.done && (
+            <span className="text-[10px] flex items-center gap-1 mt-0.5" style={{ color: '#4A5E80' }}>
+              <Repeat size={9} /> Récurrent
+            </span>
+          )}
+        </div>
 
         {/* Meta */}
         <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
           {task.duration && (
             <span className="text-[11px] hidden sm:block font-mono" style={{ color: '#3D4F6E' }}>{task.duration}</span>
           )}
-
           {!task.done && (
             <span
               className="hidden sm:block text-[9px] px-1.5 py-0.5 rounded-md font-bold font-mono"
@@ -98,66 +107,47 @@ export function TaskItem({ task, domain, goalTitle, onToggle, onDelete, onEdit, 
               +{task.xpValue ?? 10}xp
             </span>
           )}
-
           {task.challengeActiveId && (
             <span
               className="hidden sm:block text-[10px] px-2 py-0.5 rounded-full font-bold"
               style={{ background: 'rgba(200,134,90,0.10)', color: '#C8865A', border: '1px solid rgba(200,134,90,0.22)' }}
-            >
-              ⚡
-            </span>
+            >⚡</span>
           )}
-
           {goalTitle && !task.challengeActiveId && (
             <span
               className="hidden sm:block text-[10px] px-2 py-0.5 rounded-full font-medium max-w-[120px] truncate"
               style={{ background: hexToRgba(c, 0.08), color: c, border: `1px solid ${hexToRgba(c, 0.18)}` }}
-            >
-              {goalTitle}
-            </span>
+            >{goalTitle}</span>
           )}
-
-          {/* Edit button */}
           {onEdit && !task.done && (
-            <button
-              onClick={onEdit}
+            <button onClick={onEdit}
               className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center transition-all"
               style={{ color: '#3D4F6E' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#C8865A' }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#3D4F6E' }}
-            >
-              <Pencil size={12} strokeWidth={1.75} />
-            </button>
+            ><Pencil size={12} strokeWidth={1.75} /></button>
           )}
-
-          {/* Focus button */}
           {showFocusBtn && !task.done && (
-            <button
-              onClick={() => setShowFocus(true)}
+            <button onClick={() => setShowFocus(true)}
               className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center transition-all"
               style={{ color: '#3D4F6E' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#00E5B0' }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#3D4F6E' }}
-            >
-              <Timer size={12} strokeWidth={1.75} />
-            </button>
+            ><Timer size={12} strokeWidth={1.75} /></button>
           )}
-
           {onPostpone && !task.done && (
             <Button variant="ghost" size="icon"
               className="opacity-0 group-hover:opacity-100 w-7 h-7"
               title="Reporter à demain"
-              onClick={onPostpone}>
-              <CornerDownRight size={13} style={{ color: '#3DD8FA' }} />
-            </Button>
+              onClick={onPostpone}
+            ><CornerDownRight size={13} style={{ color: '#3DD8FA' }} /></Button>
           )}
           <Button variant="danger" size="icon" className="opacity-0 group-hover:opacity-100 w-7 h-7" onClick={onDelete}>
             <Trash2 size={12} strokeWidth={1.75} />
           </Button>
         </div>
       </div>
-
       {showFocus && <FocusMode onClose={() => setShowFocus(false)} initialTask={task} />}
     </>
   )
-}
+})

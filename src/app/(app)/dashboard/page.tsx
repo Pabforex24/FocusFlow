@@ -9,6 +9,7 @@ import {
   CheckCircle2, Target, ListTodo, Trophy, Sparkles,
 } from 'lucide-react'
 import { useStore } from '@/store'
+import { useGlobalProgress, useAllDomainProgress, useTodayStats } from '@/store/selectors'
 import { getGreeting, hexToRgba } from '@/lib/utils'
 import { ProgressBar, RingProgress } from '@/components/ui/ProgressBar'
 import { DomainIcon } from '@/components/domain/DomainIcon'
@@ -19,14 +20,18 @@ import { fr } from 'date-fns/locale'
 
 export default function DashboardPage() {
   const {
-    domains, goals, tasks, streak, userStats, focusSession,
+    domains, goals, streak, userStats, focusSession,
     activeChallenges,
-    getDomainProgress, getGlobalProgress,
     updateStreak, applyDailyPenalty,
     onboarding,
   } = useStore()
 
   const openFocusModal = useStore((s) => s.openFocusModal)
+
+  // Sélecteurs mémoïsés — ne recalculent que si tasks/goals/domains changent
+  const globalPct      = useGlobalProgress()
+  const domainProgress = useAllDomainProgress()
+  const { total: todayTotal, done: todayDone, pct: todayPct } = useTodayStats()
 
   useEffect(() => {
     updateStreak()
@@ -34,11 +39,6 @@ export default function DashboardPage() {
   }, [])
 
   const today       = new Date()
-  const todayStr    = today.toDateString()
-  const todayTasks  = tasks.filter((t) => new Date(t.scheduledAt).toDateString() === todayStr)
-  const doneTasks   = todayTasks.filter((t) => t.done)
-  const todayPct    = todayTasks.length ? Math.round((doneTasks.length / todayTasks.length) * 100) : 0
-  const globalPct   = getGlobalProgress()
   const hasFocus    = focusSession?.status === 'running' || focusSession?.status === 'paused'
   const activeCount = activeChallenges?.filter((c) => c.isActive).length ?? 0
 
@@ -80,7 +80,7 @@ export default function DashboardPage() {
       {/* KPI Cards — compact style TradeForge */}
       <div className="grid grid-cols-2 gap-2.5">
         {[
-          { label: "Aujourd'hui", value: `${doneTasks.length}/${todayTasks.length}`, sub: todayPct === 100 ? '✓ Tout fait' : `${100-todayPct}% restant`, icon: <CheckCircle2 size={13} />, color: '#00E5B0', href: '/tasks' },
+          { label: "Aujourd'hui", value: `${todayDone}/${todayTotal}`, sub: todayPct === 100 ? '✓ Tout fait' : `${100-todayPct}% restant`, icon: <CheckCircle2 size={13} />, color: '#00E5B0', href: '/tasks' },
           { label: 'Streak',      value: `${streak}j`,   sub: `record ${userStats.longestStreak}j`, icon: <Flame size={13} />,       color: '#C8865A', href: null },
           { label: 'Niveau',      value: `Nv.${userStats.level}`, sub: `${userStats.xp} XP`,       icon: <Zap size={13} />,          color: '#7B5EA7', href: null },
           { label: 'Progression', value: `${globalPct}%`, sub: 'tous domaines',                    icon: <TrendingUp size={13} />,   color: '#3DD8FA', href: '/goals' },
@@ -141,7 +141,7 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-4">
             {domains.map((domain) => {
-              const pct = getDomainProgress(domain.id)
+              const pct = domainProgress[domain.id] ?? 0
               const goalCount = goals.filter((g) => g.domainId === domain.id).length
               return (
                 <Link key={domain.id} href={`/goals?domain=${domain.id}`} className="block group">
@@ -182,8 +182,8 @@ export default function DashboardPage() {
             label: 'Tâches du jour',
             value: todayPct === 100
               ? '✓ Tout fait !'
-              : `${doneTasks.length} / ${todayTasks.length} faites`,
-            sub: todayTasks.length === 0 ? 'Rien de planifié' : `${100 - todayPct}% restant`,
+              : `${todayDone} / ${todayTotal} faites`,
+            sub: todayTotal === 0 ? 'Rien de planifié' : `${100 - todayPct}% restant`,
             progress: todayPct,
           },
           {
