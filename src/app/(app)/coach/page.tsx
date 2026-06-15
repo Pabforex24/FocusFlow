@@ -8,10 +8,10 @@ import { useStore } from '@/store'
 import { useGlobalProgress, useAllDomainProgress } from '@/store/selectors'
 import { getRandomQuote } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Button } from '@/components/ui/Button'
+import { Button }     from '@/components/ui/Button'
 import { InsightCard } from '@/components/coach/InsightCard'
-import { WeekChart } from '@/components/coach/WeekChart'
-import { inputCls } from '@/components/ui/Modal'
+import { WeekChart }   from '@/components/coach/WeekChart'
+import { inputCls }    from '@/components/ui/Modal'
 
 interface ChatMessage {
   role:      'user' | 'assistant'
@@ -19,8 +19,13 @@ interface ChatMessage {
   streaming?: boolean
 }
 
+const STORAGE_KEY = 'focusflow-coach-history'
+const MAX_HISTORY = 20
+
 export default function CoachPage() {
   const { domains, goals, tasks, streak } = useStore()
+
+  // Sélecteurs mémoïsés
   const globalPct      = useGlobalProgress()
   const domainProgress = useAllDomainProgress()
 
@@ -29,10 +34,7 @@ export default function CoachPage() {
   const [chatInput,       setChatInput]       = useState('')
   const [chatLoading,     setChatLoading]     = useState(false)
 
-  // ── Historique persisté dans localStorage (20 derniers messages) ──────────
-  const STORAGE_KEY = 'focusflow-coach-history'
-  const MAX_HISTORY = 20
-
+  // Historique persisté dans localStorage
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
     if (typeof window === 'undefined') return []
     try {
@@ -41,12 +43,10 @@ export default function CoachPage() {
     } catch { return [] }
   })
 
-  // Sauvegarde l'historique à chaque changement (hors messages en streaming)
+  // Sauvegarde à chaque changement (hors streaming)
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const toSave = chatMessages
-      .filter((m) => !m.streaming)
-      .slice(-MAX_HISTORY)
+    const toSave = chatMessages.filter((m) => !m.streaming).slice(-MAX_HISTORY)
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)) } catch {}
   }, [chatMessages])
 
@@ -63,7 +63,6 @@ export default function CoachPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
-  // Auto-resize textarea
   const resizeTextarea = useCallback(() => {
     const el = textareaRef.current
     if (!el) return
@@ -82,7 +81,6 @@ export default function CoachPage() {
       globalPct,
       streak,
       domainsData:  domains.map((d) => ({ name: d.name, pct: domainProgress[d.id] ?? 0 })),
-      // Contexte enrichi pour le coach
       pendingTasks: tasks
         .filter((t) => !t.done && new Date(t.scheduledAt).toDateString() === todayStr)
         .map((t) => t.title)
@@ -91,14 +89,14 @@ export default function CoachPage() {
     }
   }, [tasks, goals, domains, streak, globalPct, domainProgress])
 
-  // ── Insights ──────────────────────────────────────────────────────────────
+  // ── Insights ────────────────────────────────────────────────────────────────
   const generateInsights = async () => {
     setInsightsLoading(true)
     const ctx = buildContext()
     await new Promise((r) => setTimeout(r, 400))
 
-    const completion  = ctx.totalToday > 0 ? Math.round((ctx.todayDone / ctx.totalToday) * 100) : 0
-    const weakDomain  = [...ctx.domainsData].sort((a, b) => a.pct - b.pct)[0]
+    const completion   = ctx.totalToday > 0 ? Math.round((ctx.todayDone / ctx.totalToday) * 100) : 0
+    const weakDomain   = [...ctx.domainsData].sort((a, b) => a.pct - b.pct)[0]
     const strongDomain = [...ctx.domainsData].sort((a, b) => b.pct - a.pct)[0]
 
     let perfIcon = '🏆', perfMsg = ''
@@ -131,16 +129,16 @@ export default function CoachPage() {
           <InsightCard icon="🎯" title="Recommandations">
             <ul className="space-y-1.5 list-disc list-inside">
               {weakDomain && weakDomain.pct < 50 && (
-                <li><strong>Priorité :</strong> Le domaine "{weakDomain.name}" ({weakDomain.pct}%) mérite plus d'attention cette semaine.</li>
+                <li><strong>Priorité :</strong> Le domaine "{weakDomain.name}" ({weakDomain.pct}%) mérite plus d'attention.</li>
               )}
               {strongDomain && strongDomain.pct > 60 && (
-                <li><strong>Point fort :</strong> "{strongDomain.name}" progresse bien ({strongDomain.pct}%). Capitalisez dessus.</li>
+                <li><strong>Point fort :</strong> "{strongDomain.name}" progresse bien ({strongDomain.pct}%).</li>
               )}
               {ctx.streak >= 3
-                ? <li><strong>Streak :</strong> {ctx.streak} jours consécutifs ! Ne cassez pas la chaîne ce soir.</li>
-                : <li>Complétez au moins une tâche aujourd'hui pour démarrer ou maintenir votre série.</li>
+                ? <li><strong>Streak :</strong> {ctx.streak} jours consécutifs ! Ne cassez pas la chaîne.</li>
+                : <li>Complétez au moins une tâche aujourd'hui pour démarrer votre série.</li>
               }
-              {goals.length === 0 && <li>Créez votre premier objectif pour commencer à mesurer votre progression.</li>}
+              {goals.length === 0 && <li>Créez votre premier objectif pour mesurer votre progression.</li>}
             </ul>
           </InsightCard>
         )}
@@ -153,12 +151,20 @@ export default function CoachPage() {
     setInsightsLoading(false)
   }
 
-  // ── Chat avec streaming ───────────────────────────────────────────────────
+  // ── Chat streaming ───────────────────────────────────────────────────────────
+  const getLocalFallback = (msg: string, ctx: ReturnType<typeof buildContext>) => {
+    const m = msg.toLowerCase()
+    if (m.includes('motiv'))      return `La motivation ne dure pas, mais les habitudes si. ${getRandomQuote()}`
+    if (m.includes('procrastin')) return "Pour vaincre la procrastination : démarrez avec 2 minutes. L'action crée l'élan."
+    if (m.includes('streak'))     return `Votre streak actuel est de ${ctx.streak} jours. Ne cassez pas la chaîne !`
+    if (m.includes('objectif'))   return `Vous avez ${goals.length} objectif(s) actif(s). Concentrez-vous sur un seul à la fois.`
+    return `Je suis votre coach de discipline. ${getRandomQuote()}`
+  }
+
   const sendChat = async () => {
     const msg = chatInput.trim()
     if (!msg || chatLoading) return
 
-    // Annule un stream en cours si l'utilisateur envoie avant la fin
     abortRef.current?.abort()
     abortRef.current = new AbortController()
 
@@ -167,7 +173,7 @@ export default function CoachPage() {
     setChatMessages((prev) => [...prev, userMsg])
     setChatLoading(true)
 
-    const ctx          = buildContext()
+    const ctx = buildContext()
     const systemPrompt = `Tu es un coach personnel de productivité et discipline dans FocusFlow.
 Données utilisateur : ${domains.length} domaines, ${goals.length} objectifs, streak de ${ctx.streak} jours, progression globale ${ctx.globalPct}%.
 Domaines : ${ctx.domainsData.map((d) => `${d.name}(${d.pct}%)`).join(', ')}.
@@ -175,7 +181,6 @@ Tâches du jour non faites : ${ctx.pendingTasks.length > 0 ? ctx.pendingTasks.jo
 Objectifs actifs : ${ctx.goalTitles.length > 0 ? ctx.goalTitles.join(', ') : 'aucun'}.
 Réponds en français, de façon concise, motivante et pratique. Maximum 4 phrases.`
 
-    // Ajoute un message vide qui va se remplir token par token
     setChatMessages((prev) => [...prev, { role: 'assistant', content: '', streaming: true }])
 
     try {
@@ -189,7 +194,7 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
         }),
       })
 
-      // Fallback non-streamé (pas de clé Groq, rate limit, etc.)
+      // Fallback JSON (pas de clé, rate limit…)
       if (resp.headers.get('content-type')?.includes('application/json')) {
         const data = await resp.json()
         setChatMessages((prev) => [
@@ -200,7 +205,7 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
         return
       }
 
-      // Lecture du stream SSE
+      // Stream SSE
       const reader  = resp.body!.getReader()
       const decoder = new TextDecoder()
       let fullContent = ''
@@ -208,7 +213,6 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-
         const chunk = decoder.decode(value, { stream: true })
         for (const line of chunk.split('\n')) {
           const trimmed = line.trim()
@@ -219,7 +223,6 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
             const parsed = JSON.parse(data)
             if (parsed.token) {
               fullContent += parsed.token
-              // Met à jour le dernier message en temps réel
               setChatMessages((prev) => [
                 ...prev.slice(0, -1),
                 { role: 'assistant', content: fullContent, streaming: true },
@@ -229,7 +232,6 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
         }
       }
 
-      // Marque le message comme terminé (arrête le curseur clignotant)
       setChatMessages((prev) => [
         ...prev.slice(0, -1),
         { role: 'assistant', content: fullContent, streaming: false },
@@ -239,27 +241,11 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
       if (err?.name === 'AbortError') return
       setChatMessages((prev) => [
         ...prev.slice(0, -1),
-        { role: 'assistant', content: getLocalFallback(msg, buildContext()), streaming: false },
+        { role: 'assistant', content: getLocalFallback(msg, ctx), streaming: false },
       ])
     } finally {
       setChatLoading(false)
     }
-  }
-
-  const getLocalFallback = (msg: string, ctx: ReturnType<typeof buildContext>) => {
-    const m = msg.toLowerCase()
-    if (m.includes('motiv'))     return `La motivation ne dure pas, mais les habitudes si. ${getRandomQuote()}`
-    if (m.includes('procrastin')) return "Pour vaincre la procrastination : démarrez avec 2 minutes. L'action crée l'élan, pas l'inverse."
-    if (m.includes('streak'))    return `Votre streak actuel est de ${ctx.streak} jours. Chaque jour compte — ne cassez pas la chaîne !`
-    if (m.includes('objectif'))  return `Vous avez ${goals.length} objectif(s) actif(s). Concentrez-vous sur un seul à la fois.`
-    return `Je suis votre coach de discipline. ${getRandomQuote()}`
-  }
-
-  // Groupe les messages par date pour afficher un séparateur
-  const getMessageDate = (idx: number) => {
-    // On ne peut pas stocker la date dans ChatMessage sans changer le type,
-    // donc on se base sur le premier message pour estimer — simplifié
-    return null
   }
 
   return (
@@ -294,7 +280,7 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
       {insightsLoading && (
         <InsightCard icon="⏳" title="Analyse en cours…">
           <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
+            {[0,1,2].map((i) => (
               <div key={i} className="w-2 h-2 rounded-full bg-accent animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
@@ -309,12 +295,8 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
       <div className="bg-bg-2 border border-border rounded-xl p-5 mb-8">
         <WeekChart tasks={tasks} />
         <div className="flex items-center gap-4 mt-4 justify-end">
-          <div className="flex items-center gap-1.5 text-xs text-content-3">
-            <div className="w-3 h-3 rounded bg-bg-4" />Total
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-content-3">
-            <div className="w-3 h-3 rounded bg-accent" />Complétées
-          </div>
+          <div className="flex items-center gap-1.5 text-xs text-content-3"><div className="w-3 h-3 rounded bg-bg-4" />Total</div>
+          <div className="flex items-center gap-1.5 text-xs text-content-3"><div className="w-3 h-3 rounded bg-accent" />Complétées</div>
         </div>
       </div>
 
@@ -330,7 +312,6 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
               onClick={clearHistory}
               className="flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg transition-all opacity-60 hover:opacity-100"
               style={{ color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)' }}
-              title="Effacer l'historique"
             >
               <Trash2 size={11} /> Effacer
             </button>
@@ -345,33 +326,26 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
               <p>votre discipline ou vos objectifs…</p>
             </div>
           )}
-
           {chatMessages.map((msg, i) => (
-            <div
-              key={i}
+            <div key={i}
               className="px-4 py-3 rounded-xl text-sm leading-relaxed max-w-[85%]"
               style={{
-                alignSelf:   msg.role === 'user' ? 'flex-end' : 'flex-start',
-                background:  msg.role === 'user' ? 'rgba(123,94,167,0.18)' : 'rgba(255,255,255,0.04)',
-                border:      msg.role === 'user' ? '1px solid rgba(123,94,167,0.30)' : '1px solid rgba(255,255,255,0.07)',
-                color:       msg.role === 'user' ? 'var(--color-content)' : 'var(--color-content-2)',
+                alignSelf:  msg.role === 'user' ? 'flex-end' : 'flex-start',
+                background: msg.role === 'user' ? 'rgba(123,94,167,0.18)' : 'rgba(255,255,255,0.04)',
+                border:     msg.role === 'user' ? '1px solid rgba(123,94,167,0.30)' : '1px solid rgba(255,255,255,0.07)',
+                color:      msg.role === 'user' ? 'var(--color-content)' : 'var(--color-content-2)',
               }}
             >
               {msg.content}
-              {/* Curseur clignotant pendant le streaming */}
               {msg.streaming && (
-                <span
-                  className="inline-block w-[2px] h-[14px] ml-0.5 align-middle animate-pulse"
-                  style={{ background: 'var(--color-accent)', borderRadius: '1px' }}
-                />
+                <span className="inline-block w-[2px] h-[14px] ml-0.5 align-middle animate-pulse"
+                  style={{ background: 'var(--color-accent)', borderRadius: '1px' }} />
               )}
             </div>
           ))}
-
           <div ref={chatEndRef} />
         </div>
 
-        {/* Input */}
         <div className="flex gap-2">
           <textarea
             ref={textareaRef}
@@ -379,18 +353,13 @@ Réponds en français, de façon concise, motivante et pratique. Maximum 4 phras
             value={chatInput}
             rows={1}
             onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() }
-            }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
             placeholder="Écrivez votre message… (Shift+Entrée pour sauter une ligne)"
             disabled={chatLoading}
             style={{ minHeight: '40px', maxHeight: '160px' }}
           />
           <Button variant="primary" onClick={sendChat} disabled={!chatInput.trim() || chatLoading}>
-            {chatLoading
-              ? <RefreshCw size={15} className="animate-spin" />
-              : <Send size={15} />
-            }
+            {chatLoading ? <RefreshCw size={15} className="animate-spin" /> : <Send size={15} />}
           </Button>
         </div>
       </div>
