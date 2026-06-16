@@ -9,8 +9,48 @@ import {
 import { showToast } from '@/lib/toast'
 
 // ─── Challenge catalogue ──────────────────────────────────────────────────────
-// Catalogue vide — l'utilisateur crée ses propres challenges via "Créer"
-export const CHALLENGE_CATALOGUE: Challenge[] = []
+export const CHALLENGE_CATALOGUE: Challenge[] = [
+  {
+    id: 'ch-trading-30',
+    title: 'Trader Discipline 30J',
+    description: 'Construis une routine de trading solide : backtest quotidien, journal et analyse hebdo.',
+    durationDays: 30, color: '#00C2A8', icon: 'TrendingUp',
+    blueprints: [
+      { id: 'bp-t1', title: '1h de backtest',                     domainId: 'seed-d1', goalId: '', duration: '1h',    frequency: 'workdays' },
+      { id: 'bp-t2', title: 'Mettre à jour le journal de trades',  domainId: 'seed-d1', goalId: '', duration: '20min', frequency: 'daily'    },
+    ],
+  },
+  {
+    id: 'ch-sport-21',
+    title: 'Défi Forme 21J',
+    description: 'Adopte une routine sportive en 21 jours avec cardio, musculation et récupération.',
+    durationDays: 21, color: '#FFB830', icon: 'Dumbbell',
+    blueprints: [
+      { id: 'bp-s1', title: 'Footing 20 minutes',  domainId: 'seed-d2', goalId: '', duration: '20min', frequency: 'daily'    },
+      { id: 'bp-s2', title: 'Séance musculation',   domainId: 'seed-d2', goalId: '', duration: '45min', frequency: 'workdays' },
+    ],
+  },
+  {
+    id: 'ch-learning-14',
+    title: 'Deep Learning 14J',
+    description: "Plonge dans un sujet d'étude intensif avec sessions concentrées et révisions.",
+    durationDays: 14, color: '#4EA8DE', icon: 'Brain',
+    blueprints: [
+      { id: 'bp-l1', title: "Session d'étude focalisée", domainId: 'seed-d3', goalId: '', duration: '1h30', frequency: 'daily' },
+      { id: 'bp-l2', title: 'Révision des notes',         domainId: 'seed-d3', goalId: '', duration: '20min', frequency: 'daily' },
+    ],
+  },
+  {
+    id: 'ch-wellness-7',
+    title: 'Reset Bien-être 7J',
+    description: 'Une semaine pour tout remettre à zéro : hydratation, sommeil, mouvement, pleine conscience.',
+    durationDays: 7, color: '#1BC47D', icon: 'Leaf',
+    blueprints: [
+      { id: 'bp-w1', title: "Boire 2L d'eau",    domainId: 'seed-d2', goalId: '', duration: '—',    frequency: 'daily' },
+      { id: 'bp-w2', title: 'Méditation 10 min',  domainId: 'seed-d2', goalId: '', duration: '10min', frequency: 'daily' },
+    ],
+  },
+]
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 
