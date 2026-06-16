@@ -3,10 +3,9 @@ import * as db from '@/lib/db'
 import { persist } from 'zustand/middleware'
 import {
   AppStore, Domain, Goal, Task, Challenge, ActiveChallenge,
-  UserStats, Badge,
+  UserStats, Badge, OnboardingState,
   ALL_BADGES, xpForLevel, getOccurrenceDates,
 } from '@/types'
-import { showToast } from '@/lib/toast'
 
 // ─── Challenge catalogue ──────────────────────────────────────────────────────
 export const CHALLENGE_CATALOGUE: Challenge[] = [
@@ -57,22 +56,26 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const today    = new Date().toISOString().split('T')[0]
 const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
 
+// ─── Seed data ────────────────────────────────────────────────────────────────
+
 const seedDomains: Domain[] = [
   { id: 'seed-d1', name: 'Trading', icon: 'TrendingUp', color: '#00C2A8', createdAt: new Date().toISOString() },
   { id: 'seed-d2', name: 'Sport',   icon: 'Dumbbell',   color: '#FFB830', createdAt: new Date().toISOString() },
   { id: 'seed-d3', name: 'Études',  icon: 'BookOpen',   color: '#4EA8DE', createdAt: new Date().toISOString() },
 ]
+
 const seedGoals: Goal[] = [
   { id: 'seed-g1', domainId: 'seed-d1', title: '30h de backtest',          unit: 'heures',  createdAt: new Date().toISOString() },
   { id: 'seed-g2', domainId: 'seed-d2', title: '20 séances de sport',       unit: 'séances', createdAt: new Date().toISOString() },
   { id: 'seed-g3', domainId: 'seed-d3', title: 'Valider le module finance', unit: '',        createdAt: new Date().toISOString() },
 ]
+
 const seedTasks: Task[] = [
-  { id: uid(), title: '1h30 de backtest EUR/USD',               domainId: 'seed-d1', goalId: 'seed-g1', duration: '1h30',  scheduledAt: `${today}T08:00:00.000Z`,    done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Analyser les trades de la semaine',       domainId: 'seed-d1', goalId: 'seed-g1', duration: '30min', scheduledAt: `${today}T10:00:00.000Z`,    done: true,  xpValue: 10, doneAt: new Date().toISOString(), createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Footing 20 minutes',                      domainId: 'seed-d2', goalId: 'seed-g2', duration: '20min', scheduledAt: `${today}T07:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Réviser chapitre 3 — Marchés financiers', domainId: 'seed-d3', goalId: 'seed-g3', duration: '1h',    scheduledAt: `${today}T14:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
-  { id: uid(), title: 'Backtest stratégie RSI',                  domainId: 'seed-d1', goalId: 'seed-g1', duration: '2h',    scheduledAt: `${tomorrow}T09:00:00.000Z`, done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
+  { id: uid(), title: '1h30 de backtest EUR/USD',                domainId: 'seed-d1', goalId: 'seed-g1', duration: '1h30',  scheduledAt: `${today}T08:00:00.000Z`,    done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Analyser les trades de la semaine',        domainId: 'seed-d1', goalId: 'seed-g1', duration: '30min', scheduledAt: `${today}T10:00:00.000Z`,    done: true,  xpValue: 10, doneAt: new Date().toISOString(), createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Footing 20 minutes',                       domainId: 'seed-d2', goalId: 'seed-g2', duration: '20min', scheduledAt: `${today}T07:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Réviser chapitre 3 — Marchés financiers',  domainId: 'seed-d3', goalId: 'seed-g3', duration: '1h',    scheduledAt: `${today}T14:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
+  { id: uid(), title: 'Backtest stratégie RSI',                   domainId: 'seed-d1', goalId: 'seed-g1', duration: '2h',    scheduledAt: `${tomorrow}T09:00:00.000Z`, done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
 ]
 
 const initialUserStats: UserStats = {
@@ -82,6 +85,7 @@ const initialUserStats: UserStats = {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function computeLevel(xp: number): { level: number; xpToNextLevel: number } {
   let level = 1, cumulative = 0
   while (cumulative + xpForLevel(level) <= xp) {
@@ -98,56 +102,39 @@ function buildAllTasks(
   blueprintGoalMap: Record<string, string>
 ): Omit<Task, 'id' | 'createdAt'>[] {
   const tasks: Omit<Task, 'id' | 'createdAt'>[] = []
+
   for (const bp of challenge.blueprints) {
     const resolvedGoalId = blueprintGoalMap[bp.id] || bp.goalId
     const dates = getOccurrenceDates(startDate, endDate, bp.frequency, bp.customDays)
+
     for (const d of dates) {
       tasks.push({
-        title:             bp.title,
-        domainId:          bp.domainId,
-        goalId:            resolvedGoalId || undefined,
-        duration:          bp.duration,
-        scheduledAt:       d.toISOString().split('T')[0] + 'T08:00:00.000Z',
-        done:              false,
-        xpValue:           20,
+        title: bp.title,
+        domainId: bp.domainId,
+        goalId: resolvedGoalId || undefined,
+        duration: bp.duration,
+        scheduledAt: d.toISOString().split('T')[0] + 'T08:00:00.000Z',
+        done: false,
+        xpValue: 20,
         challengeActiveId: acId,
-        priority:          'medium',
-        frequency:         bp.frequency,
-        customDays:        bp.customDays,
-        isGenerated:       true,
+        priority: 'medium',
+        frequency: bp.frequency,
+        customDays: bp.customDays,
+        isGenerated: true,
       })
     }
   }
   return tasks
 }
 
-// ─── Sync profil Supabase (debouncé 3s) ──────────────────────────────────────
-let profileSyncTimer: ReturnType<typeof setTimeout> | null = null
-
-function scheduleProfileSync() {
-  if (typeof window === 'undefined') return
-  if (profileSyncTimer) clearTimeout(profileSyncTimer)
-  profileSyncTimer = setTimeout(() => {
-    profileSyncTimer = null
-    const s = useStore.getState()
-    if (!s.supabaseUserId) return
-    db.upsertProfile(s.supabaseUserId, s.userStats, {
-      streak:              s.streak,
-      lastActive:          s.lastActive,
-      badges:              s.badges,
-      catalogueOverrides:  s.catalogueOverrides,
-      deletedCatalogueIds: s.deletedCatalogueIds,
-      onboardingCompleted: s.onboarding.completed,
-    }).catch((err) => console.error('[store] profileSync failed:', err))
-  }, 3000)
-}
-
 // ─── Storage SSR-safe ─────────────────────────────────────────────────────────
 const ssrSafeStorage = {
   getItem: (key: string) => {
     if (typeof window === 'undefined') return null
-    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : null }
-    catch { return null }
+    try {
+      const str = localStorage.getItem(key)
+      return str ? JSON.parse(str) : null
+    } catch { return null }
   },
   setItem: (key: string, value: unknown) => {
     if (typeof window === 'undefined') return
@@ -160,110 +147,53 @@ const ssrSafeStorage = {
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
+
 export const useStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      domains:             seedDomains,
-      goals:               seedGoals,
-      tasks:               seedTasks,
-      streak:              0,
-      lastActive:          null,
-      onboarding:          { completed: false, step: 'domains' },
-      userStats:           initialUserStats,
-      badges:              ALL_BADGES.map((b) => ({ ...b })),
-      focusSession:        null,
-      focusModalOpen:      false,
-      isInserting:         false,
+      domains:          [],
+      goals:            [],
+      tasks:            [],
+      streak:           0,
+      lastActive:       null,
+      onboarding:       { completed: false, step: 'domains' },
+      userStats:        initialUserStats,
+      badges:           ALL_BADGES.map((b) => ({ ...b })),
+      focusSession:     null,
+      focusModalOpen:   false,
+      isInserting:      false,
       lastSyncedAt:        null,
       restDays:            [],
       restDayUsedThisWeek: false,
-      activeChallenges:    [],
+      activeChallenges: [],
       customChallenges:    [],
-      recurringTemplates:  [],
       deletedCatalogueIds: [],
       catalogueOverrides:  {},
-      supabaseUserId:      null,
-      userEmail:           null,
 
-      // ── Supabase identity ─────────────────────────────────────────────────
-      setSupabaseUser: (userId) => set({ supabaseUserId: userId }),
-      setUserEmail:    (email)  => set({ userEmail: email }),
-      setLastSyncedAt: (ts)     => set({ lastSyncedAt: ts }),
-
-      // ── Hydratation complète depuis Supabase (boot) ───────────────────────
-      hydrateFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
-        const patch: Partial<AppStore> = { domains, goals, tasks, customChallenges, activeChallenges }
-        if (profile) {
-          const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
-          patch.userStats = {
-            xp:                  profile.xp               ?? 0,
-            level,
-            xpToNextLevel,
-            totalTasksDone:      profile.total_tasks_done  ?? 0,
-            challengesCompleted: profile.challenges_done   ?? 0,
-            longestStreak:       profile.longest_streak    ?? 0,
-            hardcoreMode:        profile.hardcore_mode     ?? false,
-          }
-          patch.streak     = profile.streak_count ?? 0
-          patch.lastActive = profile.last_active  ?? null
-          patch.onboarding = { completed: true, step: 'done' }
-          if (Array.isArray(profile.badges) && profile.badges.length > 0) patch.badges = profile.badges
-          if (profile.catalogue_overrides)   patch.catalogueOverrides  = profile.catalogue_overrides
-          if (profile.deleted_catalogue_ids) patch.deletedCatalogueIds = profile.deleted_catalogue_ids
-        }
-        set(patch as any)
-      },
-
-      // ── Merge delta (sync incrémentale) ───────────────────────────────────
-      mergeFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
-        const s = get()
-        const patch: Partial<AppStore> = {}
-        const merge = <T extends { id: string }>(local: T[], remote: T[]) => {
-          if (!remote.length) return undefined
-          const map = new Map(local.map((x) => [x.id, x]))
-          remote.forEach((x) => map.set(x.id, x))
-          return Array.from(map.values())
-        }
-        const md = merge(s.domains, domains);           if (md) patch.domains = md
-        const mg = merge(s.goals, goals);               if (mg) patch.goals = mg
-        const mt = merge(s.tasks, tasks);               if (mt) patch.tasks = mt
-        const mc = merge(s.customChallenges, customChallenges); if (mc) patch.customChallenges = mc
-        const ma = merge(s.activeChallenges, activeChallenges); if (ma) patch.activeChallenges = ma
-        if (profile) {
-          const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
-          patch.userStats = {
-            xp: profile.xp ?? 0, level, xpToNextLevel,
-            totalTasksDone:      profile.total_tasks_done ?? 0,
-            challengesCompleted: profile.challenges_done  ?? 0,
-            longestStreak:       profile.longest_streak   ?? 0,
-            hardcoreMode:        profile.hardcore_mode    ?? false,
-          }
-          patch.streak     = profile.streak_count ?? 0
-          patch.lastActive = profile.last_active  ?? null
-        }
-        set(patch as any)
-      },
-
-      // ── Domain ────────────────────────────────────────────────────────────
-      addDomain: async (data) => {
+      // ── Domain ───────────────────────────────────────────────────────────────
+      addDomain: async (data: Omit<Domain, 'id' | 'createdAt'>) => {
         const newDomain = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ domains: [...s.domains, newDomain] }))
         const userId = get().supabaseUserId
-        if (!userId) return
-        set({ isInserting: true })
-        try {
-          const error = await db.insertDomain(userId, newDomain)
-          if (error) {
-            set((s) => ({ domains: s.domains.filter((d) => d.id !== newDomain.id), isInserting: false }))
-            showToast('Domaine non sauvegardé — vérifie ta connexion', 'error')
-            return
+        console.log('[store] addDomain — userId:', userId, 'name:', newDomain.name)
+        // 1. Affichage immédiat (optimistic)
+        set((s) => ({ domains: [...s.domains, newDomain] }))
+        if (userId) {
+          set({ isInserting: true })
+          try {
+            const error = await db.insertDomain(userId, newDomain)
+            if (error) {
+              console.error('[store] addDomain FAILED:', error.message, 'code:', error.code)
+              // Rollback : retirer la donnée du store
+              set((s) => ({ domains: s.domains.filter(d => d.id !== newDomain.id), isInserting: false }))
+              return
+            }
+            console.log('[store] addDomain SUCCESS — confirmé dans Supabase')
+            set({ isInserting: false })
+          } catch (e) {
+            console.error('[store] addDomain EXCEPTION:', e)
+            set((s) => ({ domains: s.domains.filter(d => d.id !== newDomain.id), isInserting: false }))
           }
-        } catch {
-          set((s) => ({ domains: s.domains.filter((d) => d.id !== newDomain.id), isInserting: false }))
-          showToast('Domaine non sauvegardé — vérifie ta connexion', 'error')
-          return
         }
-        set({ isInserting: false })
       },
       updateDomain: (id, data) => {
         set((s) => ({ domains: s.domains.map((d) => (d.id === id ? { ...d, ...data } : d)) }))
@@ -280,26 +210,29 @@ export const useStore = create<AppStore>()(
         if (get().supabaseUserId) db.deleteDomain(id).catch(console.error)
       },
 
-      // ── Goal ──────────────────────────────────────────────────────────────
-      addGoal: async (data) => {
+      // ── Goal ─────────────────────────────────────────────────────────────────
+      addGoal: async (data: Omit<Goal, 'id' | 'createdAt'>) => {
         const newGoal = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ goals: [...s.goals, newGoal] }))
         const userId = get().supabaseUserId
-        if (!userId) return
-        set({ isInserting: true })
-        try {
-          const error = await db.insertGoal(userId, newGoal)
-          if (error) {
-            set((s) => ({ goals: s.goals.filter((g) => g.id !== newGoal.id), isInserting: false }))
-            showToast('Objectif non sauvegardé — vérifie ta connexion', 'error')
-            return
+        console.log('[store] addGoal — userId:', userId, 'title:', newGoal.title)
+        // 1. Affichage immédiat (optimistic)
+        set((s) => ({ goals: [...s.goals, newGoal] }))
+        if (userId) {
+          set({ isInserting: true })
+          try {
+            const error = await db.insertGoal(userId, newGoal)
+            if (error) {
+              console.error('[store] addGoal FAILED:', error.message, 'code:', error.code)
+              set((s) => ({ goals: s.goals.filter(g => g.id !== newGoal.id), isInserting: false }))
+              return
+            }
+            console.log('[store] addGoal SUCCESS — confirmé dans Supabase')
+            set({ isInserting: false })
+          } catch (e) {
+            console.error('[store] addGoal EXCEPTION:', e)
+            set((s) => ({ goals: s.goals.filter(g => g.id !== newGoal.id), isInserting: false }))
           }
-        } catch {
-          set((s) => ({ goals: s.goals.filter((g) => g.id !== newGoal.id), isInserting: false }))
-          showToast('Objectif non sauvegardé — vérifie ta connexion', 'error')
-          return
         }
-        set({ isInserting: false })
       },
       updateGoal: (id, data) => {
         set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...data } : g)) }))
@@ -314,52 +247,37 @@ export const useStore = create<AppStore>()(
         if (get().supabaseUserId) db.deleteGoal(id).catch(console.error)
       },
 
-      // ── Task ──────────────────────────────────────────────────────────────
-      addTask: async (data) => {
+      // ── Task ─────────────────────────────────────────────────────────────────
+      addTask: async (data: Omit<Task, 'id' | 'createdAt'>) => {
         const newTask = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ tasks: [...s.tasks, newTask] }))
         const userId = get().supabaseUserId
-        if (!userId) return
-        set({ isInserting: true })
-        try {
-          const error = await db.insertTask(userId, newTask)
-          if (error) {
-            set((s) => ({ tasks: s.tasks.filter((t) => t.id !== newTask.id), isInserting: false }))
-            showToast('Tâche non sauvegardée — vérifie ta connexion', 'error')
-            return
+        console.log('[store] addTask — userId:', userId, 'title:', newTask.title)
+        // 1. Affichage immédiat (optimistic)
+        set((s) => ({ tasks: [...s.tasks, newTask] }))
+        if (userId) {
+          set({ isInserting: true })
+          try {
+            const error = await db.insertTask(userId, newTask)
+            if (error) {
+              console.error('[store] addTask FAILED:', error.message, 'code:', error.code)
+              // Rollback : retirer la tâche du store
+              set((s) => ({ tasks: s.tasks.filter(t => t.id !== newTask.id), isInserting: false }))
+              return
+            }
+            console.log('[store] addTask SUCCESS — confirmé dans Supabase')
+            set({ isInserting: false })
+          } catch (e) {
+            console.error('[store] addTask EXCEPTION:', e)
+            set((s) => ({ tasks: s.tasks.filter(t => t.id !== newTask.id), isInserting: false }))
           }
-        } catch {
-          set((s) => ({ tasks: s.tasks.filter((t) => t.id !== newTask.id), isInserting: false }))
-          showToast('Tâche non sauvegardée — vérifie ta connexion', 'error')
-          return
         }
-        set({ isInserting: false })
       },
-
-      // ── CORRIGÉ : bulkAddTasks avec guard + rollback ───────────────────────
-      bulkAddTasks: async (list) => {
+      bulkAddTasks: (list) => {
         const newTasks = list.map((d) => ({ ...d, id: uid(), createdAt: new Date().toISOString() }))
         set((s) => ({ tasks: [...s.tasks, ...newTasks] }))
         const userId = get().supabaseUserId
-        if (!userId) return
-        set({ isInserting: true })
-        try {
-          const error = await db.insertTasks(userId, newTasks)
-          if (error) {
-            const ids = new Set(newTasks.map((t) => t.id))
-            set((s) => ({ tasks: s.tasks.filter((t) => !ids.has(t.id)), isInserting: false }))
-            showToast('Challenge non sauvegardé — vérifie ta connexion', 'error')
-            return
-          }
-        } catch {
-          const ids = new Set(newTasks.map((t) => t.id))
-          set((s) => ({ tasks: s.tasks.filter((t) => !ids.has(t.id)), isInserting: false }))
-          showToast('Challenge non sauvegardé — vérifie ta connexion', 'error')
-          return
-        }
-        set({ isInserting: false })
+        if (userId) db.insertTasks(userId, newTasks).catch(console.error)
       },
-
       toggleTask: (id) => {
         const { tasks, awardXP, checkAndAwardBadges, updateStreak } = get()
         const task = tasks.find((t) => t.id === id)
@@ -367,7 +285,9 @@ export const useStore = create<AppStore>()(
         const nowDone = !task.done
         const doneAt  = nowDone ? new Date().toISOString() : undefined
         set((s) => ({
-          tasks: s.tasks.map((t) => t.id === id ? { ...t, done: nowDone, doneAt } : t),
+          tasks: s.tasks.map((t) =>
+            t.id === id ? { ...t, done: nowDone, doneAt } : t
+          ),
           userStats: nowDone
             ? { ...s.userStats, totalTasksDone: s.userStats.totalTasksDone + 1 }
             : { ...s.userStats, totalTasksDone: Math.max(0, s.userStats.totalTasksDone - 1) },
@@ -378,13 +298,10 @@ export const useStore = create<AppStore>()(
           awardXP(task.xpValue ?? 10)
           updateStreak()
           checkAndAwardBadges()
-          // Bonus si toutes les tâches du jour sont faites
           const { tasks: updated } = get()
           const todayStr = new Date().toDateString()
           const todayAll = updated.filter((t) => new Date(t.scheduledAt).toDateString() === todayStr)
           if (todayAll.length > 0 && todayAll.every((t) => t.done)) awardXP(50)
-          // Sync profil après chaque tâche complétée (debouncé 3s)
-          scheduleProfileSync()
         }
       },
       deleteTask: (id) => {
@@ -395,49 +312,32 @@ export const useStore = create<AppStore>()(
         set((s) => ({ tasks: s.tasks.map((t) => t.id === id ? { ...t, ...data } : t) }))
         if (get().supabaseUserId) db.updateTask({ id, ...data }).catch(console.error)
       },
-      postponeTask: (taskId) => {
-        const task = get().tasks.find((t) => t.id === taskId)
-        if (!task) return
-        const tomorrow = new Date(Date.now() + 86400000)
-        const original = new Date(task.scheduledAt)
-        tomorrow.setHours(original.getHours(), original.getMinutes(), 0, 0)
-        const scheduledAt = tomorrow.toISOString()
-        set((s) => ({
-          tasks: s.tasks.map((t) => t.id === taskId ? { ...t, scheduledAt, postponed: true } : t),
-        }))
-        if (get().supabaseUserId) db.updateTask({ id: taskId, scheduledAt }).catch(console.error)
-      },
 
-      // ── Gamification ─────────────────────────────────────────────────────
+      // ── Gamification ─────────────────────────────────────────────────────────
       awardXP: (amount) =>
         set((s) => {
           const newXP = s.userStats.xp + amount
           const { level, xpToNextLevel } = computeLevel(newXP)
           return { userStats: { ...s.userStats, xp: newXP, level, xpToNextLevel } }
         }),
-
       checkAndAwardBadges: () => {
         const { userStats, badges, streak, tasks, awardXP } = get()
         const earned = new Set(badges.filter((b) => b.unlockedAt).map((b) => b.id))
         const unlocked: typeof badges = []
         const check = (id: typeof badges[0]['id'], cond: boolean) => {
-          if (!earned.has(id) && cond)
-            unlocked.push({ ...badges.find((b) => b.id === id)!, unlockedAt: new Date().toISOString() })
+          if (!earned.has(id) && cond) unlocked.push({ ...badges.find((b) => b.id === id)!, unlockedAt: new Date().toISOString() })
         }
-        check('first_task',     userStats.totalTasksDone >= 1)
-        check('tasks_10',       userStats.totalTasksDone >= 10)
-        check('tasks_30',       userStats.totalTasksDone >= 30)
-        check('tasks_100',      userStats.totalTasksDone >= 100)
-        check('streak_7',       streak >= 7)
-        check('streak_30',      streak >= 30)
-        check('challenge_done', userStats.challengesCompleted >= 1)
-        check('challenge_3',    userStats.challengesCompleted >= 3)
+        check('first_task',    userStats.totalTasksDone >= 1)
+        check('tasks_10',      userStats.totalTasksDone >= 10)
+        check('tasks_30',      userStats.totalTasksDone >= 30)
+        check('tasks_100',     userStats.totalTasksDone >= 100)
+        check('streak_7',      streak >= 7)
+        check('streak_30',     streak >= 30)
+        check('challenge_done',userStats.challengesCompleted >= 1)
+        check('challenge_3',   userStats.challengesCompleted >= 3)
         const h = new Date().getHours()
         const todayDone = tasks.filter((t) => t.done && new Date(t.doneAt || '').toDateString() === new Date().toDateString())
-        if (todayDone.length > 0) {
-          check('early_bird', h < 8)
-          check('night_owl',  h >= 23)
-        }
+        if (todayDone.length > 0) { check('early_bird', h < 8); check('night_owl', h >= 23) }
         if (unlocked.length > 0) {
           unlocked.forEach((b) => awardXP(b.xpReward))
           set((s) => ({
@@ -446,9 +346,37 @@ export const useStore = create<AppStore>()(
               return m ? { ...b, unlockedAt: m.unlockedAt } : b
             }),
           }))
-          // Sync profil quand de nouveaux badges sont débloqués
-          scheduleProfileSync()
         }
+      },
+      postponeTask: (taskId) => {
+        const task = get().tasks.find((t) => t.id === taskId)
+        if (!task) return
+        const tomorrow = new Date(Date.now() + 86400000)
+        const original = new Date(task.scheduledAt)
+        tomorrow.setHours(original.getHours(), original.getMinutes(), 0, 0)
+        const scheduledAt = tomorrow.toISOString()
+        set((s) => ({
+          tasks: s.tasks.map((t) =>
+            t.id === taskId ? { ...t, scheduledAt, postponed: true } : t
+          ),
+        }))
+        if (get().supabaseUserId) db.updateTask({ id: taskId, scheduledAt }).catch(console.error)
+      },
+
+      declareRestDay: () => {
+        const { restDays, restDayUsedThisWeek } = get()
+        const today = new Date().toDateString()
+        if (restDays.includes(today)) {
+          return { success: false, message: "Imprévu déjà déclaré pour aujourd'hui." }
+        }
+        if (restDayUsedThisWeek) {
+          return { success: false, message: 'Tu as déjà utilisé ton imprévu cette semaine. Maximum 1 par semaine.' }
+        }
+        set((s) => ({
+          restDays: [...s.restDays, today],
+          restDayUsedThisWeek: true,
+        }))
+        return { success: true, message: "Imprévu déclaré. Ton streak est protégé pour aujourd'hui." }
       },
 
       applyDailyPenalty: () => {
@@ -461,27 +389,12 @@ export const useStore = create<AppStore>()(
           const newXP = Math.max(0, userStats.xp - pen)
           const { level, xpToNextLevel } = computeLevel(newXP)
           set((s) => ({ streak: 0, userStats: { ...s.userStats, xp: newXP, level, xpToNextLevel } }))
-          scheduleProfileSync()
         }
       },
+      toggleHardcoreMode: () =>
+        set((s) => ({ userStats: { ...s.userStats, hardcoreMode: !s.userStats.hardcoreMode } })),
 
-      toggleHardcoreMode: () => {
-        set((s) => ({ userStats: { ...s.userStats, hardcoreMode: !s.userStats.hardcoreMode } }))
-        scheduleProfileSync()
-      },
-
-      declareRestDay: () => {
-        const { restDays, restDayUsedThisWeek } = get()
-        const today = new Date().toDateString()
-        if (restDays.includes(today))
-          return { success: false, message: "Imprévu déjà déclaré pour aujourd'hui." }
-        if (restDayUsedThisWeek)
-          return { success: false, message: 'Tu as déjà utilisé ton imprévu cette semaine. Maximum 1 par semaine.' }
-        set((s) => ({ restDays: [...s.restDays, today], restDayUsedThisWeek: true }))
-        return { success: true, message: "Imprévu déclaré. Ton streak est protégé pour aujourd'hui." }
-      },
-
-      // ── Focus ─────────────────────────────────────────────────────────────
+      // ── Focus ─────────────────────────────────────────────────────────────────
       startFocus: (taskId, durationMinutes = 25) => {
         const now = Date.now()
         set({ focusSession: {
@@ -512,6 +425,7 @@ export const useStore = create<AppStore>()(
         return { focusSession: { ...s.focusSession, status: 'running', runningStartedAt: Date.now() } }
       }),
       openFocusModal:  () => set({ focusModalOpen: true }),
+      setLastSyncedAt: (ts) => set({ lastSyncedAt: ts }),
       closeFocusModal: () => set({ focusModalOpen: false }),
       completeFocus: () => {
         const { focusSession, awardXP, toggleTask, checkAndAwardBadges } = get()
@@ -520,25 +434,26 @@ export const useStore = create<AppStore>()(
         if (focusSession.taskId) toggleTask(focusSession.taskId)
         set((s) => ({ focusSession: { ...focusSession, status: 'done', completedAt: new Date().toISOString(), xpEarned: 30 } }))
         checkAndAwardBadges()
-        scheduleProfileSync()
       },
-      abandonFocus: () =>
-        set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } } : s),
+      abandonFocus: () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } } : s),
 
-      // ── Challenge ─────────────────────────────────────────────────────────
+      // ── Challenge ─────────────────────────────────────────────────────────────
       startChallenge: (challengeId, blueprintGoalMap = {}) => {
         const { customChallenges } = get()
         const challenge =
           CHALLENGE_CATALOGUE.find((c) => c.id === challengeId) ||
           (customChallenges || []).find((c) => c.id === challengeId)
         if (!challenge) return
+
         const startDate = new Date()
         const endDate   = challenge.deadline
           ? new Date(challenge.deadline)
           : new Date(Date.now() + challenge.durationDays * 86400000)
+
         const acId     = uid()
         const rawTasks = buildAllTasks(challenge, acId, startDate, endDate, blueprintGoalMap as Record<string, string>)
         const newTasks = rawTasks.map((t) => ({ ...t, id: uid(), createdAt: new Date().toISOString() }))
+
         const newAC: ActiveChallenge = {
           id: acId, challengeId,
           startDate: startDate.toISOString(),
@@ -546,17 +461,24 @@ export const useStore = create<AppStore>()(
           isActive: true, currentDay: 1,
           createdAt: new Date().toISOString(),
         }
-        set((s) => ({ tasks: [...s.tasks, ...newTasks], activeChallenges: [...s.activeChallenges, newAC] }))
+
+        set((s) => ({
+          tasks: [...s.tasks, ...newTasks],
+          activeChallenges: [...s.activeChallenges, newAC],
+        }))
+
         const userId = get().supabaseUserId
         if (userId) {
           db.insertActiveChallenge(userId, newAC).catch(console.error)
-          // bulkAddTasks gère le guard + rollback des tâches
-          get().bulkAddTasks(rawTasks)
+          db.insertTasks(userId, newTasks).catch(console.error)
         }
       },
+
       stopChallenge: (acId) => {
         set((s) => ({
-          activeChallenges: s.activeChallenges.map((ac) => ac.id === acId ? { ...ac, isActive: false } : ac),
+          activeChallenges: s.activeChallenges.map((ac) =>
+            ac.id === acId ? { ...ac, isActive: false } : ac
+          ),
           tasks: s.tasks.filter((t) => {
             if (t.challengeActiveId !== acId) return true
             return t.done || new Date(t.scheduledAt) < new Date()
@@ -568,19 +490,22 @@ export const useStore = create<AppStore>()(
           db.deleteTasksByChallenge(acId).catch(console.error)
         }
       },
+
       getChallengeProgress: (acId) => {
         const { tasks } = get()
         const ct = tasks.filter((t) => t.challengeActiveId === acId)
         if (!ct.length) return 0
         return Math.round((ct.filter((t) => t.done).length / ct.length) * 100)
       },
+
       getTodayChallengeTaskCount: (acId) => {
         const { tasks } = get()
         const todayStr = new Date().toDateString()
         const ct = tasks.filter((t) => t.challengeActiveId === acId && new Date(t.scheduledAt).toDateString() === todayStr)
         return { total: ct.length, done: ct.filter((t) => t.done).length }
       },
-      addCustomChallenge: (data) => {
+
+      addCustomChallenge: (data: Omit<Challenge, 'id'>) => {
         const newChallenge = {
           ...data,
           id: 'custom-' + uid(),
@@ -598,12 +523,20 @@ export const useStore = create<AppStore>()(
         set((s) => ({ customChallenges: s.customChallenges.filter((c) => c.id !== id) }))
         if (get().supabaseUserId) db.deleteCustomChallenge(id).catch(console.error)
       },
+
       updateCatalogueChallenge: (id, data) =>
         set((s) => ({
-          catalogueOverrides: { ...s.catalogueOverrides, [id]: { ...(s.catalogueOverrides[id] || {}), ...data } },
+          catalogueOverrides: {
+            ...s.catalogueOverrides,
+            [id]: { ...(s.catalogueOverrides[id] || {}), ...data },
+          },
         })),
+
       deleteCatalogueChallenge: (id) =>
-        set((s) => ({ deletedCatalogueIds: [...s.deletedCatalogueIds, id] })),
+        set((s) => ({
+          deletedCatalogueIds: [...s.deletedCatalogueIds, id],
+        })),
+
       getEffectiveChallenge: (id) => {
         const { customChallenges, catalogueOverrides, deletedCatalogueIds } = get()
         const custom = customChallenges.find((c) => c.id === id)
@@ -615,94 +548,88 @@ export const useStore = create<AppStore>()(
         return override ? { ...base, ...override } : base
       },
 
-
-      // ── Recurring Templates ───────────────────────────────────────────────
-      addRecurringTemplate: (data) => {
-        const newTemplate = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ recurringTemplates: [...s.recurringTemplates, newTemplate] }))
-        // Générer immédiatement la tâche du jour si la date correspond
-        get().generateRecurringTasksForDate(new Date())
-      },
-
-      updateRecurringTemplate: (id, data) => {
-        set((s) => ({
-          recurringTemplates: s.recurringTemplates.map((t) => t.id === id ? { ...t, ...data } : t),
-        }))
-      },
-
-      deleteRecurringTemplate: (id) => {
-        // Supprimer le template ET les tâches futures non faites liées
-        set((s) => ({
-          recurringTemplates: s.recurringTemplates.filter((t) => t.id !== id),
-          tasks: s.tasks.filter((t) => {
-            if (t.templateId !== id) return true
-            // Garder les tâches déjà faites, supprimer les futures
-            return t.done || new Date(t.scheduledAt) < new Date()
-          }),
-        }))
-      },
-
-      generateRecurringTasksForDate: (date: Date) => {
-        const { recurringTemplates, tasks, supabaseUserId } = get()
-        if (!recurringTemplates.length) return
-
-        const dateStr  = date.toDateString()
-        const dateISO  = date.toISOString().split('T')[0]
-        const dayOfWeek = date.getDay()  // 0=Dim, 1=Lun, ..., 6=Sam
-        const newTasks: Task[] = []
-
-        for (const template of recurringTemplates) {
-          if (!template.active) continue
-
-          // Vérifier la plage de dates
-          if (template.startDate > dateISO) continue
-          if (template.endDate && template.endDate < dateISO) continue
-
-          // Vérifier la fréquence
-          let match = false
-          if      (template.frequency === 'daily')    match = true
-          else if (template.frequency === 'workdays') match = dayOfWeek >= 1 && dayOfWeek <= 5
-          else if (template.frequency === 'weekend')  match = dayOfWeek === 0 || dayOfWeek === 6
-          else if (template.frequency === 'custom')   match = (template.customDays ?? []).includes(dayOfWeek)
-          if (!match) continue
-
-          // Ne pas régénérer si une tâche de ce template existe déjà ce jour
-          const alreadyExists = tasks.some(
-            (t) => t.templateId === template.id &&
-                   new Date(t.scheduledAt).toDateString() === dateStr
-          )
-          if (alreadyExists) continue
-
-          const newTask = {
-            id:         uid(),
-            title:      template.title,
-            domainId:   template.domainId,
-            goalId:     template.goalId,
-            duration:   template.duration,
-            scheduledAt: dateISO + 'T' + template.timeOfDay + ':00.000Z',
-            done:        false,
-            xpValue:     template.xpValue,
-            priority:    template.priority || 'medium' as const,
-            frequency:   template.frequency,
-            customDays:  template.customDays,
-            templateId:  template.id,
-            isGenerated: true,
-            createdAt:   new Date().toISOString(),
+      // ── Supabase ──────────────────────────────────────────────────────────────
+      supabaseUserId: null,
+      userEmail: null,
+      setSupabaseUser: (userId) => set({ supabaseUserId: userId }),
+      setUserEmail:    (email) => set({ userEmail: email }),
+      hydrateFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
+        const patch: Partial<AppStore> = {}
+        patch.domains          = domains
+        patch.goals            = goals
+        patch.tasks            = tasks
+        patch.customChallenges = customChallenges
+        patch.activeChallenges = activeChallenges
+        if (profile) {
+          const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
+          patch.userStats = {
+            xp: profile.xp ?? 0, level, xpToNextLevel,
+            totalTasksDone:      profile.total_tasks_done  ?? 0,
+            challengesCompleted: profile.challenges_done   ?? 0,
+            longestStreak:       profile.longest_streak    ?? 0,
+            hardcoreMode:        profile.hardcore_mode     ?? false,
           }
-          newTasks.push(newTask)
+          patch.streak     = profile.streak_count ?? 0
+          patch.lastActive = profile.last_active    ?? null
+          patch.onboarding = { completed: true, step: 'done' }
         }
-
-        if (!newTasks.length) return
-        set((s) => ({ tasks: [...s.tasks, ...newTasks] }))
-        if (supabaseUserId) {
-          db.insertTasks(supabaseUserId, newTasks).catch(console.error)
-        }
+        set(patch as any)
       },
 
-      // ── Selectors ─────────────────────────────────────────────────────────
+      // ── mergeFromSupabase — delta sync ────────────────────────────────────────
+      mergeFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
+        const s = get()
+        const patch: Partial<AppStore> = {}
+
+        // Toujours merger (tableau vide = suppressions propagées)
+        if (domains.length) {
+          const map = new Map(s.domains.map((d) => [d.id, d]))
+          domains.forEach((d) => map.set(d.id, d))
+          patch.domains = Array.from(map.values())
+        }
+        if (goals.length) {
+          const map = new Map(s.goals.map((g) => [g.id, g]))
+          goals.forEach((g) => map.set(g.id, g))
+          patch.goals = Array.from(map.values())
+        }
+        if (tasks.length) {
+          const map = new Map(s.tasks.map((t) => [t.id, t]))
+          tasks.forEach((t) => map.set(t.id, t))
+          patch.tasks = Array.from(map.values())
+        }
+        if (customChallenges.length) {
+          const map = new Map(s.customChallenges.map((c) => [c.id, c]))
+          customChallenges.forEach((c) => map.set(c.id, c))
+          patch.customChallenges = Array.from(map.values())
+        }
+        if (activeChallenges.length) {
+          const map = new Map(s.activeChallenges.map((c) => [c.id, c]))
+          activeChallenges.forEach((c) => map.set(c.id, c))
+          patch.activeChallenges = Array.from(map.values())
+        }
+        if (profile) {
+          const { level, xpToNextLevel } = computeLevel(profile.xp ?? 0)
+          patch.userStats = {
+            xp: profile.xp ?? 0, level, xpToNextLevel,
+            totalTasksDone:      profile.total_tasks_done  ?? 0,
+            challengesCompleted: profile.challenges_done   ?? 0,
+            longestStreak:       profile.longest_streak    ?? 0,
+            hardcoreMode:        profile.hardcore_mode     ?? false,
+          }
+          patch.streak     = profile.streak     ?? 0
+          patch.lastActive = profile.last_active ?? null
+        }
+        set(patch as any)
+      },
+
+      // ── Selectors ────────────────────────────────────────────────────────────
       resetRestDayWeekly: () => {
-        if (new Date().getDay() === 1) set({ restDayUsedThisWeek: false })
+        const today = new Date()
+        if (today.getDay() === 1) {
+          set({ restDayUsedThisWeek: false })
+        }
       },
+
       updateStreak: () => {
         const { tasks, streak, lastActive, userStats } = get()
         const todayStr     = new Date().toDateString()
@@ -713,10 +640,26 @@ export const useStore = create<AppStore>()(
           set({ streak: ns, lastActive: todayStr, userStats: { ...userStats, longestStreak: Math.max(userStats.longestStreak, ns) } })
         }
       },
-      getTasksForDate:   (date) => { const d = date.toDateString(); return get().tasks.filter((t) => new Date(t.scheduledAt).toDateString() === d) },
-      getGoalProgress:   (goalId) => { const ts = get().tasks.filter((t) => t.goalId === goalId); return !ts.length ? 0 : Math.round((ts.filter((t) => t.done).length / ts.length) * 100) },
-      getDomainProgress: (domainId) => { const { goals, getGoalProgress } = get(); const gs = goals.filter((g) => g.domainId === domainId); return !gs.length ? 0 : Math.round(gs.reduce((a, g) => a + getGoalProgress(g.id), 0) / gs.length) },
-      getGlobalProgress: () => { const { domains, getDomainProgress } = get(); return !domains.length ? 0 : Math.round(domains.reduce((a, d) => a + getDomainProgress(d.id), 0) / domains.length) },
+      getTasksForDate: (date) => {
+        const d = date.toDateString()
+        return get().tasks.filter((t) => new Date(t.scheduledAt).toDateString() === d)
+      },
+      getGoalProgress: (goalId) => {
+        const ts = get().tasks.filter((t) => t.goalId === goalId)
+        if (!ts.length) return 0
+        return Math.round((ts.filter((t) => t.done).length / ts.length) * 100)
+      },
+      getDomainProgress: (domainId) => {
+        const { goals, getGoalProgress } = get()
+        const gs = goals.filter((g) => g.domainId === domainId)
+        if (!gs.length) return 0
+        return Math.round(gs.reduce((a, g) => a + getGoalProgress(g.id), 0) / gs.length)
+      },
+      getGlobalProgress: () => {
+        const { domains, getDomainProgress } = get()
+        if (!domains.length) return 0
+        return Math.round(domains.reduce((a, d) => a + getDomainProgress(d.id), 0) / domains.length)
+      },
       getTop3Tasks: () => {
         const { tasks } = get()
         const todayStr = new Date().toDateString()
@@ -726,15 +669,26 @@ export const useStore = create<AppStore>()(
           .slice(0, 3)
       },
       completeOnboarding: () => set({ onboarding: { completed: true, step: 'done' } }),
-      setOnboardingStep:  (step) => set((s) => ({ onboarding: { ...s.onboarding, step } })),
+      setOnboardingStep: (step) => set((s) => ({ onboarding: { ...s.onboarding, step } })),
     }),
     {
-      name: 'focusflow-store-v11',
+      name: 'focusflow-store-v10',
       skipHydration: true,
       storage: ssrSafeStorage,
+      // tasks, goals, domains sont des données serveur → jamais persistées localement
+      // Seules les préférences UI et l'état de session sont gardés
       partialize: (state: AppStore) => {
-        const { focusSession: _fs, focusModalOpen: _fmo, isInserting: _ii, ...rest } = state
-        return rest
+        const {
+          tasks: _t,
+          goals: _g,
+          domains: _d,
+          activeChallenges: _ac,
+          customChallenges: _cc,
+          lastSyncedAt: _ls,
+          isInserting: _ii,
+          ...uiState
+        } = state
+        return uiState
       },
     }
   )
