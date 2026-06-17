@@ -20,7 +20,7 @@ import { fr } from 'date-fns/locale'
 
 export default function DashboardPage() {
   const {
-    domains, goals, streak, userStats, focusSession,
+    domains, goals, tasks, streak, userStats, focusSession,
     activeChallenges,
     updateStreak, applyDailyPenalty,
     onboarding,
