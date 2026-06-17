@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Sparkles, Send, RefreshCw, MessageSquare } from 'lucide-react'
 import { useStore } from '@/store'
+import { useGlobalProgress, useAllDomainProgress } from '@/store/selectors'
 import { getRandomQuote, getWeekActivity, hexToRgba } from '@/lib/utils'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -18,7 +19,9 @@ interface ChatMessage {
 }
 
 export default function CoachPage() {
-  const { domains, goals, tasks, streak, getDomainProgress, getGlobalProgress } = useStore()
+  const { domains, goals, tasks, streak } = useStore()
+  const globalPct = useGlobalProgress()
+  const allDomainProgress = useAllDomainProgress()
   const [insights, setInsights] = useState<React.ReactNode | null>(null)
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
@@ -31,17 +34,16 @@ export default function CoachPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
-  const buildContext = () => {
+  const buildContext = useCallback(() => {
     const today = new Date().toDateString()
     const todayTasks = tasks.filter((t) => new Date(t.scheduledAt).toDateString() === today)
     const todayDone = todayTasks.filter((t) => t.done)
-    const globalPct = getGlobalProgress()
     const domainsData = domains.map((d) => ({
       name: d.name,
-      pct: getDomainProgress(d.id),
+      pct: allDomainProgress[d.id] ?? 0,
     }))
     return { todayDone: todayDone.length, totalToday: todayTasks.length, globalPct, streak, domainsData }
-  }
+  }, [tasks, domains, allDomainProgress, globalPct, streak])
 
   const generateInsights = async () => {
     setInsightsLoading(true)
