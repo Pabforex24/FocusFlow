@@ -3,7 +3,7 @@ import * as db from '@/lib/db'
 import { persist } from 'zustand/middleware'
 import {
   AppStore, Domain, Goal, Task, Challenge, ActiveChallenge,
-  UserStats, Badge, OnboardingState, RecurringTemplate,
+  UserStats, Badge, OnboardingState,
   ALL_BADGES, xpForLevel, getOccurrenceDates,
 } from '@/types'
 
@@ -169,7 +169,6 @@ export const useStore = create<AppStore>()(
       customChallenges:    [],
       deletedCatalogueIds: [],
       catalogueOverrides:  {},
-      recurringTemplates:  [],
 
       // ── Domain ───────────────────────────────────────────────────────────────
       addDomain: async (data: Omit<Domain, 'id' | 'createdAt'>) => {
@@ -547,66 +546,6 @@ export const useStore = create<AppStore>()(
         if (!base) return undefined
         const override = catalogueOverrides[id]
         return override ? { ...base, ...override } : base
-      },
-
-      // ── Recurring Templates ───────────────────────────────────────────────────
-      addRecurringTemplate: (data) => {
-        const newTemplate = { ...data, id: uid(), createdAt: new Date().toISOString() }
-        set((s) => ({ recurringTemplates: [...s.recurringTemplates, newTemplate] }))
-      },
-      updateRecurringTemplate: (id, data) => {
-        set((s) => ({
-          recurringTemplates: s.recurringTemplates.map((t) => t.id === id ? { ...t, ...data } : t),
-        }))
-      },
-      deleteRecurringTemplate: (id) => {
-        set((s) => ({ recurringTemplates: s.recurringTemplates.filter((t) => t.id !== id) }))
-      },
-      generateRecurringTasksForDate: (date) => {
-        const { recurringTemplates, tasks } = get()
-        const dateStr = date.toISOString().split('T')[0]
-        const dow = date.getDay()
-        const newTasks: Task[] = []
-
-        for (const tpl of recurringTemplates) {
-          if (!tpl.active) continue
-          if (tpl.startDate > dateStr) continue
-          if (tpl.endDate && tpl.endDate < dateStr) continue
-
-          // Vérifier la fréquence
-          let include = false
-          if (tpl.frequency === 'daily') include = true
-          else if (tpl.frequency === 'workdays') include = dow >= 1 && dow <= 5
-          else if (tpl.frequency === 'weekend')  include = dow === 0 || dow === 6
-          else if (tpl.frequency === 'custom')   include = (tpl.customDays || []).includes(dow)
-          if (!include) continue
-
-          // Éviter les doublons
-          const alreadyExists = tasks.some(
-            (t) => t.templateId === tpl.id && t.scheduledAt.startsWith(dateStr)
-          )
-          if (alreadyExists) continue
-
-          newTasks.push({
-            id: uid(),
-            title: tpl.title,
-            domainId: tpl.domainId,
-            goalId: tpl.goalId,
-            duration: tpl.duration,
-            priority: tpl.priority,
-            xpValue: tpl.xpValue,
-            scheduledAt: `${dateStr}T${tpl.timeOfDay}:00.000Z`,
-            done: false,
-            templateId: tpl.id,
-            createdAt: new Date().toISOString(),
-          })
-        }
-
-        if (newTasks.length > 0) {
-          set((s) => ({ tasks: [...s.tasks, ...newTasks] }))
-          const userId = get().supabaseUserId
-          if (userId) db.insertTasks(userId, newTasks).catch(console.error)
-        }
       },
 
       // ── Supabase ──────────────────────────────────────────────────────────────
