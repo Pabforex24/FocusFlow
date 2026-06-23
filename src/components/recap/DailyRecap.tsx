@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useStore } from '@/store'
-import { useAllDomainProgress } from '@/store/selectors'
 import { RingProgress, ProgressBar } from '@/components/ui/ProgressBar'
 import { DomainIcon } from '@/components/domain/DomainIcon'
 import { hexToRgba } from '@/lib/utils'
@@ -45,7 +44,7 @@ export function DailyRecap() {
   const activeChallenges     = useStore((s) => s.activeChallenges)
   const getChallengeProgress = useStore((s) => s.getChallengeProgress)
   const getEffectiveChallenge = useStore((s) => s.getEffectiveChallenge)
-  const domainProgress = useAllDomainProgress()
+  const getDomainProgress    = useStore((s) => s.getDomainProgress)
 
   useEffect(() => {
     const check = () => {
@@ -205,7 +204,7 @@ export function DailyRecap() {
                 <p className="text-[11px] uppercase tracking-widest font-bold mb-2" style={{ color: '#3D4F6E' }}>Domaines</p>
                 <div className="space-y-2">
                   {domains.map((d) => {
-                    const pct = domainProgress[d.id] ?? 0
+                    const pct = getDomainProgress(d.id)
                     return (
                       <div key={d.id} className="flex items-center gap-2">
                         <DomainIcon name={d.icon} size={12} color={d.color} />

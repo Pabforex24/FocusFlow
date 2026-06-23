@@ -272,19 +272,11 @@ export const useStore = create<AppStore>()(
           }
         }
       },
-      bulkAddTasks: async (list) => {
+      bulkAddTasks: (list) => {
         const newTasks = list.map((d) => ({ ...d, id: uid(), createdAt: new Date().toISOString() }))
         set((s) => ({ tasks: [...s.tasks, ...newTasks] }))
         const userId = get().supabaseUserId
-        if (!userId) return
-        set({ isInserting: true })
-        const error = await db.insertTasks(userId, newTasks)
-        if (error) {
-          const ids = new Set(newTasks.map((t) => t.id))
-          set((s) => ({ tasks: s.tasks.filter((t) => !ids.has(t.id)), isInserting: false }))
-          return
-        }
-        set({ isInserting: false })
+        if (userId) db.insertTasks(userId, newTasks).catch(console.error)
       },
       toggleTask: (id) => {
         const { tasks, awardXP, checkAndAwardBadges, updateStreak } = get()
@@ -628,65 +620,6 @@ export const useStore = create<AppStore>()(
           patch.lastActive = profile.last_active ?? null
         }
         set(patch as any)
-      },
-
-
-      // ── Recurring Templates ───────────────────────────────────────────────
-      recurringTemplates: [] as any[],
-
-      addRecurringTemplate: (data: any) => {
-        const newTemplate = { ...data, id: Date.now().toString(36) + Math.random().toString(36).slice(2,7), createdAt: new Date().toISOString() }
-        set((s: any) => ({ recurringTemplates: [...s.recurringTemplates, newTemplate] }))
-        get().generateRecurringTasksForDate(new Date())
-      },
-      updateRecurringTemplate: (id: string, data: any) => {
-        set((s: any) => ({
-          recurringTemplates: s.recurringTemplates.map((t: any) => t.id === id ? { ...t, ...data } : t),
-        }))
-      },
-      deleteRecurringTemplate: (id: string) => {
-        set((s: any) => ({
-          recurringTemplates: s.recurringTemplates.filter((t: any) => t.id !== id),
-          tasks: s.tasks.filter((t: any) => {
-            if (t.templateId !== id) return true
-            return t.done || new Date(t.scheduledAt) < new Date()
-          }),
-        }))
-      },
-      generateRecurringTasksForDate: (date: Date) => {
-        const { recurringTemplates, tasks, supabaseUserId } = get() as any
-        if (!recurringTemplates.length) return
-        const dateStr   = date.toDateString()
-        const dateISO   = date.toISOString().split('T')[0]
-        const dayOfWeek = date.getDay()
-        const newTasks: any[] = []
-        for (const template of recurringTemplates) {
-          if (!template.active) continue
-          if (template.startDate > dateISO) continue
-          if (template.endDate && template.endDate < dateISO) continue
-          let match = false
-          if      (template.frequency === 'daily')    match = true
-          else if (template.frequency === 'workdays') match = dayOfWeek >= 1 && dayOfWeek <= 5
-          else if (template.frequency === 'weekend')  match = dayOfWeek === 0 || dayOfWeek === 6
-          else if (template.frequency === 'custom')   match = (template.customDays ?? []).includes(dayOfWeek)
-          if (!match) continue
-          const exists = tasks.some((t: any) => t.templateId === template.id && new Date(t.scheduledAt).toDateString() === dateStr)
-          if (exists) continue
-          const uid2 = Date.now().toString(36) + Math.random().toString(36).slice(2,7)
-          newTasks.push({
-            id: uid2, title: template.title,
-            domainId: template.domainId, goalId: template.goalId,
-            duration: template.duration,
-            scheduledAt: dateISO + 'T' + template.timeOfDay + ':00.000Z',
-            done: false, xpValue: template.xpValue ?? 10,
-            priority: template.priority || 'medium',
-            templateId: template.id, isGenerated: true,
-            createdAt: new Date().toISOString(),
-          })
-        }
-        if (!newTasks.length) return
-        set((s: any) => ({ tasks: [...s.tasks, ...newTasks] }))
-        if (supabaseUserId) db.insertTasks(supabaseUserId, newTasks).catch(console.error)
       },
 
       // ── Selectors ────────────────────────────────────────────────────────────
