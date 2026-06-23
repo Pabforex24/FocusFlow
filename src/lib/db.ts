@@ -136,7 +136,7 @@ export async function loadGoals(userId: string): Promise<Goal[]> {
     .order('created_at')
   return (data || []).map((row) => ({
     id:          row.id,
-    domainId:    row.domain_id,
+    domainId:    row.domain_id || '',
     challengeId: row.challenge_id || undefined,
     title:       row.title,
     description: row.description || undefined,
@@ -150,11 +150,11 @@ export async function insertGoal(userId: string, goal: Goal) {
   console.log('[db] insertGoal start — id:', goal.id, 'userId:', userId)
   const { error } = await supabase.from('goals').insert({
     id: goal.id, user_id: userId,
-    domain_id:    goal.domainId,
+    domain_id:    goal.domainId   || null,
     challenge_id: goal.challengeId || null,
     title:        goal.title,
     description:  goal.description || null,
-    unit:         goal.unit || null,
+    unit:         goal.unit        || null,
     created_at:   goal.createdAt,
   })
   if (error && error.code !== '23505') {
@@ -437,7 +437,7 @@ export async function loadGoalsSince(userId: string, since: string): Promise<Goa
     .order('created_at')
   return (data || []).map((row) => ({
     id:          row.id,
-    domainId:    row.domain_id,
+    domainId:    row.domain_id || '',
     challengeId: row.challenge_id || undefined,
     title:       row.title,
     description: row.description || undefined,
