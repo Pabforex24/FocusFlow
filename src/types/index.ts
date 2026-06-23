@@ -76,6 +76,27 @@ export interface Task {
   customDays?: number[]
   isGenerated?: boolean
   postponed?: boolean
+  templateId?: string
+  createdAt: string
+}
+
+
+// ─── Recurring Template ───────────────────────────────────────────────────────
+
+export interface RecurringTemplate {
+  id: string
+  title: string
+  domainId?: string
+  goalId?: string
+  duration?: string
+  priority?: 'low' | 'medium' | 'high'
+  xpValue: number
+  frequency: FrequencyType
+  customDays?: number[]
+  timeOfDay: string
+  startDate: string
+  endDate?: string
+  active: boolean
   createdAt: string
 }
 
@@ -162,6 +183,7 @@ export interface AppStore {
   activeChallenges: ActiveChallenge[]
   customChallenges: Challenge[]
   deletedCatalogueIds: string[]
+  recurringTemplates: RecurringTemplate[]
   catalogueOverrides: Record<string, Partial<Omit<Challenge, 'id'>>>
   supabaseUserId: string | null
   userEmail:      string | null
@@ -173,6 +195,10 @@ export interface AppStore {
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt'>) => void
   updateGoal: (id: string, data: Partial<Goal>) => void
   deleteGoal: (id: string) => void
+  addRecurringTemplate: (data: Omit<RecurringTemplate, 'id' | 'createdAt'>) => void
+  updateRecurringTemplate: (id: string, data: Partial<RecurringTemplate>) => void
+  deleteRecurringTemplate: (id: string) => void
+  generateRecurringTasksForDate: (date: Date) => void
 
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void
   toggleTask: (id: string) => void
