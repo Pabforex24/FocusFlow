@@ -261,9 +261,9 @@ function GoalsContent() {
   const [confirmId,     setConfirmId]     = useState<string | null>(null)
 
   // Objectifs liés à un challenge
-  const challengeGoals = goals.filter((g) => !!g.challengeId && (!domainFilter || g.domainId === domainFilter))
+  const challengeGoals = goals.filter((g) => !!g.challengeId && (!domainFilter || !g.domainId || g.domainId === domainFilter))
   // Objectifs indépendants
-  const freeGoals      = goals.filter((g) => !g.challengeId && (!domainFilter || g.domainId === domainFilter))
+  const freeGoals      = goals.filter((g) => !g.challengeId && (!domainFilter || !g.domainId || g.domainId === domainFilter))
 
   // Challenges qui ont des objectifs
   const allChallengeIds = [...new Set(challengeGoals.map((g) => g.challengeId!))]
@@ -279,6 +279,10 @@ function GoalsContent() {
     } else {
       addGoal(data)
       toast('Objectif créé ! 🎯', 'success')
+      // Réinitialise le filtre domaine pour que le nouvel objectif soit toujours visible
+      if (domainFilter && (!data.domainId || data.domainId !== domainFilter)) {
+        setDomainFilter('')
+      }
     }
     setEditingGoal(null)
   }
