@@ -205,6 +205,7 @@ export async function loadTasks(userId: string): Promise<Task[]> {
     frequency:         row.frequency || undefined,
     customDays:        row.custom_days || undefined,
     isGenerated:       row.is_generated,
+    templateId:        row.template_id || undefined,
     createdAt:         row.created_at,
   }))
 }
@@ -255,6 +256,7 @@ export async function insertTasks(userId: string, tasks: Task[]) {
       frequency:           task.frequency          || null,
       custom_days:         task.customDays         ?? [],
       is_generated:        task.isGenerated        ?? false,
+      template_id:         task.templateId          || null,
       created_at:          task.createdAt,
     }))
   )
@@ -469,6 +471,7 @@ export async function loadTasksSince(userId: string, since: string): Promise<Tas
     frequency:         row.frequency           || undefined,
     customDays:        row.custom_days         || undefined,
     isGenerated:       row.is_generated,
+    templateId:        row.template_id || undefined,
     createdAt:         row.created_at,
   }))
 }
