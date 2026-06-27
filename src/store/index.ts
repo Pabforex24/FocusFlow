@@ -631,18 +631,31 @@ export const useStore = create<AppStore>()(
       },
 
 
+      setRecurringTemplates: (templates: any[]) => {
+        set({ recurringTemplates: templates } as any)
+      },
+
       // ── Recurring Templates ───────────────────────────────────────────────
       recurringTemplates: [] as any[],
 
-      addRecurringTemplate: (data: any) => {
+      addRecurringTemplate: async (data: any) => {
         const newTemplate = { ...data, id: Date.now().toString(36) + Math.random().toString(36).slice(2,7), createdAt: new Date().toISOString() }
         set((s: any) => ({ recurringTemplates: [...s.recurringTemplates, newTemplate] }))
+        const userId = get().supabaseUserId
+        if (userId) {
+          const error = await db.insertRecurringTemplate(userId, newTemplate)
+          if (error) {
+            set((s: any) => ({ recurringTemplates: s.recurringTemplates.filter((t: any) => t.id !== newTemplate.id) }))
+            return
+          }
+        }
         get().generateRecurringTasksForDate(new Date())
       },
       updateRecurringTemplate: (id: string, data: any) => {
         set((s: any) => ({
           recurringTemplates: s.recurringTemplates.map((t: any) => t.id === id ? { ...t, ...data } : t),
         }))
+        if (get().supabaseUserId) db.updateRecurringTemplateInDb(id, data).catch(console.error)
       },
       deleteRecurringTemplate: (id: string) => {
         set((s: any) => ({
@@ -652,6 +665,7 @@ export const useStore = create<AppStore>()(
             return t.done || new Date(t.scheduledAt) < new Date()
           }),
         }))
+        if (get().supabaseUserId) db.deleteRecurringTemplateFromDb(id).catch(console.error)
       },
       generateRecurringTasksForDate: (date: Date) => {
         const { recurringTemplates, tasks, supabaseUserId } = get() as any

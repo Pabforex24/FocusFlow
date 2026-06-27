@@ -136,7 +136,7 @@ export async function loadGoals(userId: string): Promise<Goal[]> {
     .order('created_at')
   return (data || []).map((row) => ({
     id:          row.id,
-    domainId:    row.domain_id || '',
+    domainId:    row.domain_id,
     challengeId: row.challenge_id || undefined,
     title:       row.title,
     description: row.description || undefined,
@@ -150,11 +150,11 @@ export async function insertGoal(userId: string, goal: Goal) {
   console.log('[db] insertGoal start — id:', goal.id, 'userId:', userId)
   const { error } = await supabase.from('goals').insert({
     id: goal.id, user_id: userId,
-    domain_id:    goal.domainId   || null,
+    domain_id:    goal.domainId,
     challenge_id: goal.challengeId || null,
     title:        goal.title,
     description:  goal.description || null,
-    unit:         goal.unit        || null,
+    unit:         goal.unit || null,
     created_at:   goal.createdAt,
   })
   if (error && error.code !== '23505') {
@@ -437,7 +437,7 @@ export async function loadGoalsSince(userId: string, since: string): Promise<Goa
     .order('created_at')
   return (data || []).map((row) => ({
     id:          row.id,
-    domainId:    row.domain_id || '',
+    domainId:    row.domain_id,
     challengeId: row.challenge_id || undefined,
     title:       row.title,
     description: row.description || undefined,
@@ -510,4 +510,72 @@ export async function loadActiveChallengesSince(userId: string, since: string): 
     currentDay:  row.current_day,
     createdAt:   row.created_at,
   }))
+}
+
+// ─── Recurring Templates ──────────────────────────────────────────────────────
+
+export async function loadRecurringTemplates(userId: string) {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('recurring_templates')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at')
+  return (data || []).map((row) => ({
+    id:         row.id,
+    title:      row.title,
+    domainId:   row.domain_id   || undefined,
+    goalId:     row.goal_id     || undefined,
+    duration:   row.duration    || undefined,
+    priority:   row.priority    || undefined,
+    xpValue:    row.xp_value,
+    frequency:  row.frequency,
+    customDays: row.custom_days || [],
+    timeOfDay:  row.time_of_day,
+    startDate:  row.start_date,
+    endDate:    row.end_date    || undefined,
+    active:     row.active,
+    createdAt:  row.created_at,
+  }))
+}
+
+export async function insertRecurringTemplate(userId: string, t: any) {
+  if (!supabase) return null
+  const { error } = await supabase.from('recurring_templates').insert({
+    id:          t.id,
+    user_id:     userId,
+    domain_id:   t.domainId   || null,
+    goal_id:     t.goalId     || null,
+    title:       t.title,
+    duration:    t.duration   || null,
+    priority:    t.priority   || null,
+    xp_value:    t.xpValue    ?? 10,
+    frequency:   t.frequency,
+    custom_days: t.customDays ?? [],
+    time_of_day: t.timeOfDay  ?? '08:00',
+    start_date:  t.startDate,
+    end_date:    t.endDate    || null,
+    active:      t.active,
+    created_at:  t.createdAt,
+  })
+  if (error && error.code !== '23505') {
+    console.error('[db] insertRecurringTemplate FAILED:', error.message)
+    return error
+  }
+  return null
+}
+
+export async function updateRecurringTemplateInDb(id: string, data: any) {
+  if (!supabase) return
+  const patch: any = {}
+  if (data.active    !== undefined) patch.active    = data.active
+  if (data.title     !== undefined) patch.title     = data.title
+  if (data.endDate   !== undefined) patch.end_date  = data.endDate || null
+  if (data.frequency !== undefined) patch.frequency = data.frequency
+  await supabase.from('recurring_templates').update(patch).eq('id', id)
+}
+
+export async function deleteRecurringTemplateFromDb(id: string) {
+  if (!supabase) return
+  await supabase.from('recurring_templates').delete().eq('id', id)
 }
