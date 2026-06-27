@@ -1,17 +1,14 @@
 'use client'
 
 /**
- * useSupabaseSync — Synchronisation Supabase propre pour FocusFlow
+ * useSupabaseSync — Synchronisation Supabase avec sync incrémentale
  *
  * Architecture :
- *  • bootSync    : au montage, charge toutes les données depuis Supabase
- *  • fullSync    : charge tout (boot, reconnexion, retour foreground, poll)
+ *  • bootSync    : au montage, charge toutes les données (fullSync)
+ *  • fullSync    : charge tout depuis Supabase (boot, reconnexion)
+ *  • deltaSync   : charge uniquement les données modifiées depuis lastSyncedAt
+ *                  (poll 60s, retour foreground) → beaucoup moins de données
  *  • isInserting : garde contre la race condition addTask/fullSync
- *
- * Race condition protégée :
- *  Si addTask/addGoal/addDomain est en cours (isInserting=true),
- *  fullSync est bloqué pour ne pas écraser une donnée optimiste non encore
- *  confirmée par Supabase.
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
@@ -19,37 +16,34 @@ import { useStore } from '@/store'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import * as db from '@/lib/db'
 
-const POLL_INTERVAL_MS = 60_000  // re-sync toutes les 60s
-const BOOT_DELAY_MS    = 800     // délai sécurité anti-race-condition au boot
+const POLL_INTERVAL_MS = 60_000
+const BOOT_DELAY_MS    = 800
 
 export function useSupabaseSync() {
-  const setSupabaseUser     = useStore((s) => s.setSupabaseUser)
-  const setUserEmail        = useStore((s: any) => s.setUserEmail as (e: string | null) => void)
-  const hydrateFromSupabase = useStore((s) => s.hydrateFromSupabase)
+  const setSupabaseUser        = useStore((s) => s.setSupabaseUser)
+  const setUserEmail           = useStore((s: any) => s.setUserEmail as (e: string | null) => void)
+  const hydrateFromSupabase    = useStore((s) => s.hydrateFromSupabase)
+  const mergeFromSupabase      = useStore((s) => s.mergeFromSupabase)
   const setLastSyncedAt        = useStore((s) => s.setLastSyncedAt)
   const setRecurringTemplates  = useStore((s: any) => s.setRecurringTemplates as (t: any[]) => void)
 
   const [loading, setLoading] = useState(false)
-  const syncingRef    = useRef(false)
-  const bootDoneRef   = useRef(false)
-  const userIdRef     = useRef<string | null>(null)
+  const syncingRef  = useRef(false)
+  const userIdRef   = useRef<string | null>(null)
+  const bootDoneRef = useRef(false)
 
-  // Lire isInserting directement (pas via hook pour éviter re-renders)
   const isInserting = () => useStore.getState().isInserting
+  const getLastSyncedAt = () => useStore.getState().lastSyncedAt
 
+  // ── Full sync (boot, reconnexion) ─────────────────────────────────────────
   const fullSync = useCallback(async (userId: string, source = 'unknown') => {
-    // Bloquer si une sync est déjà en cours
-    if (syncingRef.current) {
-      console.log('[sync] ignoré — déjà en cours (source:', source, ')')
-      return
-    }
-    // Bloquer si un insert optimiste est en attente de confirmation
+    if (syncingRef.current) return
     if (isInserting()) {
-      console.log('[sync] BLOQUÉ — insert en cours (source:', source, ')')
+      console.log('[sync] fullSync bloqué — insert en cours')
       return
     }
     syncingRef.current = true
-    console.log('[sync] START —', source)
+    console.log('[sync] fullSync START —', source)
     try {
       const [profile, domains, goals, tasks, customChallenges, activeChallenges, recurringTemplates] =
         await Promise.all([
@@ -61,22 +55,80 @@ export function useSupabaseSync() {
           db.loadActiveChallenges(userId),
           db.loadRecurringTemplates(userId),
         ])
-      // Vérification post-fetch : annuler si un insert a démarré pendant le fetch
+
       if (isInserting()) {
-        console.log('[sync] ANNULÉ post-fetch — insert démarré pendant le fetch')
+        console.log('[sync] fullSync annulé post-fetch — insert démarré')
         return
       }
-      console.log('[sync] hydrate — domains:', domains.length, 'goals:', goals.length, 'tasks:', tasks.length)
+
       hydrateFromSupabase({ profile, domains, goals, tasks, customChallenges, activeChallenges })
       setRecurringTemplates(recurringTemplates)
       setLastSyncedAt(new Date().toISOString())
-      console.log('[sync] DONE')
+      console.log('[sync] fullSync DONE — tasks:', tasks.length, 'goals:', goals.length)
     } catch (err) {
-      console.error('[sync] ERREUR:', err)
+      console.error('[sync] fullSync ERREUR:', err)
     } finally {
       syncingRef.current = false
     }
-  }, [hydrateFromSupabase, setLastSyncedAt])
+  }, [hydrateFromSupabase, setLastSyncedAt, setRecurringTemplates])
+
+  // ── Delta sync (poll, visibility) ─────────────────────────────────────────
+  // Ne charge que les enregistrements modifiés depuis lastSyncedAt
+  const deltaSync = useCallback(async (userId: string, source = 'delta') => {
+    if (syncingRef.current) return
+    if (isInserting()) {
+      console.log('[sync] deltaSync bloqué — insert en cours')
+      return
+    }
+
+    const since = getLastSyncedAt()
+    if (!since) {
+      // Pas encore de sync complète — faire un fullSync à la place
+      return fullSync(userId, 'delta-fallback')
+    }
+
+    syncingRef.current = true
+    console.log('[sync] deltaSync START —', source, '— depuis:', since)
+    try {
+      const [domains, goals, tasks, customChallenges, activeChallenges] =
+        await Promise.all([
+          db.loadDomainsSince(userId, since),
+          db.loadGoalsSince(userId, since),
+          db.loadTasksSince(userId, since),
+          db.loadCustomChallengesSince(userId, since),
+          db.loadActiveChallengesSince(userId, since),
+        ])
+
+      if (isInserting()) {
+        console.log('[sync] deltaSync annulé post-fetch — insert démarré')
+        return
+      }
+
+      const hasChanges = domains.length + goals.length + tasks.length +
+        customChallenges.length + activeChallenges.length > 0
+
+      if (hasChanges) {
+        console.log('[sync] deltaSync — changements détectés:',
+          { domains: domains.length, goals: goals.length, tasks: tasks.length })
+        mergeFromSupabase({
+          profile: null,
+          domains,
+          goals,
+          tasks,
+          customChallenges,
+          activeChallenges,
+        })
+      } else {
+        console.log('[sync] deltaSync — aucun changement')
+      }
+
+      setLastSyncedAt(new Date().toISOString())
+    } catch (err) {
+      console.error('[sync] deltaSync ERREUR:', err)
+    } finally {
+      syncingRef.current = false
+    }
+  }, [fullSync, mergeFromSupabase, setLastSyncedAt])
 
   const manualSync = useCallback(async () => {
     const userId = userIdRef.current
@@ -95,10 +147,9 @@ export function useSupabaseSync() {
         if (session?.user) {
           setUserEmail(session.user.email ?? null)
           setSupabaseUser(session.user.id)
-          userIdRef.current  = session.user.id
+          userIdRef.current   = session.user.id
           bootDoneRef.current = true
           setLoading(true)
-          // Délai de sécurité pour éviter la race condition au boot
           await new Promise((r) => setTimeout(r, BOOT_DELAY_MS))
           try { await fullSync(session.user.id, 'boot') }
           finally { setLoading(false) }
@@ -126,21 +177,20 @@ export function useSupabaseSync() {
           setUserEmail(null)
           userIdRef.current   = null
           bootDoneRef.current = false
-          setLastSyncedAt('')
           if (typeof window !== 'undefined') localStorage.removeItem('focusflow-store-v11')
         }
       }
     )
 
-    // Polling toutes les 60s
+    // Poll toutes les 60s — delta uniquement (léger)
     const poll = setInterval(() => {
-      if (userIdRef.current) fullSync(userIdRef.current, 'poll')
+      if (userIdRef.current) deltaSync(userIdRef.current, 'poll')
     }, POLL_INTERVAL_MS)
 
-    // Re-sync au retour foreground
+    // Retour foreground — delta uniquement
     const onVisibility = () => {
       if (document.visibilityState === 'visible' && userIdRef.current)
-        fullSync(userIdRef.current, 'visibility')
+        deltaSync(userIdRef.current, 'visibility')
     }
     document.addEventListener('visibilitychange', onVisibility)
 
@@ -149,7 +199,7 @@ export function useSupabaseSync() {
       clearInterval(poll)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [fullSync, setLastSyncedAt, setSupabaseUser, setUserEmail])
+  }, [fullSync, deltaSync, setLastSyncedAt, setSupabaseUser, setUserEmail])
 
   return { loading, isOnline: isSupabaseConfigured, manualSync }
 }
