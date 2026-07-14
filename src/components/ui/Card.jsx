@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { HTMLAttributes } from 'react'
 
 
-export function Card({ className, hover = false, accent, children, ...props }: CardProps) {
+export function Card({ className, hover = false, accent, children, ...props }) {
   return (
     <div
       className={cn(

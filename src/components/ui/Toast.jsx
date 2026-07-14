@@ -11,7 +11,7 @@ const ToastContext = createContext({ toast: () => {} })
 export function ToastProvider({ children }: { children: any }) {
   const [toasts, setToasts] = useState([])
 
-  const toast = useCallback((message, type: ToastType = 'info') => {
+  const toast = useCallback((message, type = 'info') => {
     const id = Date.now().toString()
     setToasts((prev) => [...prev, { id, message, type }])
     const delay = type === 'error' ? 5000 : 3000

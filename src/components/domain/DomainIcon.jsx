@@ -44,7 +44,7 @@ export const DOMAIN_ICON_KEYS = Object.keys(ICON_MAP)
 // ─── Component ────────────────────────────────────────────────────────────────
 
 
-export function DomainIcon({ name, size = 18, className, color }: DomainIconProps) {
+export function DomainIcon({ name, size = 18, className, color }) {
   const Icon = ICON_MAP[name] ?? Target
   return <Icon size={size} className={className} color={color} />
 }

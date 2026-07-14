@@ -18,7 +18,7 @@ import { ChevronLeft, ChevronRight, TrendingUp, CheckCircle2, Flame, Zap, Target
 function LineChart({
   data, color = '#00E5B0', height = 120, showArea = true,
 }: {
-  data: { value: number; label: string }[]
+  data
   color
   height
   showArea
@@ -146,7 +146,7 @@ export default function MensuelPage() {
     .filter((t) => t.done && t.doneAt && isSameMonth(new Date(t.doneAt), currentMonth))
     .reduce((sum, t) => sum + (t.xpValue ?? 10), 0)
   const bestDay = dailyCompletion.reduce((best, d, i) =>
-    d.value > (best?.value ?? 0) ? { ...d, day: monthDays[i] } : best,
+    d.value > (best?.value ?? 0) ? { ...d, day: monthDays[i] },
     null  | { value: number; label: string; day: Date }
   )
   const activeDays = dailyCompletion.filter((d) => d.value > 0).length

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const PUBLIC_ROUTES = ['/auth/login', '/auth/signup', '/auth/callback']
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request) {
   const { pathname } = request.nextUrl
 
   // Routes publiques — jamais protégées

@@ -4,12 +4,12 @@ import { format, isToday, isTomorrow, isYesterday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 // ─── Class merge utility ──────────────────────────────────────────────────────
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
 // ─── Date formatting ──────────────────────────────────────────────────────────
-export function formatTaskDate(date: Date) {
+export function formatTaskDate(date) {
   if (isToday(date)) return "Aujourd'hui"
   if (isTomorrow(date)) return 'Demain'
   if (isYesterday(date)) return 'Hier'
@@ -70,7 +70,7 @@ export function getRandomQuote() {
 }
 
 // ─── Week activity data ───────────────────────────────────────────────────────
-export function getWeekActivity(tasks: { scheduledAt: string; done: boolean }[]) {
+export function getWeekActivity(tasks) {
   const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(Date.now() - (6 - i) * 86400000)

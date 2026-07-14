@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { Zap } from 'lucide-react'
 
 
-export function XPBar({ compact = false, className }: XPBarProps) {
+export function XPBar({ compact = false, className }) {
   const { userStats } = useStore()
   const { xp, level, xpToNextLevel } = userStats
   const xpNeeded = level * 100 + 50

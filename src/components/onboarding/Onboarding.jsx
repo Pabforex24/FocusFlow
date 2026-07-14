@@ -22,7 +22,7 @@ export function Onboarding() {
   const { addDomain, addGoal, bulkAddTasks, domains, goals, completeOnboarding } = useStore()
 
   const [step, setStep] = useState('domains')
-  const [selectedPresets, setSelectedPresets] = useState>(new Set())
+  const [selectedPresets, setSelectedPresets] = useState(new Set())
   const [customDomain, setCustomDomain] = useState('')
   const [goalTitle, setGoalTitle] = useState('')
   const [goalDomainId, setGoalDomainId] = useState('')
@@ -58,7 +58,7 @@ export function Onboarding() {
         title: title.trim(),
         domainId: d,
         goalId: g.id,
-        scheduledAt: `${today}T${(8 + i).toString().padStart(2, '0')}:00:00.000Z`,
+        scheduledAt: `${today}T${(8 + i).toString().padStart(2, '0')}.000Z`,
         done: false,
         xpValue: 10,
         priority: 'medium' ,

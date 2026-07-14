@@ -176,8 +176,8 @@ function GoalRow({ goal, onEdit, onDelete }: { goal: Goal; onEdit: () => void; o
 
 function ChallengeGroup({ challengeId, goals, onEditGoal, onDeleteGoal }: {
   challengeId: string
-  goals: Goal[]
-  onEditGoal: (g: Goal) => void
+  goals
+  onEditGoal: (g) => void
   onDeleteGoal: (id) => void
 }) {
   const getEffectiveChallenge = useStore((s) => s.getEffectiveChallenge)

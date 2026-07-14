@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getInitials(email: string | null, name) {
+function getInitials(email, name) {
   if (name) return name.slice(0, 2).toUpperCase()
   if (email) return email.slice(0, 2).toUpperCase()
   return '??'
@@ -88,7 +88,7 @@ function FeedbackMsg({ type, msg }: { type: 'success' | 'error'; msg: string }) 
 
 export default function ProfilePage() {
   const router      = useRouter()
-  const userEmail   = useStore((s) => s.userEmail  | null)
+  const userEmail   = useStore((s) => s.userEmail)
   const userStats   = useStore((s) => s.userStats)
   const streak      = useStore((s) => s.streak)
   const badges      = useStore((s) => s.badges)
@@ -247,7 +247,7 @@ export default function ProfilePage() {
             <div className="relative">
               <input
                 className={inputCls}
-                style={nameFocused ? { ...inputStyle, ...inputFocusStyle } : inputStyle}
+                style={nameFocused ? { ...inputStyle, ...inputFocusStyle }}
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 onFocus={() => setNameFocused(true)}
@@ -300,7 +300,7 @@ export default function ProfilePage() {
               <input
                 type={showPwd ? 'text' : 'password'}
                 className={inputCls + ' pr-10'}
-                style={pwdFocused ? { ...inputStyle, ...inputFocusStyle } : inputStyle}
+                style={pwdFocused ? { ...inputStyle, ...inputFocusStyle }}
                 value={newPwd}
                 onChange={(e) => setNewPwd(e.target.value)}
                 onFocus={() => setPwdFocused(true)}
@@ -321,7 +321,7 @@ export default function ProfilePage() {
             <input
               type={showPwd ? 'text' : 'password'}
               className={inputCls}
-              style={cpwdFocused ? { ...inputStyle, ...inputFocusStyle } : inputStyle}
+              style={cpwdFocused ? { ...inputStyle, ...inputFocusStyle }}
               value={confirmPwd}
               onChange={(e) => setConfirmPwd(e.target.value)}
               onFocus={() => setCpwdFocused(true)}

@@ -8,7 +8,7 @@ import { format, differenceInDays } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 
-export function ChallengeCard({ challenge, activeChallenge, progress, onStart, onStop }: ChallengeCardProps) {
+export function ChallengeCard({ challenge, activeChallenge, progress, onStart, onStop }) {
   const isActive    = !!activeChallenge?.isActive
   const isCompleted = !isActive && !!activeChallenge && progress === 100
 

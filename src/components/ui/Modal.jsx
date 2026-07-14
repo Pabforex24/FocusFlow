@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils'
 import { Button } from './Button'
 
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+export function Modal({ open, onClose, title, children, className }) {
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
     if (open) document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
@@ -76,7 +76,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
 }
 
 
-export function Field({ label, children, className }: FieldProps) {
+export function Field({ label, children, className }) {
   return (
     <div className={cn('mb-4', className)}>
       <label className="block text-xs font-medium text-content-2 mb-1.5">{label}</label>

@@ -24,7 +24,7 @@ function markShownToday() {
   localStorage.setItem(getTodayKey(), '1')
 }
 
-function RecapStat({ icon, label, value, color }: { icon: any; label: string; value: string | number; color: string }) {
+function RecapStat({ icon, label, value, color }: { icon: any; label: string; value) {
   return (
     <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl"
       style={{ background: hexToRgba(color, 0.08), border: `1px solid ${hexToRgba(color, 0.18)}` }}>
@@ -83,10 +83,7 @@ export function DailyRecap() {
     .filter(Boolean) []
 
   const msg = isPerfect
-    ? { emoji: '🏆', text: 'Journée parfaite ! Toutes tes tâches sont complétées.' }
-    : todayPct >= 75 ? { emoji: '💪', text: 'Très bonne journée ! Continue sur cette lancée.' }
-    : todayPct >= 50 ? { emoji: '👍', text: 'Bonne journée. Demain, tu feras encore mieux.' }
-    : todayPct > 0   ? { emoji: '🌱', text: 'Tu . Chaque tâche compte.' }
+    ? { emoji: '🏆', text: 'Journée parfaite ! Toutes tes tâches sont complétées.' } >= 75 ? { emoji: '💪', text: 'Très bonne journée ! Continue sur cette lancée.' } >= 50 ? { emoji: '👍', text: 'Bonne journée. Demain, tu feras encore mieux.' } > 0   ? { emoji: '🌱', text: 'Tu . Chaque tâche compte.' }
     : { emoji: '🌙',  text: "Planifie tes tâches pour demain dès maintenant !" }
 
   const accentColor = isPerfect ? '#00E5B0' : '#7B5EA7'
@@ -181,7 +178,7 @@ export function DailyRecap() {
                   Challenges en cours
                 </p>
                 <div className="space-y-2">
-                  {runningChallenges.map(({ ac, challenge, progress, daysLeft }: any) => (
+                  {runningChallenges.map(({ ac, challenge, progress, daysLeft }) => (
                     <div key={ac.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
                       style={{ background: hexToRgba(challenge.color, 0.07), border: `1px solid ${hexToRgba(challenge.color, 0.18)}` }}>
                       <RingProgress value={progress} size={36} strokeWidth={3} color={challenge.color}>

@@ -5,7 +5,7 @@ import { Button } from './Button'
   className
 }
 
-export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, className }) {
   return (
     <div
       className={cn('flex flex-col items-center justify-center text-center py-16 px-6 rounded-2xl', className)}

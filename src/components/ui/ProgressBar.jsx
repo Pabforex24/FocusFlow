@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 export function ProgressBar({
   value, color = '#00E5B0', height = 'sm', className, animated = true, glow = true,
-}: ProgressBarProps) {
+}) {
   const clamped = Math.min(100, Math.max(0, value))
   return (
     <div
@@ -33,7 +33,7 @@ export function ProgressBar({
 
 export function RingProgress({
   value, size = 56, strokeWidth = 4, color = '#00E5B0', className, children, glow = true,
-}: RingProgressProps) {
+}) {
   const clamped = Math.min(100, Math.max(0, value))
   const r = (size - strokeWidth * 2) / 2
   const circumference = 2 * Math.PI * r

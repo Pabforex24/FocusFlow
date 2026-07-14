@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { hexToRgba } from '@/lib/utils'
 
 
-export function Badge({ color, children, className }: BadgeProps) {
+export function Badge({ color, children, className }) {
   return (
     <span
       className={cn(
@@ -29,7 +29,7 @@ export function Badge({ color, children, className }: BadgeProps) {
 }
 
 
-export function Chip({ active, color, onClick, children, className }: ChipProps) {
+export function Chip({ active, color, onClick, children, className }) {
   const activeColor = color || '#d4a843'
 
   return (

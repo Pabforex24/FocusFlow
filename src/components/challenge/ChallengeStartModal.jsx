@@ -14,10 +14,10 @@ const FREQ_LABEL = {
   daily: 'Chaque jour', workdays: 'Jours ouvrables', weekend: 'Week-end', custom: 'Personnalisé',
 }
 
-export function ChallengeStartModal({ challenge, onClose }: ChallengeStartModalProps) {
+export function ChallengeStartModal({ challenge, onClose }) {
   const { goals, domains, startChallenge } = useStore()
 
-  const [bpGoalMap, setBpGoalMap] = useState>({})
+  const [bpGoalMap, setBpGoalMap] = useState({})
   const [started,   setStarted]   = useState(false)
 
   // ⚠️ Tous les hooks AVANT le return conditionnel

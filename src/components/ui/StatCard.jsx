@@ -1,7 +1,7 @@
 import { cn, hexToRgba } from '@/lib/utils'
 
 
-export function StatCard({ label, value, sub, icon, color = '#d4a843', className }: StatCardProps) {
+export function StatCard({ label, value, sub, icon, color = '#d4a843', className }) {
   return (
     <div
       className={cn(

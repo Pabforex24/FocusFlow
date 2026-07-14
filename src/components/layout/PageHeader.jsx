@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 
-export function PageHeader({ title, subtitle, action, className }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, action, className }) {
   return (
     <div className={cn('flex items-start justify-between gap-4 mb-8', className)}>
       <div>

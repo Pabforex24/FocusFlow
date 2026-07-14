@@ -9,7 +9,7 @@ import { Play, Pause, Square, CheckCircle2, X, Timer, Zap } from 'lucide-react'
 
 const DURATIONS = [15, 25, 45, 60]
 
-export function FocusMode({ onClose, initialTask }: FocusModeProps) {
+export function FocusMode({ onClose, initialTask }) {
   const {
     focusSession, startFocus, tickFocus, pauseFocus,
     resumeFocus, completeFocus, abandonFocus, tasks,
@@ -93,7 +93,7 @@ export function FocusMode({ onClose, initialTask }: FocusModeProps) {
             <select
               className="w-full bg-bg-3 border border-border rounded-xl px-3 py-2 text-sm text-content outline-none"
               value={selectedTaskId || ''}
-              onChange={(e) => setSelectedTaskId(e.target.value || undefined)}
+              onChange={(e) => setSelectedTaskId(e.target.value |)}
             >
               <option value="">— Session libre —</option>
               {todayPending.map((t) => (

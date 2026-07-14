@@ -21,7 +21,7 @@ const BOOT_DELAY_MS    = 800
 
 export function useSupabaseSync() {
   const setSupabaseUser        = useStore((s) => s.setSupabaseUser)
-  const setUserEmail           = useStore((s) => s.setUserEmail as (e: string | null) => void)
+  const setUserEmail           = useStore((s) => s.setUserEmail as (e) => void)
   const hydrateFromSupabase    = useStore((s) => s.hydrateFromSupabase)
   const mergeFromSupabase      = useStore((s) => s.mergeFromSupabase)
   const setLastSyncedAt        = useStore((s) => s.setLastSyncedAt)

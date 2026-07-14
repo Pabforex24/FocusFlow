@@ -7,7 +7,7 @@ import { DomainIcon } from '@/components/domain/DomainIcon'
 import { cn } from '@/lib/utils'
 
 
-export function DomainModal({ open, onClose, onSave, existing }: DomainModalProps) {
+export function DomainModal({ open, onClose, onSave, existing }) {
   const [name,  setName]  = useState('')
   const [color, setColor] = useState(DOMAIN_COLORS[0])
   const [icon,  setIcon]  = useState(DOMAIN_ICONS[0])
@@ -41,7 +41,7 @@ export function DomainModal({ open, onClose, onSave, existing }: DomainModalProp
           className={inputCls}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="ex: Trading, Sport, Études…"
+          placeholder="ex, Sport, Études…"
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           autoFocus
         />

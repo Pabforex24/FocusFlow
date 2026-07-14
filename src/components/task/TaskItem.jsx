@@ -21,7 +21,7 @@ const PRIORITY_COLOR = {
 // React.memo : le composant ne se re-rend que si ses props changent réellement
 export const TaskItem = memo(function TaskItem({
   task, domain, goalTitle, onToggle, onDelete, onEdit, onPostpone, showFocusBtn = false
-}: TaskItemProps) {
+}) {
   const [showFocus, setShowFocus] = useState(false)
   const c = domain?.color || '#00E5B0'
 

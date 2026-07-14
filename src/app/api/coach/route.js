@@ -8,7 +8,7 @@ const MAX_REQ    = 20       // requêtes max par fenêtre
 
 const rateLimitMap = new Map()
 
-function getClientIp(req: NextRequest) {
+function getClientIp(req) {
   return (
     req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
     req.headers.get('x-real-ip') ||
@@ -46,7 +46,7 @@ if (typeof setInterval !== 'undefined') {
 }
 
 // ── Handler principal ─────────────────────────────────────────────────────────
-export async function POST(req: NextRequest) {
+export async function POST(req) {
   const ip = getClientIp(req)
   const { allowed, remaining, resetIn } = checkRateLimit(ip)
 
@@ -69,11 +69,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Validation basique du body
-  let messages: { role: string; content: string }[]
-  let system: string | undefined
-
-  try {
-    const body = await req.json()
+  let messages
+  let system)
     messages = body.messages
     system   = body.system
 
@@ -146,7 +143,7 @@ export async function POST(req: NextRequest) {
 }
 
 // ── Fallback local intelligent ────────────────────────────────────────────────
-function getLocalFallback(messages: { role: string; content: string }[]) {
+function getLocalFallback(messages) {
   const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() || ''
 
   if (lastMsg.includes('motiv'))

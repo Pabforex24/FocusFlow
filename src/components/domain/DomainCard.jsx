@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { DomainIcon } from './DomainIcon'
 
 
-export function DomainCard({ domain, progress, goalCount, onClick, onEdit, onDelete }: DomainCardProps) {
+export function DomainCard({ domain, progress, goalCount, onClick, onEdit, onDelete }) {
   const c = domain.color
   return (
     <div

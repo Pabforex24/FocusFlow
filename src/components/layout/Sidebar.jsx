@@ -32,7 +32,7 @@ export function Sidebar({ onOpenFocus, onManualSync, syncLoading }: {
   const pathname = usePathname()
   const router   = useRouter()
   const { streak, tasks, userStats, focusSession, setSupabaseUser } = useStore()
-  const userEmail = useStore((s) => s.userEmail  | null)
+  const userEmail = useStore((s) => s.userEmail)
 
   const [collapsed, setCollapsed] = useState(false)
   const [menuOpen,  setMenuOpen]  = useState(false)
@@ -101,9 +101,9 @@ export function Sidebar({ onOpenFocus, onManualSync, syncLoading }: {
   const onTouchEnd = useCallback(() => { dragRef.current.dragging = false }, [])
 
   const quickActions = [
-    { label: 'Nouveau challenge', icon: Trophy,  href: '/challenges', color: '#C8865A' },
-    { label: 'Nouvel objectif',   icon: Target,  href: '/goals',      color: '#3DD8FA' },
-    { label: 'Nouveau domaine',   icon: Globe,   href: '/domains',    color: '#00E5B0' },
+    { label: 'Nouveau challenge', icon,  href: '/challenges', color: '#C8865A' },
+    { label: 'Nouvel objectif',   icon,  href: '/goals',      color: '#3DD8FA' },
+    { label: 'Nouveau domaine',   icon,   href: '/domains',    color: '#00E5B0' },
   ]
 
   return (

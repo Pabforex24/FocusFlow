@@ -3,7 +3,7 @@
 import { getWeekActivity } from '@/lib/utils'
 
 
-export function WeekChart({ tasks }: WeekChartProps) {
+export function WeekChart({ tasks }) {
   const data = getWeekActivity(tasks)
   const max = Math.max(...data.map((d) => d.total), 1)
 

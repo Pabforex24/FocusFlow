@@ -7,7 +7,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
 
-export function BadgeCard({ badge, size = 'md' }: BadgeCardProps) {
+export function BadgeCard({ badge, size = 'md' }) {
   const unlocked = !!badge.unlockedAt
 
   if (size === 'sm') {

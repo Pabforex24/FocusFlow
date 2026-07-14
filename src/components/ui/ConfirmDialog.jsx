@@ -13,7 +13,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = 'Confirmer',
   danger = true,
-}: ConfirmDialogProps) {
+}) {
   return (
     <Modal open={open} onClose={onClose} title={title} className="max-w-sm">
       <div className="flex gap-3 mb-5">

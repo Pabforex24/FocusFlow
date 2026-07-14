@@ -7,10 +7,10 @@
 
 let _handler = null
 
-export function registerToastHandler(fn: ToastHandler) {
+export function registerToastHandler(fn) {
   _handler = fn
 }
 
-export function showToast(message, type: ToastType = 'info') {
+export function showToast(message, type = 'info') {
   _handler?.(message, type)
 }

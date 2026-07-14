@@ -13,7 +13,7 @@ import { useState, useCallback } from 'react'
  *   modal.data           → T | null
  */
 export function useModal() {
-  const [state, setState] = useState>({ open: false, data: null })
+  const [state, setState] = useState({ open: false, data: null })
 
   const openModal = useCallback((data) => {
     setState({ open: true, data: data ?? null })
@@ -26,7 +26,7 @@ export function useModal() {
   return {
     isOpen: state.open,
     data: state.data,
-    open: openModal,
-    close: closeModal,
+    open,
+    close,
   }
 }

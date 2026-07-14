@@ -3,7 +3,7 @@ import * from '@/lib/db'
 import { persist } from 'zustand/middleware'
 
 // ─── Challenge catalogue ──────────────────────────────────────────────────────
-export const CHALLENGE_CATALOGUE: Challenge[] = [
+export const CHALLENGE_CATALOGUE = [
   {
     id: 'ch-trading-30',
     title: 'Trader Discipline 30J',
@@ -53,19 +53,19 @@ const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
-const seedDomains: Domain[] = [
+const seedDomains = [
   { id: 'seed-d1', name: 'Trading', icon: 'TrendingUp', color: '#00C2A8', createdAt: new Date().toISOString() },
   { id: 'seed-d2', name: 'Sport',   icon: 'Dumbbell',   color: '#FFB830', createdAt: new Date().toISOString() },
   { id: 'seed-d3', name: 'Études',  icon: 'BookOpen',   color: '#4EA8DE', createdAt: new Date().toISOString() },
 ]
 
-const seedGoals: Goal[] = [
+const seedGoals = [
   { id: 'seed-g1', domainId: 'seed-d1', title: '30h de backtest',          unit: 'heures',  createdAt: new Date().toISOString() },
   { id: 'seed-g2', domainId: 'seed-d2', title: '20 séances de sport',       unit: 'séances', createdAt: new Date().toISOString() },
   { id: 'seed-g3', domainId: 'seed-d3', title: 'Valider le module finance', unit: '',        createdAt: new Date().toISOString() },
 ]
 
-const seedTasks: Task[] = [
+const seedTasks = [
   { id: uid(), title: '1h30 de backtest EUR/USD',                domainId: 'seed-d1', goalId: 'seed-g1', duration: '1h30',  scheduledAt: `${today}T08:00:00.000Z`,    done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
   { id: uid(), title: 'Analyser les trades de la semaine',        domainId: 'seed-d1', goalId: 'seed-g1', duration: '30min', scheduledAt: `${today}T10:00:00.000Z`,    done: true,  xpValue: 10, doneAt: new Date().toISOString(), createdAt: new Date().toISOString() },
   { id: uid(), title: 'Footing 20 minutes',                       domainId: 'seed-d2', goalId: 'seed-g2', duration: '20min', scheduledAt: `${today}T07:00:00.000Z`,    done: false, xpValue: 10, priority: 'medium', createdAt: new Date().toISOString() },
@@ -73,7 +73,7 @@ const seedTasks: Task[] = [
   { id: uid(), title: 'Backtest stratégie RSI',                   domainId: 'seed-d1', goalId: 'seed-g1', duration: '2h',    scheduledAt: `${tomorrow}T09:00:00.000Z`, done: false, xpValue: 10, priority: 'high',   createdAt: new Date().toISOString() },
 ]
 
-const initialUserStats: UserStats = {
+const initialUserStats = {
   xp: 0, level: 1, xpToNextLevel: xpForLevel(1),
   totalTasksDone: 0, challengesCompleted: 0, longestStreak: 0,
   hardcoreMode: false,
@@ -90,13 +90,12 @@ function computeLevel(xp): { level; xpToNextLevel: number } {
 }
 
 function buildAllTasks(
-  challenge: Challenge,
+  challenge,
   acId,
-  startDate: Date,
-  endDate: Date,
-  blueprintGoalMap: Record<string, string>
-): Omit<Task, 'id' | 'createdAt'>[] {
-  const tasks: Omit<Task, 'id' | 'createdAt'>[] = []
+  startDate,
+  endDate,
+  blueprintGoalMap): Omit<Task, 'id' | 'createdAt'>[] {
+  const tasks = []
 
   for (const bp of challenge.blueprints) {
     const resolvedGoalId = blueprintGoalMap[bp.id] || bp.goalId
@@ -106,7 +105,7 @@ function buildAllTasks(
       tasks.push({
         title: bp.title,
         domainId: bp.domainId,
-        goalId: resolvedGoalId || undefined,
+        goalId: resolvedGoalId |,
         duration: bp.duration,
         scheduledAt: d.toISOString().split('T')[0] + 'T08:00:00.000Z',
         done: false,
@@ -166,7 +165,7 @@ export const useStore = create()(
       catalogueOverrides:  {},
 
       // ── Domain ───────────────────────────────────────────────────────────────
-      addDomain: async (data: Omit<Domain, 'id' | 'createdAt'>) => {
+      addDomain: async (data) => {
         const newDomain = { ...data, id: uid(), createdAt: new Date().toISOString() }
         const userId = get().supabaseUserId
         console.log('[store] addDomain — userId:', userId, 'name:', newDomain.name)
@@ -191,7 +190,7 @@ export const useStore = create()(
         }
       },
       updateDomain: (id, data) => {
-        set((s) => ({ domains: s.domains.map((d) => (d.id === id ? { ...d, ...data } : d)) }))
+        set((s) => ({ domains: s.domains.map((d) => (d.id === id ? { ...d, ...data })) }))
         const updated = get().domains.find((d) => d.id === id)
         if (updated && get().supabaseUserId) db.updateDomain(updated).catch(console.error)
       },
@@ -206,7 +205,7 @@ export const useStore = create()(
       },
 
       // ── Goal ─────────────────────────────────────────────────────────────────
-      addGoal: async (data: Omit<Goal, 'id' | 'createdAt'>) => {
+      addGoal: async (data) => {
         const newGoal = { ...data, id: uid(), createdAt: new Date().toISOString() }
         const userId = get().supabaseUserId
         console.log('[store] addGoal — userId:', userId, 'title:', newGoal.title)
@@ -230,7 +229,7 @@ export const useStore = create()(
         }
       },
       updateGoal: (id, data) => {
-        set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...data } : g)) }))
+        set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...data })) }))
         const updated = get().goals.find((g) => g.id === id)
         if (updated && get().supabaseUserId) db.updateGoal(updated).catch(console.error)
       },
@@ -243,7 +242,7 @@ export const useStore = create()(
       },
 
       // ── Task ─────────────────────────────────────────────────────────────────
-      addTask: async (data: Omit<Task, 'id' | 'createdAt'>) => {
+      addTask: async (data) => {
         const newTask = { ...data, id: uid(), createdAt: new Date().toISOString() }
         const userId = get().supabaseUserId
         console.log('[store] addTask — userId:', userId, 'title:', newTask.title)
@@ -289,7 +288,7 @@ export const useStore = create()(
         const doneAt  = nowDone ? new Date().toISOString() : undefined
         set((s) => ({
           tasks: s.tasks.map((t) =>
-            t.id === id ? { ...t, done: nowDone, doneAt } : t
+            t.id === id ? { ...t, done: nowDone, doneAt }
           ),
           userStats: nowDone
             ? { ...s.userStats, totalTasksDone: s.userStats.totalTasksDone + 1 }
@@ -312,7 +311,7 @@ export const useStore = create()(
         if (get().supabaseUserId) db.deleteTask(id).catch(console.error)
       },
       updateTask: (id, data) => {
-        set((s) => ({ tasks: s.tasks.map((t) => t.id === id ? { ...t, ...data } : t) }))
+        set((s) => ({ tasks: s.tasks.map((t) => t.id === id ? { ...t, ...data }) }))
         if (get().supabaseUserId) db.updateTask({ id, ...data }).catch(console.error)
       },
 
@@ -346,7 +345,7 @@ export const useStore = create()(
           set((s) => ({
             badges: s.badges.map((b) => {
               const m = unlocked.find((u) => u.id === b.id)
-              return m ? { ...b, unlockedAt: m.unlockedAt } : b
+              return m ? { ...b, unlockedAt: m.unlockedAt }
             }),
           }))
         }
@@ -360,7 +359,7 @@ export const useStore = create()(
         const scheduledAt = tomorrow.toISOString()
         set((s) => ({
           tasks: s.tasks.map((t) =>
-            t.id === taskId ? { ...t, scheduledAt, postponed: true } : t
+            t.id === taskId ? { ...t, scheduledAt, postponed: true }
           ),
         }))
         if (get().supabaseUserId) db.updateTask({ id: taskId, scheduledAt }).catch(console.error)
@@ -438,7 +437,7 @@ export const useStore = create()(
         set((s) => ({ focusSession: { ...focusSession, status: 'done', completedAt: new Date().toISOString(), xpEarned: 30 } }))
         checkAndAwardBadges()
       },
-      abandonFocus: () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } } : s),
+      abandonFocus: () => set((s) => s.focusSession ? { focusSession: { ...s.focusSession, status: 'abandoned' } }),
 
       // ── Challenge ─────────────────────────────────────────────────────────────
       startChallenge: (challengeId, blueprintGoalMap = {}) => {
@@ -454,10 +453,10 @@ export const useStore = create()(
           : new Date(Date.now() + challenge.durationDays * 86400000)
 
         const acId     = uid()
-        const rawTasks = buildAllTasks(challenge, acId, startDate, endDate, blueprintGoalMap as Record<string, string>)
+        const rawTasks = buildAllTasks(challenge, acId, startDate, endDate, blueprintGoalMap<string, string>)
         const newTasks = rawTasks.map((t) => ({ ...t, id: uid(), createdAt: new Date().toISOString() }))
 
-        const newAC: ActiveChallenge = {
+        const newAC = {
           id: acId, challengeId,
           startDate: startDate.toISOString(),
           endDate:   endDate.toISOString(),
@@ -480,7 +479,7 @@ export const useStore = create()(
       stopChallenge: (acId) => {
         set((s) => ({
           activeChallenges: s.activeChallenges.map((ac) =>
-            ac.id === acId ? { ...ac, isActive: false } : ac
+            ac.id === acId ? { ...ac, isActive: false }
           ),
           tasks: s.tasks.filter((t) => {
             if (t.challengeActiveId !== acId) return true
@@ -508,7 +507,7 @@ export const useStore = create()(
         return { total: ct.length, done: ct.filter((t) => t.done).length }
       },
 
-      addCustomChallenge: (data: Omit<Challenge, 'id'>) => {
+      addCustomChallenge: (data) => {
         const newChallenge = {
           ...data,
           id: 'custom-' + uid(),
@@ -519,7 +518,7 @@ export const useStore = create()(
         if (userId) db.upsertCustomChallenge(userId, newChallenge).catch(console.error)
       },
       updateCustomChallenge: (id, data) => {
-        set((s) => ({ customChallenges: s.customChallenges.map((c) => c.id === id ? { ...c, ...data } : c) }))
+        set((s) => ({ customChallenges: s.customChallenges.map((c) => c.id === id ? { ...c, ...data }) }))
         if (get().supabaseUserId) db.updateCustomChallenge({ id, ...data }).catch(console.error)
       },
       deleteCustomChallenge: (id) => {
@@ -548,7 +547,7 @@ export const useStore = create()(
         const base = CHALLENGE_CATALOGUE.find((c) => c.id === id)
         if (!base) return undefined
         const override = catalogueOverrides[id]
-        return override ? { ...base, ...override } : base
+        return override ? { ...base, ...override }
       },
 
       // ── Supabase ──────────────────────────────────────────────────────────────
@@ -557,7 +556,7 @@ export const useStore = create()(
       setSupabaseUser: (userId) => set({ supabaseUserId: userId }),
       setUserEmail:    (email) => set({ userEmail: email }),
       hydrateFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
-        const patch: Partial<AppStore> = {}
+        const patch = {}
         patch.domains          = domains
         patch.goals            = goals
         patch.tasks            = tasks
@@ -576,13 +575,13 @@ export const useStore = create()(
           patch.lastActive = profile.last_active    ?? null
           patch.onboarding = { completed: true, step: 'done' }
         }
-        set(patch as any)
+        set(patch)
       },
 
       // ── mergeFromSupabase — delta sync ────────────────────────────────────────
       mergeFromSupabase: ({ profile, domains, goals, tasks, customChallenges, activeChallenges }) => {
         const s = get()
-        const patch: Partial<AppStore> = {}
+        const patch = {}
 
         // Toujours merger (tableau vide = suppressions propagées)
         if (domains.length) {
@@ -622,16 +621,16 @@ export const useStore = create()(
           patch.streak     = profile.streak     ?? 0
           patch.lastActive = profile.last_active ?? null
         }
-        set(patch as any)
+        set(patch)
       },
 
 
       setRecurringTemplates: (templates) => {
-        set({ recurringTemplates: templates } as any)
+        set({ recurringTemplates: templates })
       },
 
       // ── Recurring Templates ───────────────────────────────────────────────
-      recurringTemplates: [] as any[],
+      recurringTemplates: [][],
 
       addRecurringTemplate: async (data) => {
         const newTemplate = { ...data, id: Date.now().toString(36) + Math.random().toString(36).slice(2,7), createdAt: new Date().toISOString() }
@@ -648,7 +647,7 @@ export const useStore = create()(
       },
       updateRecurringTemplate: (id, data) => {
         set((s) => ({
-          recurringTemplates: s.recurringTemplates.map((t) => t.id === id ? { ...t, ...data } : t),
+          recurringTemplates: s.recurringTemplates.map((t) => t.id === id ? { ...t, ...data }),
         }))
         if (get().supabaseUserId) db.updateRecurringTemplateInDb(id, data).catch(console.error)
       },
@@ -662,7 +661,7 @@ export const useStore = create()(
         }))
         if (get().supabaseUserId) db.deleteRecurringTemplateFromDb(id).catch(console.error)
       },
-      generateRecurringTasksForDate: (date: Date) => {
+      generateRecurringTasksForDate: (date) => {
         const { recurringTemplates, tasks, supabaseUserId } = get()
         if (!recurringTemplates.length) return
         const dateStr   = date.toDateString()
@@ -753,7 +752,7 @@ export const useStore = create()(
       storage: ssrSafeStorage,
       // tasks, goals, domains sont des données serveur → jamais persistées localement
       // Seules les préférences UI et l'état de session sont gardés
-      partialize: (state: AppStore) => {
+      partialize: (state) => {
         const {
           tasks: _t,
           goals: _g,

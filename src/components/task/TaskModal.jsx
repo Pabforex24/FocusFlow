@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { Repeat } from 'lucide-react'
 
 
-const FREQ_OPTIONS: { value: FrequencyType; label: string }[] = [
+const FREQ_OPTIONS = [
   { value: 'daily',    label: 'Chaque jour'    },
   { value: 'workdays', label: 'Jours ouvrables' },
   { value: 'weekend',  label: 'Week-end'        },
@@ -18,7 +18,7 @@ const FREQ_OPTIONS: { value: FrequencyType; label: string }[] = [
 
 const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
-export function TaskModal({ open, onClose, onSave, onSaveRecurring, domains, goals, defaultDate, existing }: TaskModalProps) {
+export function TaskModal({ open, onClose, onSave, onSaveRecurring, domains, goals, defaultDate, existing }) {
   const [title,         setTitle]         = useState('')
   const [domainId,      setDomainId]      = useState('')
   const [goalId,        setGoalId]        = useState('')
@@ -78,25 +78,25 @@ export function TaskModal({ open, onClose, onSave, onSaveRecurring, domains, goa
       // Créer un template récurrent
       onSaveRecurring({
         title:      title.trim(),
-        domainId:   domainId  || undefined,
-        goalId:     goalId    || undefined,
-        duration:   duration  || undefined,
+        domainId:   domainId  |,
+        goalId:     goalId    |,
+        duration:   duration  |,
         priority,
         xpValue:    10,
         frequency,
-        customDays: frequency === 'custom' ? customDays : undefined,
+        customDays: frequency === 'custom' ? customDays,
         timeOfDay,
         startDate:  scheduledDate,
-        endDate:    endDate   || undefined,
+        endDate:    endDate   |,
         active:     true,
       })
     } else {
       // Tâche unique classique
       onSave({
         title:       title.trim(),
-        domainId:    domainId || undefined,
-        goalId:      goalId   || undefined,
-        duration:    duration || undefined,
+        domainId:    domainId |,
+        goalId:      goalId   |,
+        duration:    duration |,
         scheduledAt: new Date(scheduledDate + 'T' + timeOfDay + ':00').toISOString(),
         done:        existing?.done ?? false,
         xpValue:     10,

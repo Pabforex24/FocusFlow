@@ -161,7 +161,7 @@ Réponds en français, de manière concise, motivante et pratique. Maximum 3 phr
     setChatLoading(false)
   }
 
-  const getFallbackReply = (msg, ctx: ReturnType<typeof buildContext>) => {
+  const getFallbackReply = (msg, ctx) => {
     const m = msg.toLowerCase()
     if (m.includes('motiv')) return `La motivation ne dure pas, mais les habitudes si. ${getRandomQuote()}`
     if (m.includes('procrastin')) return 'Pour vaincre la procrastination : démarrez avec 2 minutes. L\'action crée l\'élan, pas l\'inverse.'

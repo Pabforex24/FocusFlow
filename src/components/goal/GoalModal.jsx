@@ -10,7 +10,7 @@ const UNIT_SUGGESTIONS = ['heures', 'séances', 'km', 'pages', 'modules', 'proje
 
 export function GoalModal({
   open, onClose, onSave, domains, existing, defaultDomainId, challenges = [],
-}: GoalModalProps) {
+}) {
   const [title,       setTitle]       = useState('')
   const [description, setDescription] = useState('')
   const [domainId,    setDomainId]    = useState('')

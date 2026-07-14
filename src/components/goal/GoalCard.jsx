@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { DomainIcon } from '@/components/domain/DomainIcon'
 
 
-export function GoalCard({ goal, domain, progress, taskCount, doneCount, onEdit, onDelete }: GoalCardProps) {
+export function GoalCard({ goal, domain, progress, taskCount, doneCount, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false)
   const c = domain?.color || '#00E5B0'
 

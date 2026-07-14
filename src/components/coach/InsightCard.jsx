@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 
-export function InsightCard({ icon, title, children, className }: InsightCardProps) {
+export function InsightCard({ icon, title, children, className }) {
   return (
     <div className={cn('bg-bg-2 border border-border rounded-xl p-4 mb-3', className)}>
       <div className="flex items-center gap-2.5 mb-3">

@@ -22,7 +22,7 @@ export function PWAHandler() {
 
     if (!isStandalone) return
 
-    const handleClick = (e: MouseEvent) => {
+    const handleClick = (e) => {
       const target = (e.target ).closest('a')
       if (!target) return
 

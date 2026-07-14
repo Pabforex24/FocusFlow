@@ -26,7 +26,7 @@ export function NotificationPanel() {
 
   // Close on outside click
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handler = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target )) setOpen(false)
     }
     if (open) document.addEventListener('mousedown', handler)

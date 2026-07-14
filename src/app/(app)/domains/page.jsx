@@ -35,7 +35,7 @@ export default function DomainsPage() {
     setEditing(null)
   }
 
-  const handleEdit = (domain: Domain) => {
+  const handleEdit = (domain) => {
     setEditing(domain)
     setModalOpen(true)
   }

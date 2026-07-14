@@ -50,11 +50,9 @@ export async function loadProfile(userId) {
   return data
 }
 
-export async function upsertProfile(userId, stats: UserStats, extra: {
+export async function upsertProfile(userId, stats, extra: {
   streak
-  lastActive: string | null
-  badges: Badge[]
-  catalogueOverrides: Record<string, any>
+  lastActive, any>
   deletedCatalogueIds
   onboardingCompleted
 }) {
@@ -94,7 +92,7 @@ export async function loadDomains(userId): Promise<Domain[]> {
   }))
 }
 
-export async function insertDomain(userId, domain: Domain) {
+export async function insertDomain(userId, domain) {
   if (!supabase) return null
   console.log('[db] insertDomain start — id:', domain.id, 'userId:', userId)
   const { error } = await supabase.from('domains').insert({
@@ -110,7 +108,7 @@ export async function insertDomain(userId, domain: Domain) {
   return null
 }
 
-export async function updateDomain(domain: Domain) {
+export async function updateDomain(domain) {
   if (!supabase) return
   await supabase.from('domains')
     .update({ name: domain.name, icon: domain.icon, color: domain.color })
@@ -134,24 +132,24 @@ export async function loadGoals(userId): Promise<Goal[]> {
   return (data || []).map((row) => ({
     id:          row.id,
     domainId:    row.domain_id,
-    challengeId: row.challenge_id || undefined,
+    challengeId: row.challenge_id |,
     title:       row.title,
-    description: row.description || undefined,
-    unit:        row.unit || undefined,
+    description: row.description |,
+    unit:        row.unit |,
     createdAt:   row.created_at,
   }))
 }
 
-export async function insertGoal(userId, goal: Goal) {
+export async function insertGoal(userId, goal) {
   if (!supabase) return null
   console.log('[db] insertGoal start — id:', goal.id, 'userId:', userId)
   const { error } = await supabase.from('goals').insert({
     id: goal.id, user_id: userId,
     domain_id:    goal.domainId,
-    challenge_id: goal.challengeId || null,
+    challenge_id: goal.challengeId |,
     title:        goal.title,
-    description:  goal.description || null,
-    unit:         goal.unit || null,
+    description:  goal.description |,
+    unit:         goal.unit |,
     created_at:   goal.createdAt,
   })
   if (error && error.code !== '23505') {
@@ -190,39 +188,39 @@ export async function loadTasks(userId): Promise<Task[]> {
   return (data || []).map((row) => ({
     id:                row.id,
     title:             row.title,
-    domainId:          row.domain_id || undefined,
-    goalId:            row.goal_id   || undefined,
-    challengeActiveId: row.challenge_active_id || undefined,
-    duration:          row.duration  || undefined,
+    domainId:          row.domain_id |,
+    goalId:            row.goal_id   |,
+    challengeActiveId: row.challenge_active_id |,
+    duration:          row.duration  |,
     scheduledAt:       row.scheduled_at,
     done:              row.done,
-    doneAt:            row.done_at   || undefined,
+    doneAt:            row.done_at   |,
     xpValue:           row.xp_value,
-    priority:          row.priority  || undefined,
-    frequency:         row.frequency || undefined,
-    customDays:        row.custom_days || undefined,
+    priority:          row.priority  |,
+    frequency:         row.frequency |,
+    customDays:        row.custom_days |,
     isGenerated:       row.is_generated,
-    templateId:        row.template_id || undefined,
+    templateId:        row.template_id |,
     createdAt:         row.created_at,
   }))
 }
 
-export async function insertTask(userId, task: Task) {
+export async function insertTask(userId, task) {
   if (!supabase) return null
   console.log('[db] insertTask start — id:', task.id, 'title:', task.title, 'userId:', userId)
   const { error } = await supabase.from('tasks').insert({
     id: task.id, user_id: userId,
-    domain_id:           task.domainId           || null,
-    goal_id:             task.goalId             || null,
-    challenge_active_id: task.challengeActiveId  || null,
+    domain_id:           task.domainId           |,
+    goal_id:             task.goalId             |,
+    challenge_active_id: task.challengeActiveId  |,
     title:               task.title,
-    duration:            task.duration           || null,
+    duration:            task.duration           |,
     scheduled_at:        task.scheduledAt,
     done:                task.done,
-    done_at:             task.doneAt             || null,
+    done_at:             task.doneAt             |,
     xp_value:            task.xpValue,
-    priority:            task.priority           || null,
-    frequency:           task.frequency          || null,
+    priority:            task.priority           |,
+    frequency:           task.frequency          |,
     custom_days:         task.customDays         ?? [],
     is_generated:        task.isGenerated        ?? false,
     created_at:          task.createdAt,
@@ -235,25 +233,25 @@ export async function insertTask(userId, task: Task) {
   return null
 }
 
-export async function insertTasks(userId, tasks: Task[]) {
+export async function insertTasks(userId, tasks) {
   if (!supabase || !tasks.length) return null
   const { error } = await supabase.from('tasks').insert(
     tasks.map((task) => ({
       id: task.id, user_id: userId,
-      domain_id:           task.domainId           || null,
-      goal_id:             task.goalId             || null,
-      challenge_active_id: task.challengeActiveId  || null,
+      domain_id:           task.domainId           |,
+      goal_id:             task.goalId             |,
+      challenge_active_id: task.challengeActiveId  |,
       title:               task.title,
-      duration:            task.duration           || null,
+      duration:            task.duration           |,
       scheduled_at:        task.scheduledAt,
       done:                task.done,
-      done_at:             task.doneAt             || null,
+      done_at:             task.doneAt             |,
       xp_value:            task.xpValue,
-      priority:            task.priority           || null,
-      frequency:           task.frequency          || null,
+      priority:            task.priority           |,
+      frequency:           task.frequency          |,
       custom_days:         task.customDays         ?? [],
       is_generated:        task.isGenerated        ?? false,
-      template_id:         task.templateId          || null,
+      template_id:         task.templateId          |,
       created_at:          task.createdAt,
     }))
   )
@@ -266,7 +264,7 @@ export async function insertTasks(userId, tasks: Task[]) {
 
 export async function updateTask(task: Partial<Task> & { id: string }) {
   if (!supabase) return
-  const patch: Record<string, any> = {}
+  const patch = {}
   if (task.title       !== undefined) patch.title        = task.title
   if (task.done        !== undefined) patch.done         = task.done
   if (task.doneAt      !== undefined) patch.done_at      = task.doneAt
@@ -304,21 +302,21 @@ export async function loadCustomChallenges(userId): Promise<Challenge[]> {
     title:        row.title,
     description:  row.description || '',
     durationDays: row.duration_days,
-    deadline:     row.deadline || undefined,
+    deadline:     row.deadline |,
     color:        row.color,
     icon:         row.icon,
     blueprints:   row.blueprints || [],
   }))
 }
 
-export async function upsertCustomChallenge(userId, challenge: Challenge) {
+export async function upsertCustomChallenge(userId, challenge) {
   if (!supabase) return
   await supabase.from('custom_challenges').upsert({
     id: challenge.id, user_id: userId,
     title:         challenge.title,
     description:   challenge.description,
     duration_days: challenge.durationDays,
-    deadline:      challenge.deadline || null,
+    deadline:      challenge.deadline |,
     color:         challenge.color,
     icon:          challenge.icon,
     blueprints:    challenge.blueprints,
@@ -326,7 +324,7 @@ export async function upsertCustomChallenge(userId, challenge: Challenge) {
 }
 
 
-export async function insertCustomChallenge(userId, challenge: Challenge) {
+export async function insertCustomChallenge(userId, challenge) {
   if (!supabase) return
   await supabase.from('custom_challenges').insert({
     id:            challenge.id,
@@ -334,7 +332,7 @@ export async function insertCustomChallenge(userId, challenge: Challenge) {
     title:         challenge.title,
     description:   challenge.description,
     duration_days: challenge.durationDays,
-    deadline:      challenge.deadline || null,
+    deadline:      challenge.deadline |,
     color:         challenge.color,
     icon:          challenge.icon,
     blueprints:    challenge.blueprints,
@@ -347,7 +345,7 @@ export async function updateCustomChallenge(challenge: Partial<Challenge> & { id
     title:         challenge.title,
     description:   challenge.description,
     duration_days: challenge.durationDays,
-    deadline:      challenge.deadline || null,
+    deadline:      challenge.deadline |,
     color:         challenge.color,
     icon:          challenge.icon,
     blueprints:    challenge.blueprints,
@@ -383,7 +381,7 @@ export async function loadActiveChallenges(userId): Promise<ActiveChallenge[]> {
   }))
 }
 
-export async function insertActiveChallenge(userId, ac: ActiveChallenge) {
+export async function insertActiveChallenge(userId, ac) {
   if (!supabase) return
   await supabase.from('active_challenges').insert({
     id: ac.id, user_id: userId,
@@ -398,7 +396,7 @@ export async function insertActiveChallenge(userId, ac: ActiveChallenge) {
 
 export async function updateActiveChallenge(id, patch: { isActive?; currentDay?: number }) {
   if (!supabase) return
-  const dbPatch: Record<string, any> = {}
+  const dbPatch = {}
   if (patch.isActive   !== undefined) dbPatch.is_active    = patch.isActive
   if (patch.currentDay !== undefined) dbPatch.current_day  = patch.currentDay
   await supabase.from('active_challenges').update(dbPatch).eq('id', id)
@@ -437,10 +435,10 @@ export async function loadGoalsSince(userId, since): Promise<Goal[]> {
   return (data || []).map((row) => ({
     id:          row.id,
     domainId:    row.domain_id,
-    challengeId: row.challenge_id || undefined,
+    challengeId: row.challenge_id |,
     title:       row.title,
-    description: row.description || undefined,
-    unit:        row.unit || undefined,
+    description: row.description |,
+    unit:        row.unit |,
     createdAt:   row.created_at,
   }))
 }
@@ -456,19 +454,19 @@ export async function loadTasksSince(userId, since): Promise<Task[]> {
   return (data || []).map((row) => ({
     id:                row.id,
     title:             row.title,
-    domainId:          row.domain_id           || undefined,
-    goalId:            row.goal_id             || undefined,
-    challengeActiveId: row.challenge_active_id || undefined,
-    duration:          row.duration            || undefined,
+    domainId:          row.domain_id           |,
+    goalId:            row.goal_id             |,
+    challengeActiveId: row.challenge_active_id |,
+    duration:          row.duration            |,
     scheduledAt:       row.scheduled_at,
     done:              row.done,
-    doneAt:            row.done_at             || undefined,
+    doneAt:            row.done_at             |,
     xpValue:           row.xp_value,
-    priority:          row.priority            || undefined,
-    frequency:         row.frequency           || undefined,
-    customDays:        row.custom_days         || undefined,
+    priority:          row.priority            |,
+    frequency:         row.frequency           |,
+    customDays:        row.custom_days         |,
     isGenerated:       row.is_generated,
-    templateId:        row.template_id || undefined,
+    templateId:        row.template_id |,
     createdAt:         row.created_at,
   }))
 }
@@ -486,7 +484,7 @@ export async function loadCustomChallengesSince(userId, since): Promise<Challeng
     title:        row.title,
     description:  row.description,
     durationDays: row.duration_days,
-    deadline:     row.deadline || undefined,
+    deadline:     row.deadline |,
     color:        row.color,
     icon:         row.icon,
     blueprints:   row.blueprints || [],
@@ -524,16 +522,16 @@ export async function loadRecurringTemplates(userId) {
   return (data || []).map((row) => ({
     id:         row.id,
     title:      row.title,
-    domainId:   row.domain_id   || undefined,
-    goalId:     row.goal_id     || undefined,
-    duration:   row.duration    || undefined,
-    priority:   row.priority    || undefined,
+    domainId:   row.domain_id   |,
+    goalId:     row.goal_id     |,
+    duration:   row.duration    |,
+    priority:   row.priority    |,
     xpValue:    row.xp_value,
     frequency:  row.frequency,
     customDays: row.custom_days || [],
     timeOfDay:  row.time_of_day,
     startDate:  row.start_date,
-    endDate:    row.end_date    || undefined,
+    endDate:    row.end_date    |,
     active:     row.active,
     createdAt:  row.created_at,
   }))
@@ -544,17 +542,17 @@ export async function insertRecurringTemplate(userId, t) {
   const { error } = await supabase.from('recurring_templates').insert({
     id:          t.id,
     user_id:     userId,
-    domain_id:   t.domainId   || null,
-    goal_id:     t.goalId     || null,
+    domain_id:   t.domainId   |,
+    goal_id:     t.goalId     |,
     title:       t.title,
-    duration:    t.duration   || null,
-    priority:    t.priority   || null,
+    duration:    t.duration   |,
+    priority:    t.priority   |,
     xp_value:    t.xpValue    ?? 10,
     frequency:   t.frequency,
     custom_days: t.customDays ?? [],
     time_of_day: t.timeOfDay  ?? '08:00',
     start_date:  t.startDate,
-    end_date:    t.endDate    || null,
+    end_date:    t.endDate    |,
     active:      t.active,
     created_at:  t.createdAt,
   })

@@ -40,7 +40,7 @@ function showLocalNotif(title, body, tag, url = '/tasks', delay = 0) {
 export function useNotifications() {
   const tasks  = useStore((s) => s.tasks)
   const streak = useStore((s) => s.streak)
-  const scheduledRef = useRef>(new Set())
+  const scheduledRef = useRef(new Set())
 
   // ── Enregistrement du service worker ─────────────────────────────────────
   useEffect(() => {
@@ -56,7 +56,7 @@ export function useNotifications() {
     return result 
   }, [])
 
-  const getPermission = useCallback((): NotifPermission => {
+  const getPermission = useCallback(() => {
     if (!isClient || !('Notification' in window)) return 'denied'
     return Notification.permission 
   }, [])

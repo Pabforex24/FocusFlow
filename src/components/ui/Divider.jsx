@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 
-export function Divider({ label, className }: DividerProps) {
+export function Divider({ label, className }) {
   if (!label) {
     return <div className={cn('border-t border-border my-4', className)} />
   }

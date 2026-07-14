@@ -12,11 +12,11 @@ import { format, addDays } from 'date-fns'
 
 const uid = () => Math.random().toString(36).slice(2, 9)
 
-const DEFAULT_BP = (): ChallengeBlueprint => ({
+const DEFAULT_BP = () => ({
   id: uid(), title: '', domainId: '', goalId: '', duration: '30min', frequency: 'daily', customDays: [],
 })
 
-const FREQ_OPTIONS: { value: FrequencyType; label: string }[] = [
+const FREQ_OPTIONS = [
   { value: 'daily',    label: 'Chaque jour'    },
   { value: 'workdays', label: 'Jours ouvrables' },
   { value: 'weekend',  label: 'Week-end'        },
@@ -24,7 +24,7 @@ const FREQ_OPTIONS: { value: FrequencyType; label: string }[] = [
 ]
 const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
-export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditModalProps) {
+export function ChallengeEditModal({ open, onClose, existing }) {
   const { domains, goals, addCustomChallenge, updateCustomChallenge, updateCatalogueChallenge } = useStore()
 
   const [title,       setTitle]       = useState('')
@@ -65,7 +65,7 @@ export function ChallengeEditModal({ open, onClose, existing }: ChallengeEditMod
   const addBP    = () => setBlueprints((b) => [...b, DEFAULT_BP()])
   const removeBP = (id) => setBlueprints((b) => b.filter((x) => x.id !== id))
   const updateBP = (id, patch: ) =>
-    setBlueprints((b) => b.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    setBlueprints((b) => b.map((x) => (x.id === id ? { ...x, ...patch })))
   const toggleDay = (bpId, day) =>
     setBlueprints((b) => b.map((x) => {
       if (x.id !== bpId) return x

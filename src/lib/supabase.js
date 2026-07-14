@@ -19,7 +19,7 @@ export const supabase =
   isSupabaseConfigured
     ? createBrowserClient(url, key)
 
-export function toCamel(row: T) {
+export function toCamel(row) {
   return Object.fromEntries(
     Object.entries(row).map(([k, v]) => [
       k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()), v,
@@ -27,7 +27,7 @@ export function toCamel(row: T) {
   )
 }
 
-export function toSnake(obj: T) {
+export function toSnake(obj) {
   return Object.fromEntries(
     Object.entries(obj).map(([k, v]) => [
       k.replace(/([A-Z])/g, (c) => `_${c.toLowerCase()}`), v,
