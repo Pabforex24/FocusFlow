@@ -1,37 +1,49 @@
-'use client'
+import { Outfit } from 'next/font/google'
+import { ToastProvider } from '@/components/ui/Toast'
+import { StoreHydrator } from '@/components/StoreHydrator'
+import { PWAHandler } from '@/components/PWAHandler'
+import './globals.css'
 
-import { Sidebar } from '@/components/layout/Sidebar'
-import { FocusMode } from '@/components/focus/FocusMode'
-import { useStore } from '@/store'
-import { useNotifications } from '@/hooks/useNotifications'
-import { useSupabaseSync } from '@/hooks/useSupabaseSync'
-import { useDailyTaskGeneration } from '@/hooks/useDailyTaskGeneration'
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-outfit',
+  display: 'swap',
+})
 
-/**
- * Layout global des pages protégées.
- * FocusMode est ici — il survit à toutes les navigations.
- * L'état d'ouverture est dans le store Zustand, accessible partout.
- */
-export const dynamic = 'force-dynamic'
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#050812',
+}
 
-export default function AppLayout({ children }: { children: any }) {
-  useNotifications()
-  useDailyTaskGeneration()
-  const { manualSync, loading: syncLoading } = useSupabaseSync()
-  const focusModalOpen  = useStore((s) => s.focusModalOpen)
-  const openFocusModal  = useStore((s) => s.openFocusModal)
-  const closeFocusModal = useStore((s) => s.closeFocusModal)
+export const metadata = {
+  title: 'FocusFlow — Discipline Personnelle',
+  description: 'Transformez vos objectifs long terme en actions quotidiennes concrètes.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'FocusFlow',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
+}
 
+export default function RootLayout({ children }) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar onOpenFocus={openFocusModal} onManualSync={manualSync} syncLoading={syncLoading} />
-
-      <main className="flex-1 min-w-0 overflow-y-auto pb-20 md:pb-0">
-        {children}
-      </main>
-
-      {/* Modal Focus — persiste entre toutes les navigations */}
-      {focusModalOpen && <FocusMode onClose={closeFocusModal} />}
-    </div>
+    <html lang="fr" className={outfit.variable}>
+      <body className="bg-bg text-content font-body antialiased">
+        <StoreHydrator />
+        <PWAHandler />
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </body>
+    </html>
   )
 }
