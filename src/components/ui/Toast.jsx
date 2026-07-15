@@ -8,7 +8,7 @@ import { registerToastHandler } from '@/lib/toast'
 
 const ToastContext = createContext({ toast: () => {} })
 
-export function ToastProvider({ children }: { children: any }) {
+export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
   const toast = useCallback((message, type = 'info') => {
@@ -18,7 +18,6 @@ export function ToastProvider({ children }: { children: any }) {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), delay)
   }, [])
 
-  // Enregistre le handler global pour que showToast() fonctionne hors de React
   useEffect(() => {
     registerToastHandler(toast)
   }, [toast])

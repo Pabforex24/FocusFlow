@@ -14,9 +14,11 @@ export function ChallengeCard({ challenge, activeChallenge, progress, onStart, o
 
   const daysLeft = activeChallenge?.isActive
     ? Math.max(0, differenceInDays(new Date(activeChallenge.endDate), new Date()))
+    : null
 
   const endLabel = activeChallenge
     ? format(new Date(activeChallenge.endDate), 'd MMM yyyy', { locale: fr })
+    : null
 
   const c = challenge.color
 
@@ -139,8 +141,8 @@ export function ChallengeCard({ challenge, activeChallenge, progress, onStart, o
                 border: '1px solid rgba(248,113,113,0.2)',
                 color: '#f87171',
               }}
-              onMouseEnter={(e) => { (e.currentTarget ).style.background = 'rgba(248,113,113,0.15)' }}
-              onMouseLeave={(e) => { (e.currentTarget ).style.background = 'rgba(248,113,113,0.08)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(248,113,113,0.15)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(248,113,113,0.08)' }}
             >
               <StopCircle size={12} /> Arrêter
             </button>
@@ -154,14 +156,12 @@ export function ChallengeCard({ challenge, activeChallenge, progress, onStart, o
                 color: c,
               }}
               onMouseEnter={(e) => {
-                const el = e.currentTarget 
-                el.style.background = hexToRgba(c, 0.18)
-                el.style.boxShadow = `0 0 18px ${hexToRgba(c, 0.2)}`
+                e.currentTarget.style.background = hexToRgba(c, 0.18)
+                e.currentTarget.style.boxShadow = `0 0 18px ${hexToRgba(c, 0.2)}`
               }}
               onMouseLeave={(e) => {
-                const el = e.currentTarget 
-                el.style.background = hexToRgba(c, 0.1)
-                el.style.boxShadow = 'none'
+                e.currentTarget.style.background = hexToRgba(c, 0.1)
+                e.currentTarget.style.boxShadow = 'none'
               }}
             >
               <Zap size={12} fill="currentColor" />

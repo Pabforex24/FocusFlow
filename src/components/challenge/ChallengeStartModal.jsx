@@ -20,7 +20,6 @@ export function ChallengeStartModal({ challenge, onClose }) {
   const [bpGoalMap, setBpGoalMap] = useState({})
   const [started,   setStarted]   = useState(false)
 
-  // ⚠️ Tous les hooks AVANT le return conditionnel
   const startDate = useMemo(() => new Date(), [])
 
   const endDate = useMemo(() => {
@@ -44,7 +43,6 @@ export function ChallengeStartModal({ challenge, onClose }) {
     }, 0)
   }, [challenge, startDate, endDate])
 
-  // Garde conditionnelle APRÈS tous les hooks
   if (!challenge) return null
 
   const handleStart = () => {
@@ -53,7 +51,7 @@ export function ChallengeStartModal({ challenge, onClose }) {
     setTimeout(onClose, 1400)
   }
 
-  const goalsForBp = (bp: typeof challenge.blueprints[0]) =>
+  const goalsForBp = (bp) =>
     goals.filter((g) => !bp.domainId || g.domainId === bp.domainId)
 
   return (

@@ -64,8 +64,8 @@ export function ChallengeEditModal({ open, onClose, existing }) {
 
   const addBP    = () => setBlueprints((b) => [...b, DEFAULT_BP()])
   const removeBP = (id) => setBlueprints((b) => b.filter((x) => x.id !== id))
-  const updateBP = (id, patch: ) =>
-    setBlueprints((b) => b.map((x) => (x.id === id ? { ...x, ...patch })))
+  const updateBP = (id, patch) =>
+    setBlueprints((b) => b.map((x) => (x.id === id ? { ...x, ...patch } : x)))
   const toggleDay = (bpId, day) =>
     setBlueprints((b) => b.map((x) => {
       if (x.id !== bpId) return x

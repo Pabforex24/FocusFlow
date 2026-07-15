@@ -1,8 +1,7 @@
+import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
-import { forwardRef, ButtonHTMLAttributes } from 'react'
 
-
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = forwardRef(
   ({ className, variant = 'ghost', size = 'md', children, ...props }, ref) => {
     return (
       <button
