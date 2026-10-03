@@ -1,4 +1,4 @@
-import { Flame, LogOut, Monitor, Moon, RefreshCw, ShieldAlert, Sun, Trophy } from 'lucide-react'
+import { Check, Flame, LogOut, Monitor, Moon, RefreshCw, ShieldAlert, Sun, Trophy } from 'lucide-react'
 import { Button } from '../components/ui/Button.jsx'
 import { Card, CardHeader } from '../components/ui/Card.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
@@ -9,11 +9,18 @@ import { useSignOut } from '../components/Layout.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
+import { cn } from '../lib/cn.js'
+
+// Aperçu fixe de chaque palette (indépendant de la palette active).
+const PALETTE_CHOICES = [
+  { value: 'foret', label: 'Forêt', hint: 'Vert profond', swatch: 'linear-gradient(135deg, #275d46 0%, #0a1512 70%, #050808 100%)', accent: '#6fcfa4' },
+  { value: 'walnut', label: 'Walnut', hint: 'Brun noyer', swatch: 'linear-gradient(135deg, #5e4b43 0%, #2e1f1b 55%, #0a0605 100%)', accent: '#c9a58c' },
+]
 
 export default function Profile() {
   const { user } = useAuth()
   const { profile, stats, actions } = useData()
-  const { preference, setTheme } = useTheme()
+  const { preference, setTheme, palette, setPalette } = useTheme()
   const signOut = useSignOut()
   const hardcore = profile?.hardcore_mode ?? false
   const name = profile?.display_name || user.email
@@ -47,8 +54,27 @@ export default function Profile() {
         </Card>
 
         <Card>
-          <CardHeader title="Apparence" description="Choisissez le thème de l'application" />
+          <CardHeader title="Apparence" description="Choisissez le thème et la palette de l'application" />
           <Segmented fill value={preference} onChange={setTheme} options={[{ value: 'light', label: 'Clair', icon: Sun }, { value: 'dark', label: 'Sombre', icon: Moon }, { value: 'system', label: 'Auto', icon: Monitor }]} />
+          <p className="mt-5 mb-2 text-sm font-medium text-fg">Palette de couleurs</p>
+          <div role="radiogroup" aria-label="Palette de couleurs" className="grid grid-cols-2 gap-3">
+            {PALETTE_CHOICES.map(({ value, label, hint, swatch, accent }) => {
+              const selected = palette === value
+              return (
+                <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => setPalette(value)}
+                  className={cn('relative flex flex-col gap-2.5 rounded-2xl border p-2.5 text-left transition active:scale-[0.98]',
+                    selected ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-line hover:border-brand-500/40')}>
+                  <span className="relative block h-16 w-full overflow-hidden rounded-xl border border-white/10" style={{ backgroundImage: swatch }} aria-hidden>
+                    <span className="absolute right-2.5 bottom-2.5 size-3.5 rounded-full" style={{ backgroundColor: accent, boxShadow: `0 0 10px ${accent}99` }} />
+                  </span>
+                  <span className="flex items-center justify-between gap-2 px-0.5">
+                    <span><span className="block text-sm font-semibold text-fg">{label}</span><span className="block text-xs text-muted">{hint}</span></span>
+                    {selected && <span className="grid size-5 shrink-0 place-items-center rounded-full bg-brand-500 text-brand-950"><Check className="size-3.5" strokeWidth={3} aria-hidden /></span>}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </Card>
 
         <Card className="flex items-center justify-between gap-4">

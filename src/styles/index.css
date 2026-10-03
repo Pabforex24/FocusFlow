@@ -21,6 +21,17 @@
   --glow-b: rgb(79 178 134 / 0.1);
   --glow-c: rgb(39 93 70 / 0.06);
   --dot: rgb(39 93 70 / 0.1);
+
+  /* Accents de la palette (composants : lueurs, ombres, grille de bannière) */
+  --accent-rgb: 79 178 134;
+  --accent-soft-rgb: 111 207 164;
+  --grid-rgb: 120 235 215;
+  /* Grandes bannières */
+  --hero-glow: rgb(39 93 70 / 0.85);
+  --hero-from: #275d46;
+  --hero-mid: #0a1512;
+  --hero-to: #050808;
+  --hero-border: rgb(111 207 164 / 0.22);
 }
 .dark {
   color-scheme: dark;
@@ -36,8 +47,57 @@
   --glow-b: rgb(15 60 45 / 0.4);
   --glow-c: rgb(79 178 134 / 0.05);
   --dot: rgb(111 207 164 / 0.06);
+  --veil-rgb: 4 7 7;
+  --texture: url('/bg-texture.jpg');
 
   --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 20px 40px -28px rgb(0 0 0 / 0.9);
+}
+
+/* ── Palette « Walnut » : choisie dans Profil > Apparence (attribut data-palette sur <html>).
+   Elle remplace seulement les couleurs ; la palette « Forêt » ci-dessus reste la valeur par défaut. ── */
+:root[data-palette='walnut'] {
+  --bg: #f6f1ed;
+  --surface: #ffffff;
+  --surface-2: #efe8e2;
+  --line: #e1d5cc;
+  --fg: #1f1612;
+  --muted: #6a564c;
+  --subtle: #8c796e;
+
+  --glow-a: rgb(125 95 77 / 0.16);
+  --glow-b: rgb(169 130 106 / 0.1);
+  --glow-c: rgb(94 75 67 / 0.06);
+  --dot: rgb(94 75 67 / 0.1);
+
+  --accent-rgb: 169 130 106;
+  --accent-soft-rgb: 201 165 140;
+  --grid-rgb: 200 165 140;
+  --hero-glow: rgb(94 75 67 / 0.85);
+  --hero-from: #2e1f1b;
+  --hero-mid: #130e0c;
+  --hero-to: #0a0605;
+  --hero-border: rgb(200 165 140 / 0.22);
+
+  --color-brand-50: #fbf6f2;  --color-brand-100: #f4e8de; --color-brand-200: #e9d3c1;
+  --color-brand-300: #e0c6b2; --color-brand-400: #c9a58c; --color-brand-500: #a9826a;
+  --color-brand-600: #7d5f4d; --color-brand-700: #5e4b43; --color-brand-800: #3f302b;
+  --color-brand-900: #2e1f1b; --color-brand-950: #1c0f0a;
+}
+.dark[data-palette='walnut'] {
+  --bg: #0a0706;
+  --surface: #181210;
+  --surface-2: #211815;
+  --line: rgb(255 255 255 / 0.09);
+  --fg: #f5eeea;
+  --muted: #a39088;
+  --subtle: #85756d;
+
+  --glow-a: rgb(94 75 67 / 0.4);
+  --glow-b: rgb(46 31 27 / 0.5);
+  --glow-c: rgb(169 130 106 / 0.05);
+  --dot: rgb(201 165 140 / 0.06);
+  --veil-rgb: 9 6 5;
+  --texture: url('/bg-texture-walnut.jpg');
 }
 
 @theme inline {
@@ -88,7 +148,7 @@
 @utility btn-brand {
   background-image: linear-gradient(180deg, var(--color-brand-300), var(--color-brand-500));
   color: var(--color-brand-950);
-  box-shadow: 0 6px 18px rgb(79 178 134 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.45);
+  box-shadow: 0 6px 18px rgb(var(--accent-rgb) / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.45);
   &:hover { filter: brightness(1.07); }
   &:active { filter: brightness(0.95); }
 }
@@ -96,15 +156,15 @@
 /* Grandes bannières (accueil, coach, connexion) : lueur verte en haut à droite, dégradé vers le noir. */
 @utility hero-surface {
   background-image:
-    radial-gradient(70% 120% at 92% 15%, rgb(39 93 70 / 0.85), transparent 60%),
-    linear-gradient(135deg, #275d46 0%, #0a1512 60%, #050808 100%);
-  border: 1px solid rgb(111 207 164 / 0.22);
+    radial-gradient(70% 120% at 92% 15%, var(--hero-glow), transparent 60%),
+    linear-gradient(135deg, var(--hero-from) 0%, var(--hero-mid) 60%, var(--hero-to) 100%);
+  border: 1px solid var(--hero-border);
 }
 
 @layer base {
   html, body, #root { min-height: 100%; }
   html { accent-color: var(--color-brand-600); }
-  ::selection { background: rgb(79 178 134 / 0.3); }
+  ::selection { background: rgb(var(--accent-rgb) / 0.3); }
   body {
     @apply bg-bg font-sans text-fg antialiased;
     -webkit-tap-highlight-color: transparent;
@@ -113,7 +173,7 @@
   }
   /* Mode sombre : texture minérale sombre, fixe, recouverte d'un voile noir pour garder le texte lisible. */
   .dark body {
-    background-image: linear-gradient(180deg, rgb(4 7 7 / 0.8), rgb(4 7 7 / 0.96)), url('/bg-texture.jpg');
+    background-image: linear-gradient(180deg, rgb(var(--veil-rgb) / 0.8), rgb(var(--veil-rgb) / 0.96)), var(--texture);
     background-size: cover;
     background-position: center top;
     background-attachment: fixed;

@@ -62,7 +62,7 @@ export default function Dashboard() {
       <section className="relative overflow-hidden rounded-3xl hero-surface p-5 text-white shadow-pop sm:p-7">
         <div className="pointer-events-none absolute -right-[10%] -bottom-[45%] -left-[10%] h-4/5 opacity-70" aria-hidden
           style={{
-            backgroundImage: 'linear-gradient(rgb(120 235 215 / 0.1) 1px, transparent 1px), linear-gradient(90deg, rgb(120 235 215 / 0.1) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgb(var(--grid-rgb) / 0.1) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--grid-rgb) / 0.1) 1px, transparent 1px)',
             backgroundSize: '44px 44px',
             transform: 'perspective(360px) rotateX(62deg)',
             transformOrigin: 'top',
@@ -84,7 +84,7 @@ export default function Dashboard() {
           </div>
           <div className="hidden shrink-0 sm:block">
             <div className="relative grid size-40 place-items-center">
-              <span className="absolute inset-2 rotate-[8deg] animate-float motion-reduce:animate-none rounded-[2.25rem] border border-white/20 bg-white/5 shadow-[0_18px_40px_rgb(0_0_0/0.45),inset_0_0_30px_rgb(79_178_134/0.1)] backdrop-blur-sm" aria-hidden />
+              <span className="absolute inset-2 rotate-[8deg] animate-float motion-reduce:animate-none rounded-[2.25rem] border border-white/20 bg-white/5 shadow-[0_18px_40px_rgb(0_0_0/0.45),inset_0_0_30px_rgb(var(--accent-rgb)/0.1)] backdrop-blur-sm" aria-hidden />
               <ProgressRing value={pct} size={112} stroke={9} tone={pct === 100 ? 'success' : 'brand'}>
                 <span className="text-center font-display text-2xl leading-none font-bold text-white">{pct}%<span className="mt-1 block font-sans text-[11px] font-medium text-white/65">{done} sur {todayTasks.length}</span></span>
               </ProgressRing>
@@ -134,7 +134,7 @@ export default function Dashboard() {
                 return (
                   <div key={d.key} className="flex flex-1 flex-col items-center gap-2" title={`${formatShort(d.key)} : ${d.done}/${d.total}`}>
                     <div className="flex h-28 w-full items-end overflow-hidden rounded-xl bg-surface-2">
-                      <div className={cn('w-full rounded-xl transition-[height] duration-700', d.rate === 1 ? 'bg-linear-to-t from-brand-500 to-brand-300 shadow-[0_0_14px_rgb(79_178_134/0.4)]' : 'bg-linear-to-t from-brand-700 to-brand-500')} style={{ height: `${d.total ? Math.max(8, (d.rate ?? 0) * 100) : 0}%` }} />
+                      <div className={cn('w-full rounded-xl transition-[height] duration-700', d.rate === 1 ? 'bg-linear-to-t from-brand-500 to-brand-300 shadow-[0_0_14px_rgb(var(--accent-rgb)/0.4)]' : 'bg-linear-to-t from-brand-700 to-brand-500')} style={{ height: `${d.total ? Math.max(8, (d.rate ?? 0) * 100) : 0}%` }} />
                     </div>
                     <span className={cn('text-xs font-medium', isToday ? 'text-brand-600 dark:text-brand-300' : 'text-subtle')}>{fromKey(d.key).toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 3)}</span>
                   </div>

@@ -30,7 +30,7 @@ export default function Sidebar() {
             )}>
             {({ isActive }) => (
               <>
-                {isActive && <span className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-400 shadow-[0_0_8px_rgb(111_207_164/0.6)]" aria-hidden />}
+                {isActive && <span className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-400 shadow-[0_0_8px_rgb(var(--accent-soft-rgb)/0.6)]" aria-hidden />}
                 <Icon className="size-5 shrink-0" aria-hidden />
                 <span className="hidden lg:inline">{label}</span>
               </>

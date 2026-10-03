@@ -27,7 +27,7 @@ export default function TaskItem({ task, onEdit, onDelete, compact = false }) {
       <button type="button" onClick={() => actions.toggleTask(task)} aria-pressed={task.done}
         aria-label={task.done ? `Marquer « ${task.title} » comme non terminée` : `Terminer « ${task.title} »`}
         className={cn('mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 transition active:scale-90 sm:mt-0',
-          task.done ? 'animate-pop border-transparent bg-linear-to-br from-brand-300 to-brand-500 text-brand-950 shadow-[0_0_10px_rgb(79_178_134/0.4)]' : 'border-subtle/60 text-transparent hover:border-brand-500 hover:text-brand-500/40')}>
+          task.done ? 'animate-pop border-transparent bg-linear-to-br from-brand-300 to-brand-500 text-brand-950 shadow-[0_0_10px_rgb(var(--accent-rgb)/0.4)]' : 'border-subtle/60 text-transparent hover:border-brand-500 hover:text-brand-500/40')}>
         <Check className="size-4" strokeWidth={3} aria-hidden />
       </button>
 

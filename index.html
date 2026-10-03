@@ -19,6 +19,8 @@
           var saved = localStorage.getItem('focusflow-theme')
           var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           document.documentElement.classList.toggle('dark', dark)
+          var palette = localStorage.getItem('focusflow-palette')
+          document.documentElement.dataset.palette = palette === 'walnut' ? 'walnut' : 'foret'
         } catch (e) {}
       })()
     </script>

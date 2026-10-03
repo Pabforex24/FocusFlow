@@ -1,7 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 const STORAGE_KEY = 'focusflow-theme'
-const THEME_COLORS = { light: '#F2F7F4', dark: '#050909' }
+const PALETTE_KEY = 'focusflow-palette'
+export const PALETTES = ['foret', 'walnut']
+// Couleur de la barre du navigateur : dépend de la palette et du mode clair/sombre.
+const THEME_COLORS = {
+  foret: { light: '#F2F7F4', dark: '#050909' },
+  walnut: { light: '#F6F1ED', dark: '#0A0706' },
+}
 const ThemeContext = createContext(null)
 
 function readPreference() {
@@ -14,10 +20,21 @@ function readPreference() {
   }
 }
 
+function readPalette() {
+  try {
+    const saved = localStorage.getItem(PALETTE_KEY)
+    return PALETTES.includes(saved) ? saved : 'foret'
+  } catch (error) {
+    console.warn('[theme] lecture de la palette impossible', error)
+    return 'foret'
+  }
+}
+
 const prefersDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches
 
 export function ThemeProvider({ children }) {
   const [preference, setPreference] = useState(readPreference) // 'light' | 'dark' | 'system'
+  const [palette, setPaletteState] = useState(readPalette) // 'foret' | 'walnut'
   const [systemDark, setSystemDark] = useState(prefersDark)
 
   useEffect(() => {
@@ -31,8 +48,19 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', resolved === 'dark')
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[resolved])
-  }, [resolved])
+    document.documentElement.dataset.palette = palette
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[palette][resolved])
+  }, [resolved, palette])
+
+  const setPalette = useCallback((next) => {
+    if (!PALETTES.includes(next)) return
+    setPaletteState(next)
+    try {
+      localStorage.setItem(PALETTE_KEY, next)
+    } catch (error) {
+      console.warn('[theme] sauvegarde de la palette impossible', error)
+    }
+  }, [])
 
   const setTheme = useCallback((next) => {
     setPreference(next)
@@ -45,9 +73,9 @@ export function ThemeProvider({ children }) {
   }, [])
 
   const value = useMemo(() => ({
-    preference, resolved, setTheme,
+    preference, resolved, setTheme, palette, setPalette,
     toggle: () => setTheme(resolved === 'dark' ? 'light' : 'dark'),
-  }), [preference, resolved, setTheme])
+  }), [preference, resolved, setTheme, palette, setPalette])
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
