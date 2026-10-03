@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* Dark mode piloté par la classe "dark" sur <html> (voir ThemeContext) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Thème sémantique : les valeurs changent selon le mode ── */
+:root {
+  color-scheme: light;
+  --bg: #f6f7fb;        /* fond de l'application */
+  --surface: #ffffff;   /* cartes, modales, barres */
+  --surface-2: #f0f1f7; /* zones secondaires, survols, pistes de progression */
+  --line: #e3e5ef;      /* bordures */
+  --fg: #12142a;        /* texte principal */
+  --muted: #565c74;     /* texte secondaire */
+  --subtle: #868ca3;    /* légendes, placeholders */
+
+}
+.dark {
+  color-scheme: dark;
+  --bg: #0c0e17;
+  --surface: #141726;
+  --surface-2: #1c2033;
+  --line: #292d44;
+  --fg: #eef0f8;
+  --muted: #a3aac2;
+  --subtle: #6d7490;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+}
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Couleur de marque (violet). Succès = emerald, erreur = rose, avertissement = amber, info = sky. */
+  --color-brand-50: #f3f1ff;  --color-brand-100: #e8e4ff; --color-brand-200: #d4cdff;
+  --color-brand-300: #b7abff; --color-brand-400: #9885ff; --color-brand-500: #7b61ff;
+  --color-brand-600: #6748f0; --color-brand-700: #5638d1; --color-brand-800: #462ea8;
+  --color-brand-900: #3a2886; --color-brand-950: #231762;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.05);
+  --shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.22);
+
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-fade-up: fade-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-scale-in: scale-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-sheet-up: sheet-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-toast-in: toast-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.3s ease-out both;
+
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes scale-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+  @keyframes pop { 0% { transform: scale(0.85); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+}
+
+/* Marges de sécurité iOS (encoche, barre d'accueil) */
+@utility pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+@utility pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+@layer base {
+  html, body, #root { min-height: 100%; }
+  body {
+    @apply bg-bg font-sans text-fg antialiased;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overflow-x: hidden;
+  }
+  button:not(:disabled), [role='button']:not([aria-disabled='true']) { cursor: pointer; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
+
+  /* Champs de formulaire : un seul style pour toute l'application.
+     16 px sur mobile pour éviter le zoom automatique d'iOS. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    @apply min-h-11 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base text-fg shadow-xs transition sm:text-sm;
+  }
+  input::placeholder, textarea::placeholder { @apply text-subtle; }
+  input:not([type='checkbox']):not([type='radio']):focus,
+  select:focus,
+  textarea:focus { @apply border-brand-500 outline-none ring-4 ring-brand-500/15; }
+  [aria-invalid='true'] { @apply border-rose-500 ring-rose-500/15; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
