@@ -6,24 +6,34 @@
 /* ── Thème sémantique : les valeurs changent selon le mode ── */
 :root {
   color-scheme: light;
-  --bg: #f6f7fb;        /* fond de l'application */
+  --bg: #f2f8f8;        /* fond de l'application (gris très clair, légèrement turquoise) */
   --surface: #ffffff;   /* cartes, modales, barres */
-  --surface-2: #f0f1f7; /* zones secondaires, survols, pistes de progression */
-  --line: #e3e5ef;      /* bordures */
-  --fg: #12142a;        /* texte principal */
-  --muted: #565c74;     /* texte secondaire */
-  --subtle: #868ca3;    /* légendes, placeholders */
+  --surface-2: #e9f1f2; /* zones secondaires, survols, pistes de progression */
+  --line: #d9e5e7;      /* bordures */
+  --fg: #0e1a1e;        /* texte principal */
+  --muted: #4f656b;     /* texte secondaire */
+  --subtle: #7f9398;    /* légendes, placeholders */
 
+  /* Décor du fond (voir plus bas) */
+  --glow-a: rgb(15 179 174 / 0.17);
+  --glow-b: rgb(56 189 248 / 0.12);
+  --glow-c: rgb(16 185 129 / 0.07);
+  --dot: rgb(8 131 127 / 0.11);
 }
 .dark {
   color-scheme: dark;
-  --bg: #0c0e17;
-  --surface: #141726;
-  --surface-2: #1c2033;
-  --line: #292d44;
-  --fg: #eef0f8;
-  --muted: #a3aac2;
-  --subtle: #6d7490;
+  --bg: #091114;
+  --surface: #101a1e;
+  --surface-2: #17242a;
+  --line: #223338;
+  --fg: #ecf5f6;
+  --muted: #9bb1b6;
+  --subtle: #678288;
+
+  --glow-a: rgb(20 200 190 / 0.15);
+  --glow-b: rgb(14 116 144 / 0.22);
+  --glow-c: rgb(16 185 129 / 0.06);
+  --dot: rgb(94 234 222 / 0.07);
 }
 
 @theme inline {
@@ -39,11 +49,12 @@
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  /* Couleur de marque (violet). Succès = emerald, erreur = rose, avertissement = amber, info = sky. */
-  --color-brand-50: #f3f1ff;  --color-brand-100: #e8e4ff; --color-brand-200: #d4cdff;
-  --color-brand-300: #b7abff; --color-brand-400: #9885ff; --color-brand-500: #7b61ff;
-  --color-brand-600: #6748f0; --color-brand-700: #5638d1; --color-brand-800: #462ea8;
-  --color-brand-900: #3a2886; --color-brand-950: #231762;
+  /* Couleur de marque : turquoise / teal. Succès = emerald, erreur = rose, avertissement = amber, info = sky.
+     La teinte 600 passe le contraste AA avec du texte blanc ; 400-500 servent aux accents lumineux. */
+  --color-brand-50: #ecfdfb;  --color-brand-100: #c9faf5; --color-brand-200: #94f1ec;
+  --color-brand-300: #55e3de; --color-brand-400: #22cbc7; --color-brand-500: #0fb3ae;
+  --color-brand-600: #08837f; --color-brand-700: #076a68; --color-brand-800: #095554;
+  --color-brand-900: #0b4544; --color-brand-950: #052b2b;
 
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.05);
   --shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.22);
@@ -69,11 +80,28 @@
 
 @layer base {
   html, body, #root { min-height: 100%; }
+  html { accent-color: var(--color-brand-600); }
+  ::selection { background: rgb(15 179 174 / 0.28); }
   body {
     @apply bg-bg font-sans text-fg antialiased;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     overflow-x: hidden;
+  }
+
+  /* Décor du fond, derrière tout le contenu : halos de lumière + fine trame de points.
+     Fixe (ne défile pas), sans effet de flou coûteux, ne reçoit aucun clic. */
+  body::before, body::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+  body::before {
+    background:
+      radial-gradient(44rem 32rem at 104% -6%, var(--glow-a), transparent 70%),
+      radial-gradient(38rem 30rem at -6% 106%, var(--glow-b), transparent 70%),
+      radial-gradient(26rem 20rem at 72% 58%, var(--glow-c), transparent 70%);
+  }
+  body::after {
+    background: radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 26px 26px;
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent 65%);
+    mask-image: linear-gradient(to bottom, #000, transparent 65%);
   }
   button:not(:disabled), [role='button']:not([aria-disabled='true']) { cursor: pointer; }
   :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }

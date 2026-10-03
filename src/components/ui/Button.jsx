@@ -7,7 +7,7 @@ const base =
   'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50'
 
 const variants = {
-  primary: 'bg-brand-600 text-white shadow-sm hover:bg-brand-500 active:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400',
+  primary: 'bg-brand-600 text-white shadow-sm hover:bg-brand-500 active:bg-brand-700',
   secondary: 'border border-line bg-surface text-fg shadow-xs hover:bg-surface-2',
   ghost: 'text-muted hover:bg-surface-2 hover:text-fg',
   danger: 'bg-rose-600 text-white shadow-sm hover:bg-rose-500 active:bg-rose-700',

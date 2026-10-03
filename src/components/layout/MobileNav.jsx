@@ -43,7 +43,7 @@ export default function MobileNav() {
           {findNav(MOBILE_LEFT).map((i) => <Tab key={i.to} {...i} />)}
           <div className="flex justify-center">
             <button type="button" onClick={() => setOpen(true)} aria-label="Créer ou explorer"
-              className="-mt-6 grid size-14 place-items-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/30 transition active:scale-95 dark:bg-brand-500">
+              className="-mt-6 grid size-14 place-items-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/30 transition active:scale-95">
               <Plus className="size-7" aria-hidden />
             </button>
           </div>

@@ -15,7 +15,7 @@ export default function Layout() {
   const { pathname } = useLocation()
 
   return (
-    <div className="min-h-dvh bg-bg">
+    <div className="min-h-dvh">
       <Sidebar />
       <div className="md:pl-[4.5rem] lg:pl-64">
         <Header />

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 const STORAGE_KEY = 'focusflow-theme'
-const THEME_COLORS = { light: '#F6F7FB', dark: '#0C0E17' }
+const THEME_COLORS = { light: '#F2F8F8', dark: '#091114' }
 const ThemeContext = createContext(null)
 
 function readPreference() {

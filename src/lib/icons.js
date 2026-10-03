@@ -27,7 +27,7 @@ export function resolveIcon(name, fallback = Target) {
 }
 
 // Palette volontairement courte et cohérente avec la marque.
-export const DOMAIN_COLORS = ['#7B61FF', '#0EA5A4', '#F59E0B', '#3B82F6', '#10B981', '#F43F5E', '#EC4899', '#64748B']
+export const DOMAIN_COLORS = ['#0FB3AE', '#3B82F6', '#F59E0B', '#8B5CF6', '#F43F5E', '#EC4899', '#F97316', '#64748B']
 
 // Fond translucide d'une couleur hexadécimale (#RRGGBB) : tint('#7B61FF', 0.12)
 export function tint(hex, alpha = 0.12) {
