@@ -25,7 +25,7 @@ export default function Profile() {
       <div className="mx-auto max-w-2xl space-y-4">
         <Card className="space-y-5">
           <div className="flex items-center gap-4">
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-brand-500 to-brand-700 text-xl font-bold text-white">{initials}</span>
+            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-linear-to-br from-brand-300 to-brand-500 font-display text-xl font-bold text-brand-950">{initials}</span>
             <div className="min-w-0">
               <h2 className="truncate text-lg font-semibold text-fg">{name}</h2>
               <p className="truncate text-sm text-muted">{user.email}</p>

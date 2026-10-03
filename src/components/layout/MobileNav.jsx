@@ -38,12 +38,12 @@ export default function MobileNav() {
 
   return (
     <>
-      <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/90 pb-safe backdrop-blur-lg md:hidden">
+      <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/90 pb-safe backdrop-blur-xl md:hidden">
         <div className="mx-auto grid h-16 max-w-md grid-cols-5 items-center">
           {findNav(MOBILE_LEFT).map((i) => <Tab key={i.to} {...i} />)}
           <div className="flex justify-center">
             <button type="button" onClick={() => setOpen(true)} aria-label="Créer ou explorer"
-              className="-mt-6 grid size-14 place-items-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/30 transition active:scale-95">
+              className="-mt-6 grid size-14 place-items-center rounded-2xl btn-brand shadow-lg shadow-brand-500/30 transition active:scale-95">
               <Plus className="size-7" aria-hidden />
             </button>
           </div>

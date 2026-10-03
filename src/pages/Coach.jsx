@@ -51,7 +51,7 @@ export default function Coach() {
     <>
       <PageHeader title="Coach" subtitle="Conseils calculés à partir de vos données" />
       <div className="space-y-4">
-        <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-brand-600 to-brand-900 p-5 text-white shadow-pop sm:p-6">
+        <section className="relative overflow-hidden rounded-3xl hero-surface p-5 text-white shadow-pop sm:p-6">
           <div className="pointer-events-none absolute -right-10 -bottom-10 size-44 rounded-full bg-white/10 blur-2xl" aria-hidden />
           <div className="relative flex items-start gap-4">
             <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/15"><MainIcon className="size-6" aria-hidden /></span>

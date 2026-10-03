@@ -15,7 +15,7 @@ export default class ErrorBoundary extends Component {
           <h1 className="mt-4 text-lg font-semibold text-fg">Oups, quelque chose s'est mal passé</h1>
           <p className="mt-1 text-sm text-muted">{String(this.state.error.message || this.state.error)}</p>
           <button type="button" onClick={() => window.location.reload()}
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-500">
+            className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl btn-brand px-4 text-sm font-semibold">
             <RefreshCw className="size-4" aria-hidden />Recharger l'application
           </button>
         </div>

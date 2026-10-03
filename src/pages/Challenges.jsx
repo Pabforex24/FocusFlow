@@ -32,7 +32,7 @@ function StartModal({ challenge, onClose }) {
     return (
       <Modal title={challenge.title} icon={Flag} onClose={onClose}>
         <p className="text-sm text-muted">Créez d'abord un domaine pour y ranger les tâches du challenge.</p>
-        <Link to="/domains?new=1" className="mt-5 inline-flex h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-500">Créer un domaine</Link>
+        <Link to="/domains?new=1" className="mt-5 inline-flex h-11 items-center rounded-xl btn-brand px-4 text-sm font-semibold">Créer un domaine</Link>
       </Modal>
     )
   }

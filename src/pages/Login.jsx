@@ -55,7 +55,7 @@ export default function Login() {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-brand-600 via-brand-700 to-brand-950 p-12 text-white lg:flex">
+      <aside className="relative hidden flex-col justify-between overflow-hidden hero-surface p-12 text-white lg:flex">
         <div className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-white/10 blur-3xl" aria-hidden />
         <div className="relative flex items-center gap-2.5 text-lg font-bold">FocusFlow</div>
         <div className="relative max-w-md space-y-6">

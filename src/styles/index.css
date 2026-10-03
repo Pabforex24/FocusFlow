@@ -3,37 +3,41 @@
 /* Dark mode piloté par la classe "dark" sur <html> (voir ThemeContext) */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── Thème sémantique : les valeurs changent selon le mode ── */
+/* ── Thème sémantique "Forêt" : les valeurs changent selon le mode ──
+   Sombre = noir chaud-neutre en verre dépoli, vert forêt en accent.
+   Clair  = fonds blanc cassé légèrement verts, mêmes accents. */
 :root {
   color-scheme: light;
-  --bg: #f2f8f8;        /* fond de l'application (gris très clair, légèrement turquoise) */
+  --bg: #f2f7f4;        /* fond de l'application */
   --surface: #ffffff;   /* cartes, modales, barres */
-  --surface-2: #e9f1f2; /* zones secondaires, survols, pistes de progression */
-  --line: #d9e5e7;      /* bordures */
-  --fg: #0e1a1e;        /* texte principal */
-  --muted: #4f656b;     /* texte secondaire */
-  --subtle: #7f9398;    /* légendes, placeholders */
+  --surface-2: #e8f0ec; /* zones secondaires, survols, pistes de progression */
+  --line: #d5e2da;      /* bordures */
+  --fg: #0d1a14;        /* texte principal */
+  --muted: #4c6258;     /* texte secondaire */
+  --subtle: #738a7e;    /* légendes, placeholders */
 
   /* Décor du fond (voir plus bas) */
-  --glow-a: rgb(15 179 174 / 0.17);
-  --glow-b: rgb(56 189 248 / 0.12);
-  --glow-c: rgb(16 185 129 / 0.07);
-  --dot: rgb(8 131 127 / 0.11);
+  --glow-a: rgb(47 117 87 / 0.16);
+  --glow-b: rgb(79 178 134 / 0.1);
+  --glow-c: rgb(39 93 70 / 0.06);
+  --dot: rgb(39 93 70 / 0.1);
 }
 .dark {
   color-scheme: dark;
-  --bg: #091114;
-  --surface: #101a1e;
-  --surface-2: #17242a;
-  --line: #223338;
-  --fg: #ecf5f6;
-  --muted: #9bb1b6;
-  --subtle: #678288;
+  --bg: #050909;
+  --surface: #0e1515;
+  --surface-2: #172020;
+  --line: rgb(255 255 255 / 0.09);
+  --fg: #eef4f2;
+  --muted: #8a9a97;
+  --subtle: #6f7f7c;
 
-  --glow-a: rgb(20 200 190 / 0.15);
-  --glow-b: rgb(14 116 144 / 0.22);
-  --glow-c: rgb(16 185 129 / 0.06);
-  --dot: rgb(94 234 222 / 0.07);
+  --glow-a: rgb(39 93 70 / 0.38);
+  --glow-b: rgb(15 60 45 / 0.4);
+  --glow-c: rgb(79 178 134 / 0.05);
+  --dot: rgb(111 207 164 / 0.06);
+
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 20px 40px -28px rgb(0 0 0 / 0.9);
 }
 
 @theme inline {
@@ -47,15 +51,15 @@
 }
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Sora", "DM Sans", ui-sans-serif, system-ui, sans-serif;
 
-  /* Couleur de marque : turquoise / teal. Succès = emerald, erreur = rose, avertissement = amber, info = sky.
-     La teinte 600 passe le contraste AA avec du texte blanc ; 400-500 servent aux accents lumineux. */
-  --color-brand-50: #ecfdfb;  --color-brand-100: #c9faf5; --color-brand-200: #94f1ec;
-  --color-brand-300: #55e3de; --color-brand-400: #22cbc7; --color-brand-500: #0fb3ae;
-  --color-brand-600: #08837f; --color-brand-700: #076a68; --color-brand-800: #095554;
-  --color-brand-900: #0b4544; --color-brand-950: #052b2b;
-
+  /* Couleur de marque : vert forêt (#275d46 = 700). Succès = emerald, erreur = rose, avertissement = amber, info = sky.
+     600 passe le contraste AA avec du texte blanc ; 300-500 servent aux accents lumineux sur fond sombre. */
+  --color-brand-50: #eef9f3;  --color-brand-100: #d6f1e3; --color-brand-200: #b0e4cb;
+  --color-brand-300: #8fe0bc; --color-brand-400: #6fcfa4; --color-brand-500: #4fb286;
+  --color-brand-600: #2f7557; --color-brand-700: #275d46; --color-brand-800: #1c4635;
+  --color-brand-900: #12301f; --color-brand-950: #08231a;
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.05);
   --shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.22);
 
@@ -65,12 +69,14 @@
   --animate-sheet-up: sheet-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-toast-in: toast-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-pop: pop 0.3s ease-out both;
+  --animate-float: float 7s ease-in-out infinite;
 
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes scale-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
   @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes toast-in { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
   @keyframes pop { 0% { transform: scale(0.85); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
 }
 
@@ -78,16 +84,41 @@
 @utility pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 @utility pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
+/* Bouton principal : dégradé vert clair, texte vert très sombre, légère lueur. */
+@utility btn-brand {
+  background-image: linear-gradient(180deg, var(--color-brand-300), var(--color-brand-500));
+  color: var(--color-brand-950);
+  box-shadow: 0 6px 18px rgb(79 178 134 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.45);
+  &:hover { filter: brightness(1.07); }
+  &:active { filter: brightness(0.95); }
+}
+
+/* Grandes bannières (accueil, coach, connexion) : lueur verte en haut à droite, dégradé vers le noir. */
+@utility hero-surface {
+  background-image:
+    radial-gradient(70% 120% at 92% 15%, rgb(39 93 70 / 0.85), transparent 60%),
+    linear-gradient(135deg, #275d46 0%, #0a1512 60%, #050808 100%);
+  border: 1px solid rgb(111 207 164 / 0.22);
+}
+
 @layer base {
   html, body, #root { min-height: 100%; }
   html { accent-color: var(--color-brand-600); }
-  ::selection { background: rgb(15 179 174 / 0.28); }
+  ::selection { background: rgb(79 178 134 / 0.3); }
   body {
     @apply bg-bg font-sans text-fg antialiased;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     overflow-x: hidden;
   }
+  /* Mode sombre : texture minérale sombre, fixe, recouverte d'un voile noir pour garder le texte lisible. */
+  .dark body {
+    background-image: linear-gradient(180deg, rgb(4 7 7 / 0.8), rgb(4 7 7 / 0.96)), url('/bg-texture.jpg');
+    background-size: cover;
+    background-position: center top;
+    background-attachment: fixed;
+  }
+  h1, h2, h3 { font-family: var(--font-display); }
 
   /* Décor du fond, derrière tout le contenu : halos de lumière + fine trame de points.
      Fixe (ne défile pas), sans effet de flou coûteux, ne reçoit aucun clic. */

@@ -10,7 +10,7 @@ export default function FocusBar() {
   const elapsed = ((total - remainingMs) / total) * 100
 
   return (
-    <div role="timer" className="fixed inset-x-3 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-30 animate-fade-up rounded-2xl bg-linear-to-br from-brand-600 to-brand-800 p-3.5 text-white shadow-pop md:inset-x-auto md:right-6 md:bottom-6 md:w-80">
+    <div role="timer" className="fixed inset-x-3 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-30 animate-fade-up rounded-2xl border border-brand-400/20 bg-linear-to-br from-brand-700 to-brand-950 p-3.5 text-white shadow-pop md:inset-x-auto md:right-6 md:bottom-6 md:w-80">
       <div className="flex items-center gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15"><Timer className="size-5" aria-hidden /></span>
         <div className="min-w-0 flex-1">

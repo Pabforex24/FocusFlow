@@ -38,7 +38,7 @@ export default function Modal({ title, description, icon: Icon, tone = 'brand', 
   }, [onClose])
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6"
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <div role="dialog" aria-modal="true" aria-label={title}
         className={cn(
@@ -50,7 +50,7 @@ export default function Modal({ title, description, icon: Icon, tone = 'brand', 
           <div className="flex min-w-0 items-center gap-3">
             {Icon && <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl', iconTones[tone])}><Icon className="size-5" aria-hidden /></span>}
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold tracking-tight text-fg">{title}</h2>
+              <h2 className="font-display text-lg font-semibold tracking-tight text-fg">{title}</h2>
               {description && <p className="text-sm text-muted">{description}</p>}
             </div>
           </div>

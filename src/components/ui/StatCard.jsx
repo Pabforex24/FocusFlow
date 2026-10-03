@@ -29,7 +29,7 @@ export function StatCard({ icon: Icon, label, value, hint, trend, tone = 'brand'
         )}
       </div>
       <div>
-        <p className="text-2xl font-bold tracking-tight tabular-nums">{value}</p>
+        <p className="font-display text-2xl font-bold tracking-tight tabular-nums">{value}</p>
         <p className="text-sm text-muted">{label}</p>
         {hint && <p className="mt-0.5 text-xs text-subtle">{hint}</p>}
       </div>

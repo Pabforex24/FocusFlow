@@ -4,7 +4,7 @@ import { cn } from '../lib/cn.js'
 // Pastille colorée avec l'icône d'un domaine (ou d'un challenge : passer `iconName` et `color`).
 export default function DomainTile({ domain, iconName, color, size = 'md', className }) {
   const Icon = resolveIcon(iconName ?? domain?.icon)
-  const c = color ?? domain?.color ?? '#0FB3AE'
+  const c = color ?? domain?.color ?? '#4FB286'
   const dims = size === 'sm' ? 'size-8 rounded-lg' : size === 'lg' ? 'size-12 rounded-2xl' : 'size-10 rounded-xl'
   const iconDims = size === 'sm' ? 'size-4' : size === 'lg' ? 'size-6' : 'size-5'
   return (

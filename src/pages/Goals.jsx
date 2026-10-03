@@ -81,7 +81,7 @@ export default function Goals() {
       </PageHeader>
 
       {domains.length === 0 ? (
-        <EmptyState icon={Layers} title="Créez d'abord un domaine" action={<Link to="/domains?new=1" className="inline-flex h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-500">Créer un domaine</Link>}>
+        <EmptyState icon={Layers} title="Créez d'abord un domaine" action={<Link to="/domains?new=1" className="inline-flex h-11 items-center rounded-xl btn-brand px-4 text-sm font-semibold">Créer un domaine</Link>}>
           Un objectif appartient toujours à un domaine (Sport, Études…).
         </EmptyState>
       ) : goals.length === 0 ? (
@@ -93,7 +93,7 @@ export default function Goals() {
           <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="Filtrer par domaine">
             {[{ id: 'all', name: 'Tous' }, ...domains].map((d) => (
               <button key={d.id} type="button" role="tab" aria-selected={filter === d.id} onClick={() => setFilter(d.id)}
-                className={cn('min-h-9 shrink-0 rounded-full border px-4 text-sm font-medium transition', filter === d.id ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-surface text-muted hover:text-fg')}>
+                className={cn('min-h-9 shrink-0 rounded-full border px-4 text-sm font-medium transition', filter === d.id ? 'border-brand-500/50 bg-brand-500/15 text-brand-700 dark:text-brand-300' : 'border-line bg-surface text-muted hover:text-fg')}>
                 {d.name}
               </button>
             ))}

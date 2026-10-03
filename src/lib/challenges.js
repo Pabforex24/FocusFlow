@@ -4,7 +4,7 @@ import { addDays, occurrenceDates } from './dates.js'
 // l'utilisateur au démarrage du challenge (plus d'ids "seed" fragiles).
 export const CHALLENGE_CATALOGUE = [
   {
-    id: 'ch-trading-30', title: 'Trader Discipline 30J', durationDays: 30, color: '#00C2A8', icon: 'trending-up',
+    id: 'ch-trading-30', title: 'Trader Discipline 30J', durationDays: 30, color: '#4FB286', icon: 'trending-up',
     description: 'Une routine de trading solide : backtest quotidien, journal et analyse.',
     blueprints: [
       { title: '1h de backtest', duration: '1h', frequency: 'workdays' },

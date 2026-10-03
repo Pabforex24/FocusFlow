@@ -4,9 +4,9 @@ export function Card({ as: Tag = 'div', interactive = false, padded = true, clas
   return (
     <Tag
       className={cn(
-        'rounded-2xl border border-line bg-surface shadow-card',
+        'rounded-2xl border border-line bg-surface shadow-card dark:bg-surface/70 dark:backdrop-blur-md',
         padded && 'p-4 sm:p-5',
-        interactive && 'transition duration-200 hover:-translate-y-0.5 hover:border-brand-500/40 hover:shadow-pop',
+        interactive && 'transition duration-200 hover:-translate-y-0.5 hover:border-brand-400/40 hover:shadow-pop',
         className,
       )}
       {...props}
@@ -25,7 +25,7 @@ export function CardHeader({ icon: Icon, title, description, action, className }
           </span>
         )}
         <div className="min-w-0">
-          <h2 className="truncate text-base font-semibold text-fg">{title}</h2>
+          <h2 className="truncate font-display text-base font-semibold text-fg">{title}</h2>
           {description && <p className="text-sm text-muted">{description}</p>}
         </div>
       </div>

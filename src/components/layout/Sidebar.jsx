@@ -14,23 +14,23 @@ export default function Sidebar() {
   const navigate = useNavigate()
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[4.5rem] flex-col border-r border-line bg-surface px-3 py-5 md:flex lg:w-64 lg:px-4">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[4.5rem] flex-col border-r border-line bg-surface px-3 dark:bg-surface/80 dark:backdrop-blur-xl py-5 md:flex lg:w-64 lg:px-4">
       <Logo showText={false} className="mb-6 justify-center lg:hidden" />
       <Logo className="mb-6 hidden px-2 lg:flex" />
 
       <Button className="mb-5 hidden lg:inline-flex" icon={Plus} onClick={() => navigate('/tasks?new=1')}>Nouvelle tâche</Button>
-      <IconButton className="mb-5 self-center bg-brand-600 text-white hover:bg-brand-500 hover:text-white lg:hidden" icon={Plus} label="Nouvelle tâche" onClick={() => navigate('/tasks?new=1')} />
+      <IconButton className="mb-5 self-center btn-brand hover:text-brand-950 lg:hidden" icon={Plus} label="Nouvelle tâche" onClick={() => navigate('/tasks?new=1')} />
 
       <nav className="flex flex-1 flex-col gap-1" aria-label="Navigation principale">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} title={label} aria-label={label}
             className={({ isActive }) => cn(
               'relative flex items-center justify-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors lg:justify-start',
-              isActive ? 'bg-brand-500/10 text-brand-700 dark:text-brand-300' : 'text-muted hover:bg-surface-2 hover:text-fg',
+              isActive ? 'bg-linear-to-r from-brand-400/15 to-transparent text-brand-700 ring-1 ring-line dark:text-brand-300' : 'text-muted hover:bg-surface-2 hover:text-fg',
             )}>
             {({ isActive }) => (
               <>
-                {isActive && <span className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-500" aria-hidden />}
+                {isActive && <span className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-400 shadow-[0_0_8px_rgb(111_207_164/0.6)]" aria-hidden />}
                 <Icon className="size-5 shrink-0" aria-hidden />
                 <span className="hidden lg:inline">{label}</span>
               </>

@@ -7,7 +7,7 @@ export function Segmented({ value, onChange, options, className, fill = false })
       {options.map(({ value: v, label, icon: Icon }) => (
         <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)}
           className={cn('inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium transition',
-            fill && 'flex-1', value === v ? 'bg-surface text-fg shadow-sm' : 'text-muted hover:text-fg')}>
+            fill && 'flex-1', value === v ? 'bg-surface text-fg shadow-sm dark:bg-white/10' : 'text-muted hover:text-fg')}>
           {Icon && <Icon className="size-4" aria-hidden />}{label}
         </button>
       ))}

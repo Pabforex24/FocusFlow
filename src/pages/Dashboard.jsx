@@ -59,22 +59,34 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* En-tête d'accueil */}
-      <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-brand-600 via-brand-700 to-brand-900 p-5 text-white shadow-pop sm:p-7">
-        <div className="pointer-events-none absolute -top-16 -right-16 size-56 rounded-full bg-white/10 blur-2xl" aria-hidden />
+      <section className="relative overflow-hidden rounded-3xl hero-surface p-5 text-white shadow-pop sm:p-7">
+        <div className="pointer-events-none absolute -right-[10%] -bottom-[45%] -left-[10%] h-4/5 opacity-70" aria-hidden
+          style={{
+            backgroundImage: 'linear-gradient(rgb(120 235 215 / 0.1) 1px, transparent 1px), linear-gradient(90deg, rgb(120 235 215 / 0.1) 1px, transparent 1px)',
+            backgroundSize: '44px 44px',
+            transform: 'perspective(360px) rotateX(62deg)',
+            transformOrigin: 'top',
+            WebkitMaskImage: 'linear-gradient(180deg, #000, transparent 85%)',
+            maskImage: 'linear-gradient(180deg, #000, transparent 85%)',
+          }} />
         <div className="relative flex items-center justify-between gap-5">
           <div className="min-w-0">
-            <p className="text-sm text-white/70 first-letter:uppercase">{formatLong(today)}</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight break-words sm:text-3xl">{greeting(name)}</h1>
-            <p className="mt-2 max-w-md text-sm text-white/80">{dayMessage(todayTasks.length, left, stats.streak)}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm text-white/70 first-letter:uppercase">{formatLong(today)}</p>
+              {stats.streak > 0 && <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-0.5 text-xs text-white/85"><Flame className="size-3.5" aria-hidden />Série de {stats.streak} jour{stats.streak > 1 ? 's' : ''}</span>}
+            </div>
+            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight break-words text-balance sm:text-3xl">{greeting(name)}</h1>
+            <p className="mt-2 max-w-md text-sm text-white/75">{dayMessage(todayTasks.length, left, stats.streak)}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link to="/tasks?new=1" className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-brand-700 transition hover:bg-white/90 active:scale-[0.97]"><Plus className="size-4" aria-hidden />Nouvelle tâche</Link>
-              <button type="button" onClick={() => openPicker()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-white/15 px-4 text-sm font-semibold text-white transition hover:bg-white/25 active:scale-[0.97]"><Timer className="size-4" aria-hidden />Session Focus</button>
+              <Link to="/tasks?new=1" className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-brand-950 transition hover:bg-white/90 active:scale-[0.97]"><Plus className="size-4" aria-hidden />Nouvelle tâche</Link>
+              <button type="button" onClick={() => openPicker()} className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/20 active:scale-[0.97]"><Timer className="size-4" aria-hidden />Session Focus</button>
             </div>
           </div>
           <div className="hidden shrink-0 sm:block">
-            <div className="grid size-28 place-items-center rounded-full bg-white/10">
-              <ProgressRing value={pct} size={96} stroke={9} tone={pct === 100 ? 'success' : 'brand'}>
-                <span className="text-xl font-bold text-white">{pct}%</span>
+            <div className="relative grid size-40 place-items-center">
+              <span className="absolute inset-2 rotate-[8deg] animate-float motion-reduce:animate-none rounded-[2.25rem] border border-white/20 bg-white/5 shadow-[0_18px_40px_rgb(0_0_0/0.45),inset_0_0_30px_rgb(79_178_134/0.1)] backdrop-blur-sm" aria-hidden />
+              <ProgressRing value={pct} size={112} stroke={9} tone={pct === 100 ? 'success' : 'brand'}>
+                <span className="text-center font-display text-2xl leading-none font-bold text-white">{pct}%<span className="mt-1 block font-sans text-[11px] font-medium text-white/65">{done} sur {todayTasks.length}</span></span>
               </ProgressRing>
             </div>
           </div>
@@ -98,11 +110,11 @@ export default function Dashboard() {
           {/* Tâches du jour */}
           <section aria-label="Tâches du jour">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-fg">Aujourd'hui</h2>
+              <h2 className="font-display text-lg font-semibold text-fg">Aujourd'hui</h2>
               <Link to="/tasks" className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">Tout voir<ChevronRight className="size-4" aria-hidden /></Link>
             </div>
             {todayTasks.length === 0 ? (
-              <EmptyState icon={ListChecks} title="Rien de prévu aujourd'hui" action={<Link to="/tasks?new=1" className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-500"><Plus className="size-4" aria-hidden />Ajouter une tâche</Link>}>
+              <EmptyState icon={ListChecks} title="Rien de prévu aujourd'hui" action={<Link to="/tasks?new=1" className="inline-flex h-11 items-center gap-2 rounded-xl btn-brand px-4 text-sm font-semibold"><Plus className="size-4" aria-hidden />Ajouter une tâche</Link>}>
                 Planifiez une action simple pour avancer vers vos objectifs.
               </EmptyState>
             ) : (
@@ -122,7 +134,7 @@ export default function Dashboard() {
                 return (
                   <div key={d.key} className="flex flex-1 flex-col items-center gap-2" title={`${formatShort(d.key)} : ${d.done}/${d.total}`}>
                     <div className="flex h-28 w-full items-end overflow-hidden rounded-xl bg-surface-2">
-                      <div className={cn('w-full rounded-xl transition-[height] duration-700', d.rate === 1 ? 'bg-emerald-500' : 'bg-brand-500')} style={{ height: `${d.total ? Math.max(8, (d.rate ?? 0) * 100) : 0}%` }} />
+                      <div className={cn('w-full rounded-xl transition-[height] duration-700', d.rate === 1 ? 'bg-linear-to-t from-brand-500 to-brand-300 shadow-[0_0_14px_rgb(79_178_134/0.4)]' : 'bg-linear-to-t from-brand-700 to-brand-500')} style={{ height: `${d.total ? Math.max(8, (d.rate ?? 0) * 100) : 0}%` }} />
                     </div>
                     <span className={cn('text-xs font-medium', isToday ? 'text-brand-600 dark:text-brand-300' : 'text-subtle')}>{fromKey(d.key).toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 3)}</span>
                   </div>
