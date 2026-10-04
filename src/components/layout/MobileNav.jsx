@@ -5,14 +5,14 @@ import Modal from '../Modal.jsx'
 import { CREATE_ACTIONS, MOBILE_LEFT, MOBILE_RIGHT, NAV_ITEMS, findNav } from './navigation.js'
 import { cn } from '../../lib/cn.js'
 
-function Tab({ to, label, icon: Icon }) {
+function Tab({ to, label, short, icon: Icon }) {
   return (
     <NavLink to={to} aria-label={label}
-      className={({ isActive }) => cn('flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors', isActive ? 'text-brand-600 dark:text-brand-300' : 'text-subtle')}>
+      className={({ isActive }) => cn('flex h-full min-w-0 flex-col items-center justify-center gap-0.5 text-[9px] min-[360px]:text-[10px] font-medium transition-colors', isActive ? 'text-brand-600 dark:text-brand-300' : 'text-subtle')}>
       {({ isActive }) => (
         <>
-          <span className={cn('rounded-full px-4 py-1 transition-colors', isActive && 'bg-brand-500/12')}><Icon className="size-5" aria-hidden /></span>
-          {label}
+          <span className={cn('rounded-full px-3 py-1 transition-colors', isActive && 'bg-brand-500/12')}><Icon className="size-5" aria-hidden /></span>
+          <span className="w-full truncate px-0.5 text-center">{short ?? label}</span>
         </>
       )}
     </NavLink>
@@ -39,7 +39,7 @@ export default function MobileNav() {
   return (
     <>
       <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/90 pb-safe backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid h-16 max-w-md grid-cols-5 items-center">
+        <div className="mx-auto grid h-16 max-w-md grid-cols-[1fr_1fr_1fr_3.75rem_1fr_1fr_1fr] items-center">
           {findNav(MOBILE_LEFT).map((i) => <Tab key={i.to} {...i} />)}
           <div className="flex justify-center">
             <button type="button" onClick={() => setOpen(true)} aria-label="Créer ou explorer"

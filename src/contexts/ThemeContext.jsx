@@ -2,11 +2,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 const STORAGE_KEY = 'focusflow-theme'
 const PALETTE_KEY = 'focusflow-palette'
-export const PALETTES = ['foret', 'walnut']
+export const PALETTES = ['foret', 'walnut', 'charcoal', 'navy']
 // Couleur de la barre du navigateur : dépend de la palette et du mode clair/sombre.
 const THEME_COLORS = {
   foret: { light: '#F2F7F4', dark: '#050909' },
   walnut: { light: '#F6F1ED', dark: '#0A0706' },
+  charcoal: { light: '#F3F4F6', dark: '#121316' },
+  navy: { light: '#EEF3F9', dark: '#0A111C' },
 }
 const ThemeContext = createContext(null)
 
@@ -34,7 +36,7 @@ const prefersDark = () => window.matchMedia('(prefers-color-scheme: dark)').matc
 
 export function ThemeProvider({ children }) {
   const [preference, setPreference] = useState(readPreference) // 'light' | 'dark' | 'system'
-  const [palette, setPaletteState] = useState(readPalette) // 'foret' | 'walnut'
+  const [palette, setPaletteState] = useState(readPalette) // 'foret' | 'walnut' | 'charcoal' | 'navy'
   const [systemDark, setSystemDark] = useState(prefersDark)
 
   useEffect(() => {

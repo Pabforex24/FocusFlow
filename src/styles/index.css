@@ -48,7 +48,8 @@
   --glow-c: rgb(79 178 134 / 0.05);
   --dot: rgb(111 207 164 / 0.06);
   --veil-rgb: 4 7 7;
-  --texture: url('/bg-texture.jpg');
+  /* Texture minérale générée (SVG), sans fichier image */
+  --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.08 0 0 0 0.02  0 0.26 0 0 0.06  0 0 0.18 0 0.05  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
 
   --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 20px 40px -28px rgb(0 0 0 / 0.9);
 }
@@ -82,6 +83,21 @@
   --color-brand-300: #e0c6b2; --color-brand-400: #c9a58c; --color-brand-500: #a9826a;
   --color-brand-600: #7d5f4d; --color-brand-700: #5e4b43; --color-brand-800: #3f302b;
   --color-brand-900: #2e1f1b; --color-brand-950: #1c0f0a;
+
+  /* Couleurs d'état, remappées pour Walnut : tout ce qui utilise emerald (succès), amber (avertissement),
+     rose (danger) et sky (info) devient automatiquement chaud (sauge olive, miel, terre cuite, ardoise douce). */
+  --color-emerald-50: #f6f8ec;  --color-emerald-100: #ebf0d6; --color-emerald-200: #d8e3b0; --color-emerald-300: #c4d488;
+  --color-emerald-400: #adc068; --color-emerald-500: #93a94f; --color-emerald-600: #667c36; --color-emerald-700: #53662d;
+  --color-emerald-800: #435425; --color-emerald-900: #36441f; --color-emerald-950: #1c2410;
+  --color-amber-50: #fdf7e8;  --color-amber-100: #faecc7; --color-amber-200: #f4d88f; --color-amber-300: #eec266;
+  --color-amber-400: #e6ab45; --color-amber-500: #d99a2e; --color-amber-600: #a9741d; --color-amber-700: #86591a;
+  --color-amber-800: #6d4819; --color-amber-900: #593b17; --color-amber-950: #302008;
+  --color-rose-50: #fcf2ef;  --color-rose-100: #f9e0d9; --color-rose-200: #f2c0b4; --color-rose-300: #e99c8b;
+  --color-rose-400: #df7a66; --color-rose-500: #cf5f4a; --color-rose-600: #b04a38; --color-rose-700: #8f3d2f;
+  --color-rose-800: #733329; --color-rose-900: #5f2c25; --color-rose-950: #331510;
+  --color-sky-50: #f3f6f8;  --color-sky-100: #e4ebf0; --color-sky-200: #cbd9e2; --color-sky-300: #a9bfce;
+  --color-sky-400: #8ca6b8; --color-sky-500: #6f8da3; --color-sky-600: #587588; --color-sky-700: #485f6f;
+  --color-sky-800: #3c4e5b; --color-sky-900: #33424d; --color-sky-950: #1b252c;
 }
 .dark[data-palette='walnut'] {
   --bg: #0a0706;
@@ -97,7 +113,7 @@
   --glow-c: rgb(169 130 106 / 0.05);
   --dot: rgb(201 165 140 / 0.06);
   --veil-rgb: 9 6 5;
-  --texture: url('/bg-texture-walnut.jpg');
+  --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.28 0 0 0 0.04  0 0.2 0 0 0.03  0 0 0.17 0 0.02  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
 }
 
 @theme inline {

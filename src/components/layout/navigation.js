@@ -6,15 +6,16 @@ export const NAV_ITEMS = [
   { to: '/tasks', label: 'Tâches', icon: ListChecks },
   { to: '/goals', label: 'Objectifs', icon: Target },
   { to: '/domains', label: 'Domaines', icon: Layers },
-  { to: '/challenges', label: 'Challenges', icon: Flag },
-  { to: '/monthly', label: 'Statistiques', icon: ChartColumn },
+  { to: '/challenges', label: 'Challenges', short: 'Défis', icon: Flag },
+  { to: '/monthly', label: 'Statistiques', short: 'Stats', icon: ChartColumn },
   { to: '/coach', label: 'Coach', icon: Sparkles },
   { to: '/profile', label: 'Profil', icon: UserRound },
 ]
 
-// Barre du bas sur mobile : 2 entrées, bouton "+", 2 entrées. Le reste est dans la feuille du "+".
-export const MOBILE_LEFT = ['/dashboard', '/tasks']
-export const MOBILE_RIGHT = ['/challenges', '/profile']
+// Barre du bas sur mobile : 3 entrées, bouton "+", 3 entrées. Le reste (Domaines, Profil) est dans la feuille du "+" ;
+// le profil est aussi accessible par l'avatar en haut à droite. `short` = libellé court pour les petits écrans.
+export const MOBILE_LEFT = ['/dashboard', '/tasks', '/goals']
+export const MOBILE_RIGHT = ['/challenges', '/monthly', '/coach']
 
 export const CREATE_ACTIONS = [
   { to: '/tasks?new=1', label: 'Nouvelle tâche', hint: 'Une action à faire un jour précis', icon: ListPlus },
