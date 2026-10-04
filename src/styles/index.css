@@ -116,6 +116,96 @@
   --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.28 0 0 0 0.04  0 0.2 0 0 0.03  0 0 0.17 0 0.02  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
 }
 
+/* ── Palette « Royal Charcoal » (Profil > Apparence) ── */
+:root[data-palette='charcoal'] {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --surface-2: #e9ebee;
+  --line: #d8dbe0;
+  --fg: #16171a;
+  --muted: #565a62;
+  --subtle: #7a7f88;
+
+  --glow-a: rgb(108 112 120 / 0.14);
+  --glow-b: rgb(154 160 171 / 0.1);
+  --glow-c: rgb(76 78 81 / 0.05);
+  --dot: rgb(76 78 81 / 0.1);
+
+  --accent-rgb: 154 160 171;
+  --accent-soft-rgb: 200 204 212;
+  --grid-rgb: 200 204 212;
+  --hero-glow: rgb(76 78 81 / 0.85);
+  --hero-from: #35363a;
+  --hero-mid: #17181b;
+  --hero-to: #0e0f11;
+  --hero-border: rgb(200 204 212 / 0.22);
+  --color-brand-50: #f5f6f8;  --color-brand-100: #e7e9ed; --color-brand-200: #d0d3da;
+  --color-brand-300: #e0e3e9; --color-brand-400: #c8ccd4; --color-brand-500: #9aa0ab;
+  --color-brand-600: #6c7078; --color-brand-700: #4c4e51; --color-brand-800: #35363a;
+  --color-brand-900: #1e2023; --color-brand-950: #121316;
+}
+.dark[data-palette='charcoal'] {
+  --bg: #121316;
+  --surface: #1e2023;
+  --surface-2: #272a2e;
+  --line: rgb(255 255 255 / 0.09);
+  --fg: #eef0f3;
+  --muted: #8e9198;
+  --subtle: #73767d;
+
+  --glow-a: rgb(76 78 81 / 0.4);
+  --glow-b: rgb(30 32 35 / 0.5);
+  --glow-c: rgb(200 204 212 / 0.05);
+  --dot: rgb(200 204 212 / 0.06);
+  --veil-rgb: 14 15 17;
+  --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.2 0 0 0 0.03  0 0.2 0 0 0.03  0 0 0.2 0 0.035  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
+}
+
+/* ── Palette « Navy Mirage » (Profil > Apparence) ── */
+:root[data-palette='navy'] {
+  --bg: #eef3f9;
+  --surface: #ffffff;
+  --surface-2: #e3ebf5;
+  --line: #cfdbe9;
+  --fg: #0c1624;
+  --muted: #4a5d78;
+  --subtle: #71839c;
+
+  --glow-a: rgb(53 87 125 / 0.16);
+  --glow-b: rgb(95 134 179 / 0.1);
+  --glow-c: rgb(20 30 48 / 0.05);
+  --dot: rgb(53 87 125 / 0.1);
+
+  --accent-rgb: 95 134 179;
+  --accent-soft-rgb: 157 187 224;
+  --grid-rgb: 157 187 224;
+  --hero-glow: rgb(53 87 125 / 0.85);
+  --hero-from: #2a4565;
+  --hero-mid: #0f1827;
+  --hero-to: #070d16;
+  --hero-border: rgb(157 187 224 / 0.22);
+  --color-brand-50: #eef4fb;  --color-brand-100: #dbe7f5; --color-brand-200: #adc8e8;
+  --color-brand-300: #c9dbf1; --color-brand-400: #9dbbe0; --color-brand-500: #5f86b3;
+  --color-brand-600: #35577d; --color-brand-700: #2a4565; --color-brand-800: #1c2d47;
+  --color-brand-900: #141e30; --color-brand-950: #0f1928;
+}
+.dark[data-palette='navy'] {
+  --bg: #0a111c;
+  --surface: #141e30;
+  --surface-2: #1c2a42;
+  --line: rgb(255 255 255 / 0.09);
+  --fg: #ebf1f9;
+  --muted: #8a9bb3;
+  --subtle: #6f8099;
+
+  --glow-a: rgb(53 87 125 / 0.4);
+  --glow-b: rgb(20 30 48 / 0.5);
+  --glow-c: rgb(157 187 224 / 0.05);
+  --dot: rgb(157 187 224 / 0.06);
+  --veil-rgb: 8 13 22;
+  --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.06 0 0 0 0.02  0 0.12 0 0 0.04  0 0 0.26 0 0.07  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);

@@ -15,6 +15,8 @@ import { cn } from '../lib/cn.js'
 const PALETTE_CHOICES = [
   { value: 'foret', label: 'Forêt', hint: 'Vert profond', swatch: 'linear-gradient(135deg, #275d46 0%, #0a1512 70%, #050808 100%)', accent: '#6fcfa4' },
   { value: 'walnut', label: 'Walnut', hint: 'Brun noyer', swatch: 'linear-gradient(135deg, #5e4b43 0%, #2e1f1b 55%, #0a0605 100%)', accent: '#c9a58c' },
+  { value: 'charcoal', label: 'Royal Charcoal', hint: 'Graphite argent', swatch: 'linear-gradient(135deg, #4c4e51 0%, #1e2023 55%, #0e0f11 100%)', accent: '#c8ccd4' },
+  { value: 'navy', label: 'Navy Mirage', hint: 'Bleu marine', swatch: 'linear-gradient(135deg, #35577d 0%, #141e30 55%, #070d16 100%)', accent: '#9dbbe0' },
 ]
 
 export default function Profile() {
