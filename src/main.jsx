@@ -8,7 +8,13 @@ import UpdatePrompt from './components/UpdatePrompt.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { ToastProvider } from './contexts/ToastContext.jsx'
+// Polices hébergées avec l'application (pas de Google Fonts) : rapides, disponibles hors-ligne, sans suivi par un tiers.
+import '@fontsource-variable/dm-sans'
+import '@fontsource-variable/sora'
 import './styles/index.css'
+import { installGlobalErrorReporting } from './lib/report.js'
+
+installGlobalErrorReporting()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -1,11 +1,12 @@
 import { Component } from 'react'
 import { RefreshCw, TriangleAlert } from 'lucide-react'
+import { reportError } from '../lib/report.js'
 
 // Évite l'écran blanc : une erreur de rendu affiche un message et un bouton de rechargement.
 export default class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null } }
   static getDerivedStateFromError(error) { return { error } }
-  componentDidCatch(error, info) { console.error('[ui] erreur de rendu', error, info) }
+  componentDidCatch(error, info) { reportError(error, { where: 'rendu', componentStack: info?.componentStack }) }
   render() {
     if (!this.state.error) return this.props.children
     return (

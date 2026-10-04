@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { IconButton } from './ui/Button.jsx'
 import { cn } from '../lib/cn.js'
+import { useFocusTrap } from '../lib/useFocusTrap.js'
 
 // Bloque le défilement de la page derrière la modale (technique fiable sur iOS Safari).
 function useScrollLock() {
@@ -31,6 +32,8 @@ const iconTones = {
 // Mobile : feuille qui monte du bas de l'écran. Desktop : fenêtre centrée.
 export default function Modal({ title, description, icon: Icon, tone = 'brand', size = 'md', onClose, children }) {
   useScrollLock()
+  const dialogRef = useRef(null)
+  useFocusTrap(dialogRef)
   useEffect(() => {
     const onKey = (event) => event.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
@@ -38,9 +41,9 @@ export default function Modal({ title, description, icon: Icon, tone = 'brand', 
   }, [onClose])
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6"
+    <div data-modal-root className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={title}
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
         className={cn(
           'flex max-h-[92dvh] w-full flex-col rounded-t-3xl border border-line bg-surface shadow-pop animate-sheet-up',
           'sm:max-h-[85dvh] sm:rounded-3xl sm:animate-scale-in', sizes[size],

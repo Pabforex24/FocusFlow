@@ -28,11 +28,11 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex flex-col items-center gap-2 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] md:items-end md:pr-6" role="status" aria-live="polite">
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex flex-col items-center gap-2 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] md:items-end md:pr-6" aria-live="polite">
         {toasts.map((t) => {
           const { icon: Icon, cls } = TONES[t.kind]
           return (
-            <div key={t.id} className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-line bg-surface p-3.5 text-sm shadow-pop animate-toast-in">
+            <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'} className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-line bg-surface p-3.5 text-sm shadow-pop animate-toast-in">
               <Icon className={`mt-0.5 size-5 shrink-0 ${cls}`} aria-hidden />
               <p className="flex-1 text-fg">{t.message}</p>
               <button type="button" onClick={() => dismiss(t.id)} aria-label="Fermer la notification" className="-m-1 rounded-lg p-1 text-subtle hover:bg-surface-2 hover:text-fg">

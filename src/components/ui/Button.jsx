@@ -34,7 +34,8 @@ export const IconButton = forwardRef(function IconButton(
   { icon: Icon, label, variant = 'ghost', size = 'md', className, ...props },
   ref,
 ) {
-  const dims = size === 'sm' ? 'size-9' : 'size-11 sm:size-10'
+  // Cible tactile d'au moins 44 px sur mobile, même en taille « sm » (réduite à 36 px dès l'écran large).
+  const dims = size === 'sm' ? 'size-11 sm:size-9' : 'size-11 sm:size-10'
   return (
     <button ref={ref} type="button" aria-label={label} title={label}
       className={cn(base, variants[variant], dims, 'rounded-xl', className)} {...props}>

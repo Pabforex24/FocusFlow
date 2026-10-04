@@ -3,6 +3,7 @@ import * as api from '../services/api.js'
 import { useAuth } from './AuthContext.jsx'
 import { useToast } from './ToastContext.jsx'
 import { toUserMessage, AppError } from '../lib/errors.js'
+import { reportError } from '../lib/report.js'
 import { addDays, occurrenceDates, startOfWeekKey, todayKey } from '../lib/dates.js'
 import { computeBadges, computeStats } from '../lib/gamification.js'
 import { buildChallengeTasks, challengeEndKey, isChallengeFinished } from '../lib/challenges.js'
@@ -42,7 +43,7 @@ export function DataProvider({ children }) {
       lastLoadRef.current = Date.now()
     } catch (error) {
       if (seq !== loadSeqRef.current) return
-      console.error('[data] chargement impossible', error)
+      reportError(error, { where: 'chargement' })
       if (silent) return // un échec d'actualisation en arrière-plan garde les données affichées
       setLoadError(toUserMessage(error))
       setStatus('error')
@@ -83,7 +84,7 @@ export function DataProvider({ children }) {
       if (successMessage) toast.success(successMessage)
       return true
     } catch (error) {
-      console.error('[data] action échouée', error)
+      if (!(error instanceof AppError)) reportError(error, { where: 'action' }) // erreurs attendues (règles métier) non remontées
       toast.error(toUserMessage(error))
       return false
     } finally {
