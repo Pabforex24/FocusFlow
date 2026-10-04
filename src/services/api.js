@@ -3,6 +3,7 @@
 
 import { supabase } from '../lib/supabase.js'
 import { AppError } from '../lib/errors.js'
+import { fetchAllPages } from '../lib/paginate.js'
 
 const TIMEOUT_MS = 15000
 
@@ -26,17 +27,25 @@ async function run(query) {
 }
 
 // ── Chargement complet : la base est la source de vérité ──────────────────────
+// Lit toutes les lignes d'une table, page par page (voir lib/paginate.js). `id` départage les lignes de même date :
+// sans ordre stable, une ligne pourrait être lue deux fois ou jamais d'une page à l'autre.
+const readAll = (table, columns, orders) => fetchAllPages((from, to) => {
+  let query = client().from(table).select(columns)
+  for (const [column, ascending = true] of [...orders, ['id']]) query = query.order(column, { ascending })
+  return run(query.range(from, to))
+})
+
 export async function loadAll(userId) {
   const db = client()
   const [profile, domains, goals, tasks, activeChallenges, customChallenges, restDays, focusSessions] = await Promise.all([
     run(db.from('profiles').select('*').eq('id', userId).maybeSingle()),
-    run(db.from('domains').select('*').order('created_at')),
-    run(db.from('goals').select('*').order('created_at')),
-    run(db.from('tasks').select('*').order('scheduled_on').order('created_at')),
-    run(db.from('active_challenges').select('*').order('created_at', { ascending: false })),
-    run(db.from('custom_challenges').select('*').order('created_at', { ascending: false })),
-    run(db.from('rest_days').select('day')),
-    run(db.from('focus_sessions').select('*')),
+    readAll('domains', '*', [['created_at']]),
+    readAll('goals', '*', [['created_at']]),
+    readAll('tasks', '*', [['scheduled_on'], ['created_at']]),
+    readAll('active_challenges', '*', [['created_at', false]]),
+    readAll('custom_challenges', '*', [['created_at', false]]),
+    readAll('rest_days', 'day', [['day']]),
+    readAll('focus_sessions', '*', [['created_at']]),
   ])
   return { profile, domains, goals, tasks, activeChallenges, customChallenges, restDays: restDays.map((r) => r.day), focusSessions }
 }

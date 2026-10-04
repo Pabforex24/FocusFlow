@@ -3,6 +3,7 @@ import { addDays, diffDays, occurrenceDates, startOfWeekKey, toKey, fromKey } fr
 import { computeLevel, computeStats, computeBadges, xpForLevel } from './gamification.js'
 import { buildChallengeTasks, challengeEndKey, challengeProgress } from './challenges.js'
 import { monthSummary, goalProgress, lastDays } from './stats.js'
+import { fetchAllPages } from './paginate.js'
 
 const task = (day, done, extra = {}) => ({ id: Math.random().toString(), scheduled_on: day, done, xp_value: 10, ...extra })
 
@@ -147,5 +148,32 @@ describe('helpers de statistiques et icônes', () => {
   it('les 14 badges ont une icône connue', () => {
     const badges = computeBadges(computeStats({ tasks: [], today: '2026-09-30' }))
     expect(badges.every((b) => ICONS[b.icon])).toBe(true)
+  })
+})
+
+describe('lecture par pages (fetchAllPages)', () => {
+  const table = Array.from({ length: 2350 }, (_, i) => ({ id: i }))
+  const fakePage = async (from, to) => table.slice(from, to + 1)
+
+  it('récupère toutes les lignes au-delà de 1 000, sans doublon ni oubli', async () => {
+    const rows = await fetchAllPages(fakePage)
+    expect(rows).toHaveLength(2350)
+    expect(rows[0].id).toBe(0)
+    expect(rows[2349].id).toBe(2349)
+    expect(new Set(rows.map((r) => r.id)).size).toBe(2350)
+  })
+
+  it('gère une table vide et un nombre de lignes multiple de la taille de page', async () => {
+    expect(await fetchAllPages(async () => [])).toEqual([])
+    const exact = Array.from({ length: 2000 }, (_, i) => i)
+    const calls = []
+    const rows = await fetchAllPages(async (from, to) => { calls.push([from, to]); return exact.slice(from, to + 1) })
+    expect(rows).toHaveLength(2000)
+    expect(calls).toHaveLength(3) // 1000 + 1000 + une page vide qui signale la fin
+  })
+
+  it('propage une erreur de lecture au lieu de renvoyer des données partielles', async () => {
+    const failing = async (from) => { if (from > 0) throw new Error('réseau'); return Array.from({ length: 1000 }, (_, i) => i) }
+    await expect(fetchAllPages(failing)).rejects.toThrow('réseau')
   })
 })

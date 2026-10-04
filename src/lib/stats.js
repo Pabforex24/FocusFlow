@@ -57,7 +57,7 @@ export function goalProgress(goal, tasks) {
 
 // Couleur de la heatmap/calendrier : rouge (0 %) → vert (100 %).
 export function rateColor(r) {
-  if (r === null) return 'var(--bg-3)'
+  if (r === null) return 'var(--surface-2)'
   const hue = Math.round(r * 130)
   return `hsl(${hue} 65% ${30 + r * 10}%)`
 }

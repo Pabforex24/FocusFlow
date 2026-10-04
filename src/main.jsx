@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { LucideProvider } from 'lucide-react'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import UpdatePrompt from './components/UpdatePrompt.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { ToastProvider } from './contexts/ToastContext.jsx'
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')).render(
             <ToastProvider>
               <AuthProvider>
                 <App />
+                <UpdatePrompt />
               </AuthProvider>
             </ToastProvider>
           </BrowserRouter>
@@ -28,9 +30,4 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>
 )
 
-// Service worker : uniquement en production, pour ne pas gêner le développement.
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((error) => console.error('[pwa] service worker non enregistré', error))
-  })
-}
+// Le service worker (production uniquement) est enregistré par <UpdatePrompt />, qui affiche aussi le bandeau de mise à jour.

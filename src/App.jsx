@@ -14,6 +14,7 @@ import Goals from './pages/Goals.jsx'
 import Login from './pages/Login.jsx'
 import Monthly from './pages/Monthly.jsx'
 import Profile from './pages/Profile.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 import Tasks from './pages/Tasks.jsx'
 
 function SetupNotice() {
@@ -29,10 +30,11 @@ function SetupNotice() {
 }
 
 export default function App() {
-  const { user, loading } = useAuth()
+  const { user, loading, recovery } = useAuth()
   if (!isSupabaseConfigured) return <SetupNotice />
   if (loading) return <div className="grid min-h-dvh place-items-center bg-bg"><Spinner className="size-8" /></div>
   if (!user) return <Login />
+  if (recovery) return <ResetPassword />
 
   return (
     <DataProvider>
