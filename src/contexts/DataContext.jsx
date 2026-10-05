@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext.jsx'
 import { useToast } from './ToastContext.jsx'
 import { toUserMessage, AppError } from '../lib/errors.js'
 import { reportError } from '../lib/report.js'
+import { loadSnapshot, saveSnapshot } from '../lib/snapshot.js'
 import { addDays, occurrenceDates, startOfWeekKey, todayKey } from '../lib/dates.js'
 import { computeBadges, computeStats } from '../lib/gamification.js'
 import { buildChallengeTasks, challengeEndKey, isChallengeFinished } from '../lib/challenges.js'
@@ -23,39 +24,69 @@ export function DataProvider({ children }) {
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [loadError, setLoadError] = useState(null)
   const [today, setToday] = useState(todayKey())
+  const [online, setOnline] = useState(() => navigator.onLine !== false)
+  const [stale, setStale] = useState(false)       // vrai si le dernier chargement a échoué : les données affichées sont une copie
+  const [lastSync, setLastSync] = useState(null)  // date (ms) des données affichées
+  const hasDataRef = useRef(false)                // des données (réseau ou copie locale) sont déjà affichées
 
   const pendingRef = useRef(0)      // nombre de modifications en cours
   const loadSeqRef = useRef(0)      // ignore les réponses de chargements périmés
   const lastLoadRef = useRef(0)
   const userId = user?.id ?? null
+  const userRef = useRef(user) // lu à l'enregistrement de la copie locale, sans relancer le chargement si l'objet change
+  userRef.current = user
 
   const refresh = useCallback(async ({ silent = false } = {}) => {
     if (!userId) return
     if (pendingRef.current > 0) return // ne jamais écraser une modification en cours
     const seq = ++loadSeqRef.current
-    if (!silent) setStatus('loading')
+    if (!silent && !hasDataRef.current) setStatus('loading')
     try {
       const next = await api.loadAll(userId)
       if (seq !== loadSeqRef.current) return
       setData(next)
+      hasDataRef.current = true
       setStatus('ready')
       setLoadError(null)
+      setStale(false)
       lastLoadRef.current = Date.now()
+      setLastSync(lastLoadRef.current)
+      saveSnapshot(userId, next, userRef.current) // copie locale pour le prochain démarrage et le mode hors-ligne
     } catch (error) {
       if (seq !== loadSeqRef.current) return
-      reportError(error, { where: 'chargement' })
-      if (silent) return // un échec d'actualisation en arrière-plan garde les données affichées
+      if (navigator.onLine !== false) reportError(error, { where: 'chargement' }) // hors-ligne, l'échec est attendu
+      if (hasDataRef.current) { setStale(true); setStatus('ready'); return } // on garde les données affichées
+      if (silent) return
       setLoadError(toUserMessage(error))
       setStatus('error')
     }
   }, [userId])
 
-  // Charge à la connexion, vide à la déconnexion.
+  // Charge à la connexion (en affichant d'abord la copie locale si elle existe), vide à la déconnexion.
   useEffect(() => {
     loadSeqRef.current += 1
-    if (!userId) { setData(EMPTY); setStatus('loading'); return }
+    hasDataRef.current = false
+    if (!userId) { setData(EMPTY); setStatus('loading'); setStale(false); setLastSync(null); return undefined }
+    let active = true
+    loadSnapshot(userId).then((snapshot) => {
+      if (!active || !snapshot || hasDataRef.current) return // le réseau a déjà répondu : ne pas l'écraser
+      hasDataRef.current = true
+      setData({ ...EMPTY, ...snapshot.data })
+      setLastSync(snapshot.savedAt)
+      setStatus('ready')
+    })
     refresh()
+    return () => { active = false }
   }, [userId, refresh])
+
+  // État du réseau (pour le bandeau et pour bloquer les modifications hors-ligne).
+  useEffect(() => {
+    const up = () => setOnline(true)
+    const down = () => setOnline(false)
+    window.addEventListener('online', up)
+    window.addEventListener('offline', down)
+    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down) }
+  }, [])
 
   // Actualise au retour sur l'app / au retour du réseau, et change de jour à minuit.
   useEffect(() => {
@@ -75,9 +106,17 @@ export function DataProvider({ children }) {
     }
   }, [refresh])
 
+  // Hors-ligne, l'application est en lecture seule : on le dit tout de suite plutôt qu'après un long délai d'attente.
+  const blockedOffline = useCallback(() => {
+    if (navigator.onLine !== false) return false
+    toast.error('Vous êtes hors-ligne : cette modification est impossible pour le moment.')
+    return true
+  }, [toast])
+
   // Exécute une modification : signale l'erreur à l'utilisateur, renvoie true/false.
   const act = useCallback(async (fn, successMessage) => {
     if (!userId) { toast.error('Vous devez être connecté.'); return false }
+    if (blockedOffline()) return false
     pendingRef.current += 1
     try {
       await fn()
@@ -90,7 +129,7 @@ export function DataProvider({ children }) {
     } finally {
       pendingRef.current -= 1
     }
-  }, [userId, toast])
+  }, [userId, toast, blockedOffline])
 
   const patch = useCallback((key, fn) => setData((d) => ({ ...d, [key]: fn(d[key]) })), [])
   const replaceIn = (list, row) => list.map((x) => (x.id === row.id ? row : x))
@@ -145,6 +184,7 @@ export function DataProvider({ children }) {
 
     // Cocher : mise à jour immédiate, retour arrière si le serveur refuse.
     toggleTask: async (task) => {
+      if (blockedOffline()) return false
       const done = !task.done
       const optimistic = { ...task, done, done_at: done ? new Date().toISOString() : null }
       patch('tasks', (l) => replaceIn(l, optimistic))
@@ -209,7 +249,7 @@ export function DataProvider({ children }) {
       const row = await api.updateProfile(userId, { hardcore_mode: value })
       setData((d) => ({ ...d, profile: row }))
     }),
-  }), [act, patch, refresh, userId, data.activeChallenges, data.restDays])
+  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays])
 
   const derived = useMemo(() => {
     const challengesDone = data.activeChallenges.filter((a) => isChallengeFinished(a, data.tasks, today)).length
@@ -220,7 +260,7 @@ export function DataProvider({ children }) {
     return { stats, badges: computeBadges(stats) }
   }, [data, today])
 
-  const value = useMemo(() => ({ ...data, ...derived, status, loadError, today, actions }), [data, derived, status, loadError, today, actions])
+  const value = useMemo(() => ({ ...data, ...derived, status, loadError, today, actions, online, stale, lastSync }), [data, derived, status, loadError, today, actions, online, stale, lastSync])
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }
 

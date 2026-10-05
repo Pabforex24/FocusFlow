@@ -1,5 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
+import { clearSnapshot, loadSnapshotOwner } from '../lib/snapshot.js'
+
+// Hors-ligne avec une session expirée, Supabase ne peut pas la renouveler et la supprime : l'utilisateur serait renvoyé à la
+// connexion alors que ses données sont disponibles sur l'appareil. On rouvre alors l'application avec le compte de la copie
+// locale, en lecture seule (voir DataContext). Dès que le réseau revient, la vraie session est revérifiée.
+async function offlineSession() {
+  if (navigator.onLine !== false) return null
+  const user = await loadSnapshotOwner()
+  return user ? { user, offline: true } : null
+}
 
 const AuthContext = createContext(null)
 
@@ -13,18 +23,33 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!supabase) return undefined
     let active = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return
-      setSession(data.session)
-      setLoading(false)
-    }).catch(() => { if (active) setLoading(false) })
+    supabase.auth.getSession()
+      .then(async ({ data }) => data.session ?? offlineSession())
+      .catch(() => offlineSession())
+      .then((next) => {
+        if (!active) return
+        setSession(next)
+        setLoading(false)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
       if (event === 'PASSWORD_RECOVERY') setRecovery(true)
+      // Confidentialité : plus de copie locale après une déconnexion (même depuis un autre onglet). Hors-ligne, Supabase émet
+      // lui-même SIGNED_OUT quand il ne peut pas renouveler une session expirée : on garde alors la copie (voir offlineSession).
+      if (event === 'SIGNED_OUT' && navigator.onLine !== false) clearSnapshot()
       setSession(next)
     })
     return () => { active = false; subscription.unsubscribe() }
   }, [])
+
+  // Session « hors-ligne » : au retour du réseau, on la remplace par la vraie (ou on renvoie à la connexion si elle est invalide).
+  const offlineMode = Boolean(session?.offline)
+  useEffect(() => {
+    if (!supabase || !offlineMode) return undefined
+    const onOnline = () => supabase.auth.getSession().then(({ data }) => setSession(data.session)).catch(() => {})
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [offlineMode])
 
   const value = useMemo(() => ({
     user: session?.user ?? null,
@@ -52,6 +77,7 @@ export function AuthProvider({ children }) {
     },
     async signOut() {
       const { error } = await supabase.auth.signOut()
+      await clearSnapshot()
       if (error) throw error
     },
   }), [session, loading, recovery])

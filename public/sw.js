@@ -41,7 +41,16 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('/')))
+    // Réseau d'abord. La page d'accueil la plus récente est gardée en cache : hors-ligne, elle référence les bons fichiers.
+    event.respondWith(
+      fetch(request).then((response) => {
+        if (response.ok) {
+          const copy = response.clone()
+          caches.open(SHELL_CACHE).then((cache) => cache.put('/', copy))
+        }
+        return response
+      }).catch(() => caches.match('/'))
+    )
     return
   }
 

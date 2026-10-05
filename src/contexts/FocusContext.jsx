@@ -33,7 +33,7 @@ export const formatClock = (ms) => {
 }
 
 export function FocusProvider({ children }) {
-  const { actions, tasks, today, status } = useData()
+  const { actions, tasks, today, status, online } = useData()
   const toast = useToast()
   const [session, setSession] = useState(readSaved)
   const [now, setNow] = useState(Date.now())
@@ -53,13 +53,13 @@ export function FocusProvider({ children }) {
 
   // Fin de session : enregistre une seule fois, une fois les données chargées.
   useEffect(() => {
-    if (!session || now < session.endsAt || finishingRef.current || status !== 'ready') return
+    if (!session || now < session.endsAt || finishingRef.current || status !== 'ready' || !online) return
     finishingRef.current = true
     actions.recordFocus({ minutes: session.minutes, taskId: session.taskId }).then((ok) => {
       if (ok) clear()
       else { finishingRef.current = false; toast.error('Session non enregistrée : nouvelle tentative dans un instant.') }
     })
-  }, [now, session, status, actions, clear, toast])
+  }, [now, session, status, online, actions, clear, toast])
 
   const start = useCallback((minutes, task) => {
     const next = { endsAt: Date.now() + minutes * 60_000, minutes, taskId: task?.id ?? null, taskTitle: task?.title ?? null }

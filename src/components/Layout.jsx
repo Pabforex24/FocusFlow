@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import FocusBar from './FocusBar.jsx'
 import Header from './layout/Header.jsx'
 import MobileNav from './layout/MobileNav.jsx'
+import OfflineBanner from './OfflineBanner.jsx'
 import Sidebar from './layout/Sidebar.jsx'
 import { ErrorState } from './ui/ErrorState.jsx'
 import { PageSkeleton } from './ui/LoadingState.jsx'
@@ -20,6 +21,7 @@ export default function Layout() {
       <div className="md:pl-[4.5rem] lg:pl-64">
         <Header />
         <main className="mx-auto w-full max-w-5xl px-4 pt-5 pb-32 sm:px-6 md:pt-8 md:pb-12 lg:px-8">
+          {status === 'ready' && <OfflineBanner />}
           {status === 'loading' && <PageSkeleton />}
           {status === 'error' && <ErrorState message={loadError} onRetry={() => actions.refresh()} />}
           {status === 'ready' && <div key={pathname} className="animate-fade-up"><Outlet /></div>}

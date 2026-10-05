@@ -37,6 +37,10 @@ const readAll = (table, columns, orders) => fetchAllPages((from, to) => {
 
 export async function loadAll(userId) {
   const db = client()
+  // Sans session valide, Supabase répondrait par des listes VIDES (règles RLS) et non par une erreur : on les refuserait
+  // à tort comme données réelles et on écraserait la copie locale. On exige donc une session.
+  const { data: auth } = await db.auth.getSession()
+  if (!auth?.session) throw new AppError('Session expirée ou introuvable. Reconnectez-vous.')
   const [profile, domains, goals, tasks, activeChallenges, customChallenges, restDays, focusSessions] = await Promise.all([
     run(db.from('profiles').select('*').eq('id', userId).maybeSingle()),
     readAll('domains', '*', [['created_at']]),

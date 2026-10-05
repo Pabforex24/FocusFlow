@@ -3,12 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { DataProvider, useData } from './DataContext.jsx'
 import * as api from '../services/api.js'
+import { loadSnapshot, saveSnapshot } from '../lib/snapshot.js'
 
 vi.mock('../services/api.js')
 vi.mock('./AuthContext.jsx', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }))
 const toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() }
 vi.mock('./ToastContext.jsx', () => ({ useToast: () => toast }))
 vi.mock('../lib/report.js', () => ({ reportError: vi.fn() }))
+vi.mock('../lib/snapshot.js', () => ({ loadSnapshot: vi.fn(), saveSnapshot: vi.fn(), clearSnapshot: vi.fn() }))
 
 const task = (id, extra = {}) => ({ id, title: id, scheduled_on: '2026-10-01', done: false, done_at: null, xp_value: 10, domain_id: null, goal_id: null, challenge_active_id: null, ...extra })
 const snapshot = () => ({
@@ -28,6 +30,8 @@ async function setup() {
 beforeEach(() => {
   vi.resetAllMocks()
   api.loadAll.mockResolvedValue(snapshot())
+  loadSnapshot.mockResolvedValue(null)
+  saveSnapshot.mockResolvedValue(undefined)
 })
 
 describe('DataContext', () => {
@@ -97,5 +101,44 @@ describe('DataContext', () => {
     expect(ok).toBe(false)
     expect(api.addRestDay).toHaveBeenCalledTimes(1)
     expect(toast.error).toHaveBeenCalledWith('Un seul imprévu par semaine est autorisé.')
+  })
+
+  it('enregistre une copie locale après un chargement réussi', async () => {
+    await setup()
+    await waitFor(() => expect(saveSnapshot).toHaveBeenCalledWith('u1', expect.objectContaining({ tasks: expect.any(Array) }), { id: 'u1' }))
+  })
+
+  it('affiche la copie locale tout de suite, puis les données du serveur', async () => {
+    let resolveNetwork
+    api.loadAll.mockReturnValue(new Promise((r) => { resolveNetwork = r }))
+    loadSnapshot.mockResolvedValue({ savedAt: 1000, data: snapshot() })
+    const view = renderHook(() => useData(), { wrapper: DataProvider })
+    await waitFor(() => expect(view.result.current.status).toBe('ready'))
+    expect(view.result.current.tasks).toHaveLength(3) // copie, avant la réponse du réseau
+    expect(view.result.current.lastSync).toBe(1000)
+    await act(async () => { resolveNetwork({ ...snapshot(), tasks: [task('t9')] }) })
+    expect(view.result.current.tasks.map((t) => t.id)).toEqual(['t9'])
+    expect(view.result.current.stale).toBe(false)
+  })
+
+  it('serveur injoignable : garde la copie locale au lieu d\'un écran d\'erreur', async () => {
+    api.loadAll.mockRejectedValue(new Error('Failed to fetch'))
+    loadSnapshot.mockResolvedValue({ savedAt: 1000, data: snapshot() })
+    const view = renderHook(() => useData(), { wrapper: DataProvider })
+    await waitFor(() => expect(view.result.current.stale).toBe(true))
+    expect(view.result.current.status).toBe('ready')
+    expect(view.result.current.tasks).toHaveLength(3)
+  })
+
+  it('hors-ligne : les modifications sont refusées tout de suite, sans appeler le serveur', async () => {
+    const { result } = await setup()
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    let ok
+    await act(async () => { ok = await result.current.actions.toggleTask(result.current.tasks[0]) })
+    expect(ok).toBe(false)
+    expect(api.updateTask).not.toHaveBeenCalled()
+    expect(result.current.tasks[0].done).toBe(false)
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/hors-ligne/i))
+    onLine.mockRestore()
   })
 })
