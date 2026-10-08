@@ -1,5 +1,5 @@
--- FocusFlow — schéma v5 (projet Supabase vide). À exécuter dans l'éditeur SQL.
--- État final : base + durcissement (migration 001) + session Focus atomique (migration 002).
+-- FocusFlow — schéma v6 (projet Supabase vide). À exécuter dans l'éditeur SQL.
+-- État final : base + durcissement (001) + session Focus atomique (002) + notifications push (003).
 -- Une installation fraîche n'a AUCUNE migration supplémentaire à appliquer.
 -- Principe : la base est la source de vérité. Les dates "métier" sont de type date
 -- (jour local de l'utilisateur), ce qui évite les décalages de fuseau horaire.
@@ -7,10 +7,13 @@
 create extension if not exists "pgcrypto";
 
 create table public.profiles (
-  id            uuid primary key references auth.users(id) on delete cascade,
-  display_name  text,
-  hardcore_mode boolean not null default false,
-  created_at    timestamptz not null default now()
+  id             uuid primary key references auth.users(id) on delete cascade,
+  display_name   text,
+  hardcore_mode  boolean not null default false,
+  remind_enabled boolean not null default false,
+  remind_hour    smallint check (remind_hour between 0 and 23),
+  timezone       text,
+  created_at     timestamptz not null default now()
 );
 
 create table public.domains (
@@ -88,6 +91,27 @@ create table public.focus_sessions (
   created_at   timestamptz not null default now()
 );
 
+-- Notifications push (migration 003).
+-- Un abonnement par appareil : endpoint unique (l'app fait un upsert à l'activation).
+create table public.push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  endpoint   text not null unique,
+  p256dh     text not null,
+  auth       text not null,
+  created_at timestamptz not null default now()
+);
+
+-- Journal anti-doublon : une ligne par (utilisateur, type, jour). La clé primaire sert de verrou
+-- (l'insertion est ignorée si le rappel est déjà parti). Réservé au service_role (aucune politique RLS).
+create table public.push_log (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  kind    text not null check (kind in ('daily', 'streak')),
+  day     date not null,
+  sent_at timestamptz not null default now(),
+  primary key (user_id, kind, day)
+);
+
 -- Index : les lectures filtrent toutes sur user_id (voir migration 001).
 create index domains_user_idx           on public.domains(user_id);
 create index goals_user_idx             on public.goals(user_id);
@@ -98,6 +122,7 @@ create index focus_sessions_user_idx    on public.focus_sessions(user_id, comple
 create index tasks_goal_idx             on public.tasks(goal_id);
 create index tasks_domain_idx           on public.tasks(domain_id);
 create index tasks_challenge_idx        on public.tasks(challenge_active_id);
+create index push_subscriptions_user_idx on public.push_subscriptions(user_id);
 
 -- Row Level Security : chaque utilisateur ne voit et ne modifie que ses lignes.
 alter table public.profiles          enable row level security;
@@ -108,6 +133,8 @@ alter table public.tasks             enable row level security;
 alter table public.custom_challenges enable row level security;
 alter table public.rest_days         enable row level security;
 alter table public.focus_sessions    enable row level security;
+alter table public.push_subscriptions enable row level security;
+alter table public.push_log          enable row level security;
 
 -- (select auth.uid()) est évalué une seule fois par requête au lieu d'une fois par ligne.
 -- Les tables qui pointent vers d'autres tables vérifient en plus que la ligne liée appartient
@@ -149,6 +176,12 @@ create policy "own focus" on public.focus_sessions for all
     (select auth.uid()) = user_id
     and (task_id is null or exists (select 1 from public.tasks t where t.id = task_id and t.user_id = (select auth.uid())))
   );
+
+create policy "own push subs" on public.push_subscriptions for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+-- push_log : aucune politique volontairement. Seule la clé service_role (fonction serveur
+-- api/notify.js) peut la lire et l'écrire ; les clients ne la manipulent jamais.
 
 -- Contraintes de valeurs (migration 001) : sur un projet vide, elles s'appliquent dès la
 -- première ligne insérée.

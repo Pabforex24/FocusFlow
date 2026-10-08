@@ -10,21 +10,23 @@ Stack : **React + JavaScript + Vite + Tailwind CSS 4 + Lucide + Supabase**. Aucu
 3. `cp .env.example .env` et renseignez `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (clé **anon** uniquement, jamais la clé `service_role`).
 4. `npm install` puis `npm run dev`.
 
-Commandes : `npm run build` · `npm run preview` (teste aussi la PWA) · `npm test` · `npm run check:js-only`.
-Déploiement Vercel : variables d'environnement `VITE_*` + `vercel.json` (déjà fourni) pour le routage.
+Commandes : `npm run build` · `npm run preview` (teste aussi la PWA) · `npm test` · `npm run check:js-only` · `npm run check` (tout).
+Déploiement Vercel : `vercel.json` (déjà fourni) gère le routage ; les fonctions `api/` attendent des variables serveur (voir « Coach IA » et « Notifications »).
 
 ## Architecture
 
 ```
 src/
-  lib/        Logique pure, testée : dates, gamification (XP/série/badges), challenges, stats, icônes
-  services/   api.js : seul fichier qui parle à Supabase (timeout 15 s, erreurs remontées)
+  lib/        Logique pure, testée : dates, gamification (XP/série/badges), challenges, stats, icônes, coach (contexte), notifications, push
+  services/   api.js : seul fichier qui parle à Supabase (timeout 15 s, erreurs remontées) · coachApi.js
+  hooks/      useOpenOnNew · usePushNotifications (abonnement push)
   contexts/   Auth · Data (source de vérité + actions) · Focus (minuteur) · Toast
   components/ Layout, Modal, TaskItem, TaskForm, FocusBar, DomainTile
     layout/   Sidebar, Header, MobileNav, Logo, navigation (source unique des menus)
     ui/       Design system : Button, Card, Badge, ProgressBar/Ring, StatCard, Input/Field,
               Alert, Menu, Switch, Segmented, EmptyState, ErrorState, ConfirmDialog…
   pages/      Dashboard, Tasks, Goals, Domains, Challenges, Monthly (Statistiques), Coach, Profile, Login
+api/          Fonctions Vercel (serveur) : coach.js (Groq), notify.js (rappels push planifiés)
 ```
 
 ### Règles de conception (pourquoi c'est plus stable)
@@ -47,14 +49,29 @@ src/
 | Imprévu | 1 par semaine (lundi → dimanche) |
 | Focus | 15/25/45/60 min, basé sur l'heure réelle (survit à la veille), +30 XP, coche la tâche liée |
 
+## Coach IA (Groq)
+
+La page Coach affiche d'abord des conseils **locaux** (calculés dans le navigateur, disponibles hors-ligne). Le bouton « Analyser » envoie un résumé compact des données (sans email ni donnée personnelle) à `api/coach.js`, qui interroge Groq : **la clé API reste côté serveur**. Le conseil du jour est mis en cache localement.
+
+Variables Vercel : `GROQ_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (+ option `GROQ_MODEL`, défaut `llama-3.3-70b-versatile`).
+
+## Notifications push
+
+Rappel quotidien à l'heure choisie (dans le fuseau de l'utilisateur) et alerte de série le soir. Activation dans **Profil → Notifications**. Supabase `pg_cron` appelle toutes les 10 minutes `api/notify.js` (via `pg_net`) ; la table `push_log` garantit un seul envoi par rappel et par jour.
+
+- Variables Vercel : `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_VAPID_PUBLIC_KEY` (au build), `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`.
+- Base : exécuter `supabase/migrations/003_notifications.sql`, puis `supabase/setup_cron_notify.sql` (recopier le secret affiché dans `CRON_SECRET`).
+- Clés VAPID : `npx web-push generate-vapid-keys` (sujet = `mailto:…` ou URL du site).
+- Limites : sur iOS, seules les PWA installées reçoivent des notifications (Partager → écran d'accueil, iOS ≥ 16.4) ; le service worker n'étant actif qu'en production, l'activation ne fonctionne pas en `npm run dev`.
+
 ## PWA
 
-`public/manifest.webmanifest` + `public/sw.js` (volontairement minimal : fichiers de l'app en cache, navigation réseau d'abord, **Supabase jamais intercepté**). Le service worker n'est actif qu'en production (`npm run build`).
+`public/manifest.webmanifest` + `public/sw.js` (fichiers de l'app en cache, navigation réseau d'abord, **Supabase jamais intercepté**, et gestion des notifications `push` / `notificationclick`). Le service worker n'est actif qu'en production (`npm run build`).
 
 ## Ce qui diffère de l'ancienne version
 
-- **Coach IA (Groq)** : remplacé par un coach local (conseils calculés). La clé Groq ne doit pas être dans le navigateur ; une app Vite n'a pas de serveur. Pour le rétablir : une Supabase Edge Function (ou une fonction Vercel) en JavaScript qui appelle Groq, que la page Coach appellerait.
-- **Notifications push / rappels** : non repris (complexité, fiabilité variable sur iOS). Peut être ajouté ensuite.
+- **Coach IA (Groq)** : rétabli via une fonction serveur (`api/coach.js`) — bouton « Analyser » de la page Coach.
+- **Notifications push / rappels** : rétablies (`api/notify.js` + `pg_cron` Supabase) — activées dans Profil.
 - **Mode 100 % hors-ligne sans compte** : supprimé (deux sources de vérité = source de bugs). Un compte est requis.
 - **Dates/heures des tâches** : jour uniquement (plus d'heure précise).
 - À migrer si vous avez des données dans l'ancienne base : le schéma a changé (voir `supabase/schema.sql`), une migration manuelle est nécessaire.

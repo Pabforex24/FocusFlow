@@ -100,3 +100,14 @@ export const addRestDay = (userId, day) => insertOne('rest_days', { user_id: use
 // les deux réussissent ou échouent ensemble. Renvoie { session, task } (task peut être null).
 export const recordFocus = ({ minutes, taskId, completedOn }) =>
   run(client().rpc('record_focus_session', { p_minutes: minutes, p_task_id: taskId || null, p_completed_on: completedOn }))
+
+// ── Notifications push ────────────────────────────────────────────────────────
+// Un abonnement par appareil, identifié par son endpoint : upsert pour ne pas dupliquer.
+export const savePushSubscription = (userId, sub) =>
+  run(client().from('push_subscriptions').upsert(
+    { user_id: userId, endpoint: sub.endpoint, p256dh: sub.keys?.p256dh, auth: sub.keys?.auth },
+    { onConflict: 'endpoint' },
+  ).select().single())
+
+export const removePushSubscription = (endpoint) =>
+  run(client().from('push_subscriptions').delete().eq('endpoint', endpoint))

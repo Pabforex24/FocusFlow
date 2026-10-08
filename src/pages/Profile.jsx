@@ -1,4 +1,5 @@
-import { Check, Flame, LogOut, Monitor, Moon, RefreshCw, ShieldAlert, Sun, Trophy } from 'lucide-react'
+import { Bell, Check, Flame, LogOut, Monitor, Moon, RefreshCw, ShieldAlert, Sun, Trophy } from 'lucide-react'
+import { Alert } from '../components/ui/Alert.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { Card, CardHeader } from '../components/ui/Card.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
@@ -9,7 +10,11 @@ import { useSignOut } from '../components/Layout.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
+import { usePushNotifications } from '../hooks/usePushNotifications.js'
 import { cn } from '../lib/cn.js'
+
+// Heures proposées pour le rappel quotidien (heure locale).
+const REMIND_HOURS = Array.from({ length: 18 }, (_, i) => i + 6)
 
 // Aperçu fixe de chaque palette (indépendant de la palette active).
 const PALETTE_CHOICES = [
@@ -24,6 +29,7 @@ export default function Profile() {
   const { profile, stats, actions } = useData()
   const { preference, setTheme, palette, setPalette } = useTheme()
   const signOut = useSignOut()
+  const push = usePushNotifications()
   const hardcore = profile?.hardcore_mode ?? false
   const name = profile?.display_name || user.email
   const initials = name.slice(0, 2).toUpperCase()
@@ -85,6 +91,29 @@ export default function Profile() {
             <div><p className="text-sm font-semibold text-fg">Mode Hardcore</p><p className="text-sm text-muted">Un jour sans tâche faite coûte −30 XP au lieu de −15.</p></div>
           </div>
           <Switch checked={hardcore} onChange={actions.setHardcore} label="Mode Hardcore" />
+        </Card>
+
+        <Card className="space-y-4">
+          <CardHeader title="Notifications" description="Rappel quotidien et alerte de série" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300"><Bell className="size-5" aria-hidden /></span>
+              <div><p className="text-sm font-semibold text-fg">Rappel quotidien</p><p className="text-sm text-muted">À l'heure choisie, plus une alerte le soir si votre série est en danger.</p></div>
+            </div>
+            <Switch checked={push.enabled} onChange={push.toggle} disabled={push.busy || !push.supported} label="Rappel quotidien" />
+          </div>
+          {push.enabled && (
+            <label className="flex items-center justify-between gap-4 rounded-xl bg-surface-2 px-3.5 py-2.5">
+              <span className="text-sm font-medium text-fg">Heure du rappel</span>
+              <select value={push.hour} onChange={(e) => push.setHour(e.target.value)} disabled={push.busy}
+                className="h-11 rounded-xl border border-line bg-surface px-3 text-sm font-medium text-fg">
+                {REMIND_HOURS.map((h) => <option key={h} value={h}>{h} h 00</option>)}
+              </select>
+            </label>
+          )}
+          {push.denied && <Alert tone="warning">Notifications bloquées par le navigateur. Autorisez-les dans les réglages du site, puis réactivez le rappel.</Alert>}
+          {!push.supported && <Alert tone="info">Ce navigateur ne prend pas en charge les notifications.</Alert>}
+          {push.iosHint && push.enabled && <Alert tone="info">Sur iPhone : Partager → « Ajouter à l'écran d'accueil » pour recevoir les notifications.</Alert>}
         </Card>
 
         <Card className="flex items-center justify-between gap-4">

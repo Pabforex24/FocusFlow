@@ -80,3 +80,41 @@ self.addEventListener('fetch', (event) => {
     })
   )
 })
+
+// ── Notifications push (rappels envoyés par /api/notify) ──────────────────────────────────────
+self.addEventListener('push', (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch {
+    data = { body: event.data?.text() ?? '' }
+  }
+  const title = data.title || 'FocusFlow'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: data.tag, // même tag = remplace la notification précédente du même type
+      data: { url: data.url || '/' },
+    })
+  )
+})
+
+// Clic sur la notification : réutilise un onglet déjà ouvert, sinon en ouvre un.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (list) => {
+      for (const client of list) {
+        if ('focus' in client) {
+          await client.focus()
+          if (client.navigate) await client.navigate(url)
+          return undefined
+        }
+      }
+      return self.clients.openWindow(url)
+    })
+  )
+})

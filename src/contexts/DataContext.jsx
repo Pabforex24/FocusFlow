@@ -246,6 +246,10 @@ export function DataProvider({ children }) {
       const row = await api.updateProfile(userId, { hardcore_mode: value })
       setData((d) => ({ ...d, profile: row }))
     }),
+    setRemindSettings: (patch) => act(async () => {
+      const row = await api.updateProfile(userId, patch)
+      setData((d) => ({ ...d, profile: row }))
+    }),
   }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays])
 
   const derived = useMemo(() => {
