@@ -43,11 +43,16 @@ export function usePushNotifications() {
       return
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js')
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    })
+    await navigator.serviceWorker.register('/sw.js')
+    const registration = await navigator.serviceWorker.ready
+    // Réutilise l'abonnement existant : tenter de s'abonner une 2e fois échoue.
+    let subscription = await registration.pushManager.getSubscription()
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      })
+    }
     try {
       await savePushSubscription(user.id, subscription)
       const ok = await actions.setRemindSettings({
@@ -79,6 +84,7 @@ export function usePushNotifications() {
       if (next) await subscribe()
       else await unsubscribe()
     } catch (error) {
+      console.error('[push]', error)
       toast.error(toUserMessage(error))
     } finally {
       setBusy(false)
