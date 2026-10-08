@@ -1,9 +1,15 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Compass, Flame, NotebookPen, Rocket, ShieldCheck, Sparkles, Target, Timer, TrendingUp, TriangleAlert, Trophy } from 'lucide-react'
+import { Alert } from '../components/ui/Alert.jsx'
+import { Button } from '../components/ui/Button.jsx'
 import { Card } from '../components/ui/Card.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { useData } from '../contexts/DataContext.jsx'
+import { buildCoachContext } from '../lib/coachContext.js'
+import { toUserMessage } from '../lib/errors.js'
 import { goalProgress, lastDays } from '../lib/stats.js'
+import { askCoach } from '../services/coachApi.js'
 import { cn } from '../lib/cn.js'
 
 const TONES = {
@@ -13,8 +19,11 @@ const TONES = {
   info: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
 }
 
-// Coach local : conseils calculés à partir de vos données, sans service externe.
-// (Le coach Groq nécessite une fonction serveur pour protéger la clé API : voir README.)
+// Cache du conseil IA : une génération par jour suffit, réaffichée instantanément.
+const AI_CACHE_KEY = 'focusflow-coach-ai'
+
+// Coach local : conseils calculés à partir de vos données, sans service externe,
+// affichés immédiatement. L'analyse IA (Groq via /api/coach) se déclenche à la demande.
 function buildInsights({ tasks, goals, stats, today, restDays }) {
   const out = []
   const todayTasks = tasks.filter((t) => t.scheduled_on === today)
@@ -46,10 +55,38 @@ export default function Coach() {
   const data = useData()
   const [main, ...others] = buildInsights(data)
   const MainIcon = main.icon
+  const [ai, setAi] = useState({ text: null, at: null, loading: false, error: null })
+
+  // Recharge le conseil du jour depuis le cache local s'il est encore d'actualité.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(AI_CACHE_KEY))
+      if (saved?.day === data.today && saved.text) setAi((s) => ({ ...s, text: saved.text, at: saved.at }))
+    } catch {
+      // Cache absent ou illisible : on repart sans conseil en cache.
+    }
+  }, [data.today])
+
+  const runAi = async () => {
+    setAi((s) => ({ ...s, loading: true, error: null }))
+    try {
+      const text = await askCoach(buildCoachContext(data))
+      const at = Date.now()
+      setAi({ text, at, loading: false, error: null })
+      try {
+        localStorage.setItem(AI_CACHE_KEY, JSON.stringify({ day: data.today, text, at }))
+      } catch {
+        // Stockage plein ou indisponible : le conseil reste affiché pour la session.
+      }
+    } catch (error) {
+      // En cas d'échec, le conseil précédent (et les conseils locaux) restent affichés.
+      setAi((s) => ({ ...s, loading: false, error: toUserMessage(error) }))
+    }
+  }
 
   return (
     <>
-      <PageHeader title="Coach" subtitle="Conseils calculés à partir de vos données" />
+      <PageHeader title="Coach" subtitle="Conseils locaux et analyse IA personnalisée" />
       <div className="space-y-4">
         <section className="relative overflow-hidden rounded-3xl hero-surface p-5 text-white shadow-pop sm:p-6">
           <div className="pointer-events-none absolute -right-10 -bottom-10 size-44 rounded-full bg-white/10 blur-2xl" aria-hidden />
@@ -60,6 +97,36 @@ export default function Coach() {
               <h2 className="mt-1 text-xl font-bold">{main.title}</h2>
               <p className="mt-1 text-sm text-white/85">{main.text}</p>
             </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="coach-ai-title" className="rounded-3xl border border-line bg-surface p-5 shadow-xs dark:bg-white/5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300"><Sparkles className="size-5" aria-hidden /></span>
+            <div className="min-w-0 flex-1 basis-44">
+              <h2 id="coach-ai-title" className="text-sm font-semibold text-fg">Coach IA</h2>
+              <p className="text-xs text-muted">Analyse personnalisée sur demande</p>
+            </div>
+            <Button variant="secondary" size="sm" icon={Sparkles} loading={ai.loading} onClick={runAi}>
+              {ai.text ? 'Régénérer' : 'Analyser'}
+            </Button>
+          </div>
+          {ai.error && <Alert tone="warning" className="mt-3">{ai.error}</Alert>}
+          <div className="mt-3">
+            {ai.loading ? (
+              <p className="text-sm text-muted">Le coach analyse ta semaine…</p>
+            ) : ai.text ? (
+              <p className="whitespace-pre-line text-sm leading-relaxed text-fg">{ai.text}</p>
+            ) : !ai.error ? (
+              <p className="text-sm text-muted">Le coach croise ton série, ta semaine et tes objectifs pour un conseil concret.</p>
+            ) : null}
+            {ai.at && !ai.loading && (
+              <p className="mt-2 text-xs text-muted">
+                Généré à {new Date(ai.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                {' — '}
+                {ai.text ? 'une régénération remplacera ce conseil.' : 'relance l\'analyse pour en obtenir un nouveau.'}
+              </p>
+            )}
           </div>
         </section>
 

@@ -33,4 +33,10 @@ export default [
     files: ['scripts/**/*.mjs', 'vite.config.js', 'eslint.config.js'],
     languageOptions: { globals: { ...globals.node } },
   },
+  {
+    // Fonctions Vercel (Node, pas de JSX, pas de globals navigateur).
+    files: ['api/**/*.js'],
+    languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: { ...globals.node } },
+    rules: { 'no-console': ['warn', { allow: ['warn', 'error'] }] },
+  },
 ]

@@ -1,0 +1,109 @@
+// Fonction Vercel : Coach IA via Groq. La clé API reste côté serveur (jamais dans le
+// navigateur) et le system prompt est fixe ici — le client n'envoie que le contexte JSON
+// produit par src/lib/coachContext.js, il ne peut donc pas détourner le rôle du coach.
+
+import { coachMessages } from '../src/lib/coachContext.js'
+
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile'
+const TIMEOUT_MS = 20_000
+const MAX_BODY_CHARS = 20_000
+const RATE_LIMIT = 10 // demandes par utilisateur et par minute (best effort, par instance chaude)
+
+export const maxDuration = 30
+
+// Limitation simple en mémoire : suffit pour protéger le quota Groq côté utilisateur.
+const hits = new Map()
+
+const json = (status, body) => Response.json(body, { status })
+
+function rateLimited(userId) {
+  const now = Date.now()
+  const list = (hits.get(userId) ?? []).filter((t) => now - t < 60_000)
+  if (list.length >= RATE_LIMIT) {
+    hits.set(userId, list)
+    return true
+  }
+  list.push(now)
+  hits.set(userId, list)
+  return false
+}
+
+// Vérifie le jeton Supabase auprès de /auth/v1/user : aucune clé secrète nécessaire.
+async function verifySession(request) {
+  const token = (request.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
+  if (!token) return null
+  try {
+    const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: process.env.SUPABASE_ANON_KEY ?? '', Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+export async function POST(request) {
+  const { GROQ_API_KEY, GROQ_MODEL, SUPABASE_URL, SUPABASE_ANON_KEY } = process.env
+  if (!GROQ_API_KEY || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('[coach] variables manquantes (GROQ_API_KEY / SUPABASE_URL / SUPABASE_ANON_KEY)')
+    return json(503, { error: 'Coach IA non configuré sur le serveur.' })
+  }
+
+  const user = await verifySession(request)
+  if (!user?.id) return json(401, { error: 'Session invalide. Reconnectez-vous.' })
+  if (rateLimited(user.id)) return json(429, { error: 'Trop de demandes. Réessayez dans une minute.' })
+
+  const raw = await request.text().catch(() => '')
+  if (raw.length > MAX_BODY_CHARS) return json(413, { error: 'Contexte trop volumineux.' })
+  let context
+  try {
+    context = JSON.parse(raw)?.context
+  } catch {
+    context = undefined
+  }
+  if (!context || typeof context !== 'object' || Array.isArray(context)) {
+    return json(400, { error: 'Requête invalide.' })
+  }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  try {
+    const res = await fetch(GROQ_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'content-type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model: GROQ_MODEL || DEFAULT_MODEL,
+        messages: coachMessages(context),
+        temperature: 0.6,
+        max_tokens: 400,
+      }),
+    })
+    const data = await res.json().catch(() => null)
+    if (!res.ok) {
+      console.error(`[coach] groq ${res.status} ${data?.error?.message ?? ''}`.trim())
+      return json(502, { error: 'Le coach est momentanément indisponible. Réessayez plus tard.' })
+    }
+    const text = data?.choices?.[0]?.message?.content
+    if (!text) return json(502, { error: 'Le coach a renvoyé une réponse vide.' })
+    return json(200, { text })
+  } catch (error) {
+    console.error('[coach]', error?.name === 'AbortError' ? 'timeout' : String(error?.message ?? error))
+    return json(504, { error: 'Le coach met trop de temps à répondre. Réessayez.' })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+// La route n'existe que pour le bouton « Analyser » : les autres méthodes sont rejetées.
+export function GET() {
+  return json(405, { error: 'Méthode non autorisée.' })
+}
+export function PUT() {
+  return GET()
+}
+export function DELETE() {
+  return GET()
+}
