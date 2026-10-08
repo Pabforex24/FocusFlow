@@ -60,7 +60,7 @@ Variables Vercel : `GROQ_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (+ option
 Rappel quotidien à l'heure choisie (dans le fuseau de l'utilisateur) et alerte de série le soir. Activation dans **Profil → Notifications**. Supabase `pg_cron` appelle toutes les 10 minutes `api/notify.js` (via `pg_net`) ; la table `push_log` garantit un seul envoi par rappel et par jour.
 
 - Variables Vercel : `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_VAPID_PUBLIC_KEY` (au build), `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`.
-- Base : exécuter `supabase/migrations/003_notifications.sql`, puis `supabase/setup_cron_notify.sql` (recopier le secret affiché dans `CRON_SECRET`).
+- Base : exécuter `supabase/migrations/003_notifications.sql`, puis `supabase/setup_cron_notify.sql` (il active `pg_cron`/`pg_net` si nécessaire ; recopier le secret affiché dans `CRON_SECRET`).
 - Clés VAPID : `npx web-push generate-vapid-keys` (sujet = `mailto:…` ou URL du site).
 - Limites : sur iOS, seules les PWA installées reçoivent des notifications (Partager → écran d'accueil, iOS ≥ 16.4) ; le service worker n'étant actif qu'en production, l'activation ne fonctionne pas en `npm run dev`.
 

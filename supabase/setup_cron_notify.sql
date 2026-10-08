@@ -1,16 +1,24 @@
 -- FocusFlow — planification des notifications (à exécuter UNE FOIS dans Supabase > SQL Editor).
--- Décrit ici pour être rejouable : l'extension, le secret partagé et la tâche planifiée.
+-- Décrit ici pour être rejouable : extensions, secret partagé et tâche planifiée.
 --
 -- Étapes :
 --   1. Remplacez l'URL placeholder ci-dessous par celle de votre site Vercel.
---   2. Exécutez tout le fichier.
+--   2. Exécutez tout le fichier (il active pg_cron et pg_net s'ils manquent).
+--      Si l'activation des extensions est refusée en SQL, activez-les via
+--      Dashboard → Integrations → Cron (pg_cron) et Database → Extensions (pg_net), puis relancez.
 --   3. La dernière requête affiche le secret : copiez-le dans Vercel > Settings > Environment
 --      Variables sous le nom CRON_SECRET, puis redéployez.
 --
--- pg_cron (extension déjà active sur Supabase) appelle toutes les 10 minutes la fonction
--- Vercel /api/notify. Le rappel part donc dans les ~10 minutes suivant l'heure choisie.
+-- pg_cron appelle toutes les 10 minutes la fonction Vercel /api/notify : le rappel part donc
+-- dans les ~10 minutes suivant l'heure choisie.
 
--- 1. Requêtes HTTP depuis PostgreSQL ----------------------------------------------------------
+-- 1. Extensions PostgreSQL ----------------------------------------------------------------------
+-- pg_cron doit être installé dans pg_catalog (exigence Supabase) ; il crée ensuite le schéma « cron ».
+create extension if not exists pg_cron with schema pg_catalog;
+grant usage on schema cron to postgres;
+grant all privileges on all tables in schema cron to postgres;
+
+-- pg_net : appels HTTP sortants depuis PostgreSQL.
 create extension if not exists pg_net with schema extensions;
 
 -- 2. Secret partagé avec la fonction Vercel -----------------------------------------------------
@@ -38,7 +46,7 @@ select cron.schedule(
   '*/10 * * * *',
   $job$
   select extensions.net.http_post(
-    url := 'https://REMPLACER-PAR-TON-PROJET.vercel.app/api/notify',
+    url := 'https://focus-flow-henna-seven.vercel.app/',
     headers := jsonb_build_object(
       'content-type', 'application/json',
       'authorization', 'Bearer ' || (select secret from vault.decrypted_secrets where name = 'focusflow_cron_secret')
