@@ -1,4 +1,6 @@
--- FocusFlow — schéma v4 (projet Supabase vide). À exécuter dans l'éditeur SQL.
+-- FocusFlow — schéma v5 (projet Supabase vide). À exécuter dans l'éditeur SQL.
+-- État final : base + durcissement (migration 001) + session Focus atomique (migration 002).
+-- Une installation fraîche n'a AUCUNE migration supplémentaire à appliquer.
 -- Principe : la base est la source de vérité. Les dates "métier" sont de type date
 -- (jour local de l'utilisateur), ce qui évite les décalages de fuseau horaire.
 
@@ -86,6 +88,17 @@ create table public.focus_sessions (
   created_at   timestamptz not null default now()
 );
 
+-- Index : les lectures filtrent toutes sur user_id (voir migration 001).
+create index domains_user_idx           on public.domains(user_id);
+create index goals_user_idx             on public.goals(user_id);
+create index goals_domain_idx           on public.goals(domain_id);
+create index active_challenges_user_idx on public.active_challenges(user_id);
+create index custom_challenges_user_idx on public.custom_challenges(user_id);
+create index focus_sessions_user_idx    on public.focus_sessions(user_id, completed_on);
+create index tasks_goal_idx             on public.tasks(goal_id);
+create index tasks_domain_idx           on public.tasks(domain_id);
+create index tasks_challenge_idx        on public.tasks(challenge_active_id);
+
 -- Row Level Security : chaque utilisateur ne voit et ne modifie que ses lignes.
 alter table public.profiles          enable row level security;
 alter table public.domains           enable row level security;
@@ -96,14 +109,85 @@ alter table public.custom_challenges enable row level security;
 alter table public.rest_days         enable row level security;
 alter table public.focus_sessions    enable row level security;
 
-create policy "own profile"   on public.profiles for all using (auth.uid() = id)      with check (auth.uid() = id);
-create policy "own domains"   on public.domains  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own goals"     on public.goals    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own active"    on public.active_challenges for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own tasks"     on public.tasks    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own custom"    on public.custom_challenges for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own rest days" on public.rest_days for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "own focus"     on public.focus_sessions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- (select auth.uid()) est évalué une seule fois par requête au lieu d'une fois par ligne.
+-- Les tables qui pointent vers d'autres tables vérifient en plus que la ligne liée appartient
+-- bien à l'utilisateur (durcissement de la migration 001).
+create policy "own profile" on public.profiles for all
+  using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+
+create policy "own domains" on public.domains for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+create policy "own goals" on public.goals for all
+  using ((select auth.uid()) = user_id)
+  with check (
+    (select auth.uid()) = user_id
+    and exists (select 1 from public.domains d where d.id = domain_id and d.user_id = (select auth.uid()))
+  );
+
+create policy "own active" on public.active_challenges for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+create policy "own tasks" on public.tasks for all
+  using ((select auth.uid()) = user_id)
+  with check (
+    (select auth.uid()) = user_id
+    and (domain_id is null or exists (select 1 from public.domains d where d.id = domain_id and d.user_id = (select auth.uid())))
+    and (goal_id is null or exists (select 1 from public.goals g where g.id = goal_id and g.user_id = (select auth.uid())))
+    and (challenge_active_id is null or exists (select 1 from public.active_challenges a where a.id = challenge_active_id and a.user_id = (select auth.uid())))
+  );
+
+create policy "own custom" on public.custom_challenges for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+create policy "own rest days" on public.rest_days for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+create policy "own focus" on public.focus_sessions for all
+  using ((select auth.uid()) = user_id)
+  with check (
+    (select auth.uid()) = user_id
+    and (task_id is null or exists (select 1 from public.tasks t where t.id = task_id and t.user_id = (select auth.uid())))
+  );
+
+-- Contraintes de valeurs (migration 001) : sur un projet vide, elles s'appliquent dès la
+-- première ligne insérée.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'tasks_xp_range') then
+    alter table public.tasks add constraint tasks_xp_range check (xp_value between 0 and 500);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'tasks_title_len') then
+    alter table public.tasks add constraint tasks_title_len check (char_length(title) between 1 and 200);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'tasks_duration_len') then
+    alter table public.tasks add constraint tasks_duration_len check (duration is null or char_length(duration) <= 40);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'domains_name_len') then
+    alter table public.domains add constraint domains_name_len check (char_length(name) between 1 and 80);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'domains_color_fmt') then
+    alter table public.domains add constraint domains_color_fmt check (color ~ '^#[0-9a-fA-F]{6}$');
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'goals_title_len') then
+    alter table public.goals add constraint goals_title_len check (char_length(title) between 1 and 200);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'goals_description_len') then
+    alter table public.goals add constraint goals_description_len check (description is null or char_length(description) <= 2000);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'active_color_fmt') then
+    alter table public.active_challenges add constraint active_color_fmt check (color ~ '^#[0-9a-fA-F]{6}$');
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'custom_title_len') then
+    alter table public.custom_challenges add constraint custom_title_len check (char_length(title) between 1 and 200);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'custom_color_fmt') then
+    alter table public.custom_challenges add constraint custom_color_fmt check (color ~ '^#[0-9a-fA-F]{6}$');
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'focus_minutes_range') then
+    alter table public.focus_sessions add constraint focus_minutes_range check (minutes between 1 and 600);
+  end if;
+end $$;
 
 -- Création automatique du profil à l'inscription.
 create or replace function public.handle_new_user()
