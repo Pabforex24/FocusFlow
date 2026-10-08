@@ -96,4 +96,7 @@ export const deleteCustomChallenge = (id) => removeOne('custom_challenges', id)
 // ── Profil, repos, focus ──────────────────────────────────────────────────────
 export const updateProfile = (id, patch) => updateOne('profiles', id, patch)
 export const addRestDay = (userId, day) => insertOne('rest_days', { user_id: userId, day })
-export const addFocusSession = (userId, s) => insertOne('focus_sessions', { ...s, user_id: userId })
+// Session Focus + cochage de la tâche liée en UNE transaction (fonction SQL, migration 002) :
+// les deux réussissent ou échouent ensemble. Renvoie { session, task } (task peut être null).
+export const recordFocus = ({ minutes, taskId, completedOn }) =>
+  run(client().rpc('record_focus_session', { p_minutes: minutes, p_task_id: taskId || null, p_completed_on: completedOn }))

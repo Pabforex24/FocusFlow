@@ -237,12 +237,9 @@ export function DataProvider({ children }) {
     }, 'Imprévu déclaré : votre série est protégée'),
 
     recordFocus: ({ minutes, taskId }) => act(async () => {
-      const row = await api.addFocusSession(userId, { minutes, task_id: taskId || null, completed_on: todayKey() })
-      patch('focusSessions', (l) => [...l, row])
-      if (taskId) {
-        const task = await api.updateTask(taskId, { done: true, done_at: new Date().toISOString() })
-        patch('tasks', (l) => replaceIn(l, task))
-      }
+      const { session, task } = await api.recordFocus({ minutes, taskId: taskId || null, completedOn: todayKey() })
+      patch('focusSessions', (l) => [...l, session])
+      if (task) patch('tasks', (l) => replaceIn(l, task))
     }, 'Session Focus terminée : +30 XP'),
 
     setHardcore: (value) => act(async () => {

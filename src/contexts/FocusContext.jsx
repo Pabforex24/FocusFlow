@@ -12,7 +12,11 @@ import { Segmented } from '../components/ui/Segmented.jsx'
 // Le minuteur se base sur l'heure réelle (endsAt) : il survit à la mise en veille et aux changements de page.
 // Seul cet état éphémère est gardé en localStorage ; les données restent dans Supabase.
 const STORAGE_KEY = 'focusflow-focus-session'
+// Deux contextes : `FocusContext` ne change qu'au démarrage/à la fin d'une session (les pages qui
+// n'utilisent que `openPicker` ne se re-rendent pas) ; `FocusTimerContext` change à chaque seconde
+// et n'est consommé que par la barre FocusBar, seule composante qui affiche le décompte.
 const FocusContext = createContext(null)
+const FocusTimerContext = createContext(null)
 
 function readSaved() {
   try {
@@ -70,19 +74,23 @@ export function FocusProvider({ children }) {
   }, [])
 
   const value = useMemo(() => ({
-    active: session, remainingMs: session ? session.endsAt - now : 0,
+    active: session,
     openPicker: (task = null) => setPicker({ task }),
     abandon: () => setConfirmAbandon(true),
-  }), [session, now])
+  }), [session])
+
+  const timer = useMemo(() => ({ remainingMs: session ? session.endsAt - now : 0 }), [session, now])
 
   return (
     <FocusContext.Provider value={value}>
-      {children}
-      {picker && <FocusPicker task={picker.task} tasks={tasks.filter((t) => t.scheduled_on === today && !t.done)} disabled={Boolean(session)} onStart={start} onClose={() => setPicker(null)} />}
-      {confirmAbandon && (
-        <ConfirmDialog title="Abandonner la session ?" message="Vous ne gagnerez pas les 30 XP de cette session." confirmLabel="Abandonner"
-          onConfirm={() => { clear(); setConfirmAbandon(false) }} onCancel={() => setConfirmAbandon(false)} />
-      )}
+      <FocusTimerContext.Provider value={timer}>
+        {children}
+        {picker && <FocusPicker task={picker.task} tasks={tasks.filter((t) => t.scheduled_on === today && !t.done)} disabled={Boolean(session)} onStart={start} onClose={() => setPicker(null)} />}
+        {confirmAbandon && (
+          <ConfirmDialog title="Abandonner la session ?" message="Vous ne gagnerez pas les 30 XP de cette session." confirmLabel="Abandonner"
+            onConfirm={() => { clear(); setConfirmAbandon(false) }} onCancel={() => setConfirmAbandon(false)} />
+        )}
+      </FocusTimerContext.Provider>
     </FocusContext.Provider>
   )
 }
@@ -112,3 +120,4 @@ function FocusPicker({ task, tasks, disabled, onStart, onClose }) {
 }
 
 export const useFocus = () => useContext(FocusContext)
+export const useFocusTimer = () => useContext(FocusTimerContext)

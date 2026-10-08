@@ -118,3 +118,37 @@ end; $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Enregistrement atomique d'une session Focus (identique à la migration 002) :
+-- la session et le cochage de la tâche liée réussissent ou échouent ensemble.
+create or replace function public.record_focus_session(
+  p_minutes      integer,
+  p_task_id      uuid,
+  p_completed_on date
+)
+returns json
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_session public.focus_sessions;
+  v_task    public.tasks;
+begin
+  insert into public.focus_sessions (user_id, minutes, task_id, completed_on)
+  values (auth.uid(), p_minutes, p_task_id, p_completed_on)
+  returning * into v_session;
+
+  if p_task_id is not null then
+    update public.tasks
+       set done = true, done_at = now()
+     where id = p_task_id and user_id = auth.uid()
+     returning * into v_task;
+  end if;
+
+  return json_build_object('session', to_jsonb(v_session), 'task', to_jsonb(v_task));
+end;
+$$;
+
+revoke execute on function public.record_focus_session(integer, uuid, date) from public, anon;
+grant execute on function public.record_focus_session(integer, uuid, date) to authenticated;

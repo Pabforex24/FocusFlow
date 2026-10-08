@@ -1,10 +1,12 @@
 import { Square, Timer } from 'lucide-react'
-import { useFocus, formatClock } from '../contexts/FocusContext.jsx'
+import { useFocus, useFocusTimer, formatClock } from '../contexts/FocusContext.jsx'
 import { ProgressBar } from './ui/ProgressBar.jsx'
 
 // Barre flottante visible sur toutes les pages tant qu'une session Focus est en cours.
+// Seul composant abonné au tick horodaté : les pages ne se re-rendent pas chaque seconde.
 export default function FocusBar() {
-  const { active, remainingMs, abandon } = useFocus()
+  const { active, abandon } = useFocus()
+  const { remainingMs } = useFocusTimer()
   if (!active) return null
   const total = active.minutes * 60_000
   const elapsed = ((total - remainingMs) / total) * 100

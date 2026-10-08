@@ -141,4 +141,30 @@ describe('DataContext', () => {
     expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/hors-ligne/i))
     onLine.mockRestore()
   })
+
+  it('enregistre une session Focus en une seule appel API et coche la tâche liée', async () => {
+    const { result } = await setup()
+    api.recordFocus.mockResolvedValue({
+      session: { id: 'f1', user_id: 'u1', minutes: 25, task_id: 't1', completed_on: '2026-10-08' },
+      task: { ...task('t1', { domain_id: 'd1', goal_id: 'g1' }), done: true, done_at: 'serveur' },
+    })
+    await act(async () => { await result.current.actions.recordFocus({ minutes: 25, taskId: 't1' }) })
+    expect(api.recordFocus).toHaveBeenCalledTimes(1) // une transaction serveur, pas deux requêtes
+    expect(api.recordFocus).toHaveBeenCalledWith({ minutes: 25, taskId: 't1', completedOn: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) })
+    expect(api.updateTask).not.toHaveBeenCalled()
+    expect(result.current.focusSessions).toHaveLength(1)
+    expect(result.current.tasks.find((t) => t.id === 't1')).toMatchObject({ done: true, done_at: 'serveur' })
+    expect(toast.success).toHaveBeenCalledWith('Session Focus terminée : +30 XP')
+  })
+
+  it('session Focus refusée par le serveur : rien n\'est modifié localement', async () => {
+    const { result } = await setup()
+    api.recordFocus.mockRejectedValue(new Error('Failed to fetch'))
+    let ok
+    await act(async () => { ok = await result.current.actions.recordFocus({ minutes: 25, taskId: 't1' }) })
+    expect(ok).toBe(false)
+    expect(result.current.focusSessions).toHaveLength(0)
+    expect(result.current.tasks.find((t) => t.id === 't1').done).toBe(false)
+    expect(toast.error).toHaveBeenCalled()
+  })
 })
