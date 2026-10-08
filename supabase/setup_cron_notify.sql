@@ -34,6 +34,14 @@ begin
 end $$;
 
 -- 3. Tâche planifiée (remplace la précédente si elle existe) ------------------------------------
+-- Message explicite si pg_cron n'est pas activee : le SQL seul ne peut pas toujours le faire.
+do $$
+begin
+  if not exists (select 1 from pg_namespace where nspname = 'cron') then
+    raise exception 'pg_cron n''est pas activee. Ouvrez Dashboard > Integrations > Cron, activez pg_cron, puis relancez ce script.';
+  end if;
+end $$;
+
 do $$
 begin
   if exists (select 1 from cron.job where jobname = 'focusflow-notify') then
@@ -46,7 +54,7 @@ select cron.schedule(
   '*/10 * * * *',
   $job$
   select extensions.net.http_post(
-    url := 'https://focus-flow-henna-seven.vercel.app/',
+    url := 'https://focus-flow-henna-seven.vercel.app/api/notify',
     headers := jsonb_build_object(
       'content-type', 'application/json',
       'authorization', 'Bearer ' || (select secret from vault.decrypted_secrets where name = 'focusflow_cron_secret')
