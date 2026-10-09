@@ -103,16 +103,19 @@ export const recordFocus = ({ minutes, taskId, completedOn }) =>
 
 // ── Notifications push ────────────────────────────────────────────────────────
 // Un abonnement par appareil, identifié par son endpoint : upsert pour ne pas dupliquer.
-export const savePushSubscription = (userId, sub) =>
-  run(client().from('push_subscriptions').upsert(
-    {
-      user_id: userId,
-      endpoint: sub.endpoint,
-      p256dh: sub.keys?.p256dh ?? null,
-      auth: sub.keys?.auth ?? null,
-    },
+// Les colonnes p256dh/auth sont NOT NULL : on refuse clairement un abonnement incomplet plutôt
+// que de laisser PostgreSQL répondre par une violation de contrainte (erreur 23502 illisible).
+export const savePushSubscription = (userId, sub) => {
+  const p256dh = sub?.keys?.p256dh
+  const auth = sub?.keys?.auth
+  if (!sub?.endpoint || !p256dh || !auth) {
+    throw new AppError('Abonnement push incomplet (clés de chiffrement manquantes).')
+  }
+  return run(client().from('push_subscriptions').upsert(
+    { user_id: userId, endpoint: sub.endpoint, p256dh, auth },
     { onConflict: 'endpoint' },
   ).select().single())
+}
 
 export const removePushSubscription = (endpoint) =>
   run(client().from('push_subscriptions').delete().eq('endpoint', endpoint))

@@ -13,6 +13,46 @@ export function urlBase64ToUint8Array(base64) {
   return bytes
 }
 
+// ArrayBuffer -> base64url sans remplissage (format des clés p256dh/auth attendues par web-push).
+function bufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i])
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+// Extrait { endpoint, keys: { p256dh, auth } } d'un PushSubscription.
+// `toJSON()` (standard) fournit les clés en base64url ; repli sur getKey() pour les navigateurs
+// qui n'exposent pas `toJSON`. On n'utilise PAS `sub.keys`, qui n'est pas standard et souvent absent.
+// Idempotent : un objet déjà sérialisé ({ endpoint, keys }) est renvoyé tel quel.
+export function serializeSubscription(subscription) {
+  if (subscription?.keys && typeof subscription.getKey !== 'function' && typeof subscription.toJSON !== 'function') {
+    return {
+      endpoint: subscription.endpoint,
+      keys: { p256dh: subscription.keys.p256dh || null, auth: subscription.keys.auth || null },
+    }
+  }
+  const json = typeof subscription?.toJSON === 'function' ? subscription.toJSON() : null
+  let { p256dh, auth } = json?.keys ?? {}
+  if ((!p256dh || !auth) && typeof subscription?.getKey === 'function') {
+    const rawP256dh = subscription.getKey('p256dh')
+    const rawAuth = subscription.getKey('auth')
+    if (!p256dh && rawP256dh) p256dh = bufferToBase64Url(rawP256dh)
+    if (!auth && rawAuth) auth = bufferToBase64Url(rawAuth)
+  }
+  return {
+    endpoint: subscription?.endpoint,
+    keys: { p256dh: p256dh || null, auth: auth || null },
+  }
+}
+
+// Un abonnement est exploitable par le serveur uniquement si les deux clés sont présentes.
+// Accepte indifféremment un PushSubscription ou un objet déjà sérialisé ({ endpoint, keys }).
+export function hasSubscriptionKeys(subscription) {
+  const { keys } = serializeSubscription(subscription)
+  return Boolean(keys.p256dh && keys.auth)
+}
+
 export function isPushSupported() {
   return (
     typeof window !== 'undefined' &&
@@ -29,4 +69,10 @@ export function needsIosInstallHint() {
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
   const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || navigator.standalone === true
   return isIos && !standalone
+}
+
+// Brave désactive par défaut le service push de Google : le Push API échoue
+// (« push service error ») tant que l'utilisateur n'active pas l'option dans brave://settings/privacy.
+export function isBrave() {
+  return typeof navigator !== 'undefined' && Boolean(navigator.brave)
 }

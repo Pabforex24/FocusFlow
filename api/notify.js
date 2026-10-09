@@ -131,6 +131,21 @@ export async function POST(request) {
   }
 }
 
-export function GET() {
-  return json(405, { error: 'Méthode non autorisée.' })
+// GET = diagnostic protégé par le même secret que le cron. N'envoie rien : permet de vérifier
+// que la fonction est déployée et que toutes les variables serveur sont bien présentes.
+export function GET(request) {
+  const { CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env
+  const publicKey = process.env.VITE_VAPID_PUBLIC_KEY
+  if (!CRON_SECRET || (request.headers.get('authorization') ?? '') !== `Bearer ${CRON_SECRET}`) {
+    return json(401, { error: 'Non autorisé.' })
+  }
+  const config = {
+    CRON_SECRET: Boolean(CRON_SECRET),
+    SUPABASE_URL: Boolean(SUPABASE_URL),
+    SUPABASE_SERVICE_ROLE_KEY: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+    VAPID_PRIVATE_KEY: Boolean(VAPID_PRIVATE_KEY),
+    VAPID_SUBJECT: Boolean(VAPID_SUBJECT),
+    VITE_VAPID_PUBLIC_KEY: Boolean(publicKey),
+  }
+  return json(200, { ok: Object.values(config).every(Boolean), config })
 }

@@ -28,6 +28,11 @@ export function toUserMessage(error) {
   if (/email not confirmed/i.test(msg)) return 'Confirmez votre email avant de vous connecter.'
   if (/failed to fetch|networkerror|load failed/i.test(msg)) return 'Impossible de joindre le serveur. Vérifiez votre connexion.'
   if (/timeout/i.test(msg)) return 'Le serveur met trop de temps à répondre. Réessayez.'
-  if (/push service error/i.test(msg)) return 'Votre navigateur n\'a pas pu joindre son service de notifications. Utilisez Chrome ou Firefox à jour (Brave est souvent incompatible) et vérifiez votre connexion.'
+  if (/push service error/i.test(msg)) {
+    const brave = typeof navigator !== 'undefined' && navigator.brave
+    return brave
+      ? 'Brave bloque les notifications push par défaut. Ouvrez brave://settings/privacy et activez « Use Google services for push messaging », puis réessayez.'
+      : 'Votre navigateur n\'a pas pu joindre son service de notifications. Vérifiez votre connexion, puis réessayez.'
+  }
   return 'Une erreur est survenue : ' + msg
 }

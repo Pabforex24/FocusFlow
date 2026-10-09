@@ -111,6 +111,7 @@ export default function Profile() {
               </select>
             </label>
           )}
+          {push.braveHint && !push.enabled && <Alert tone="warning">Brave désactive les notifications push par défaut. Ouvrez <code className="rounded bg-surface-2 px-1 py-0.5 text-xs">brave://settings/privacy</code> et activez « Use Google services for push messaging », puis réactivez le rappel.</Alert>}
           {push.denied && <Alert tone="warning">Notifications bloquées par le navigateur. Autorisez-les dans les réglages du site, puis réactivez le rappel.</Alert>}
           {!push.supported && <Alert tone="info">Ce navigateur ne prend pas en charge les notifications.</Alert>}
           {push.iosHint && push.enabled && <Alert tone="info">Sur iPhone : Partager → « Ajouter à l'écran d'accueil » pour recevoir les notifications.</Alert>}

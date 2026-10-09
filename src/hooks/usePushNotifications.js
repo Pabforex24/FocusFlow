@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useToast } from '../contexts/ToastContext.jsx'
 import { toUserMessage } from '../lib/errors.js'
-import { DEFAULT_REMIND_HOUR, isPushSupported, needsIosInstallHint, urlBase64ToUint8Array } from '../lib/push.js'
+import { DEFAULT_REMIND_HOUR, hasSubscriptionKeys, isBrave, isPushSupported, needsIosInstallHint, serializeSubscription, urlBase64ToUint8Array } from '../lib/push.js'
 import { removePushSubscription, savePushSubscription } from '../services/api.js'
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY
@@ -45,9 +45,9 @@ export function usePushNotifications() {
 
     await navigator.serviceWorker.register('/sw.js')
     const registration = await navigator.serviceWorker.ready
-    // Réutilise l'abonnement existant ; s'il est invalide (clés VAPID manquantes), recrée-le.
+    // Réutilise l'abonnement existant ; s'il est inexploitable (clés absentes ou illisibles), recrée-le.
     let subscription = await registration.pushManager.getSubscription()
-    if (subscription && (!subscription.keys?.p256dh || !subscription.keys?.auth)) {
+    if (subscription && !hasSubscriptionKeys(subscription)) {
       await subscription.unsubscribe().catch(() => {})
       subscription = null
     }
@@ -57,8 +57,10 @@ export function usePushNotifications() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       })
     }
+    const serialized = serializeSubscription(subscription)
+    if (!hasSubscriptionKeys(serialized)) throw new Error('Abonnement push sans clés de chiffrement.')
     try {
-      await savePushSubscription(user.id, subscription)
+      await savePushSubscription(user.id, serialized)
       const ok = await actions.setRemindSettings({
         remind_enabled: true,
         remind_hour: hour,
@@ -100,6 +102,7 @@ export function usePushNotifications() {
   return {
     supported: isPushSupported(),
     iosHint: needsIosInstallHint(),
+    braveHint: isBrave(),
     denied,
     enabled,
     hour,
