@@ -105,7 +105,12 @@ export const recordFocus = ({ minutes, taskId, completedOn }) =>
 // Un abonnement par appareil, identifié par son endpoint : upsert pour ne pas dupliquer.
 export const savePushSubscription = (userId, sub) =>
   run(client().from('push_subscriptions').upsert(
-    { user_id: userId, endpoint: sub.endpoint, p256dh: sub.keys?.p256dh, auth: sub.keys?.auth },
+    {
+      user_id: userId,
+      endpoint: sub.endpoint,
+      p256dh: sub.keys?.p256dh ?? null,
+      auth: sub.keys?.auth ?? null,
+    },
     { onConflict: 'endpoint' },
   ).select().single())
 
