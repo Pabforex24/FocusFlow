@@ -45,8 +45,12 @@ export function usePushNotifications() {
 
     await navigator.serviceWorker.register('/sw.js')
     const registration = await navigator.serviceWorker.ready
-    // Réutilise l'abonnement existant : tenter de s'abonner une 2e fois échoue.
+    // Réutilise l'abonnement existant ; s'il est invalide (clés VAPID manquantes), recrée-le.
     let subscription = await registration.pushManager.getSubscription()
+    if (subscription && (!subscription.keys?.p256dh || !subscription.keys?.auth)) {
+      await subscription.unsubscribe().catch(() => {})
+      subscription = null
+    }
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
