@@ -98,8 +98,16 @@ export async function POST(request) {
 }
 
 // La route n'existe que pour le bouton « Analyser » : les autres méthodes sont rejetées.
+// GET est un diagnostic : indique quelles variables serveur sont présentes (pas leurs valeurs).
 export function GET() {
-  return json(405, { error: 'Méthode non autorisée.' })
+  const { GROQ_API_KEY, GROQ_MODEL, SUPABASE_URL, SUPABASE_ANON_KEY } = process.env
+  const config = {
+    GROQ_API_KEY: Boolean(GROQ_API_KEY),
+    GROQ_MODEL: Boolean(GROQ_MODEL),
+    SUPABASE_URL: Boolean(SUPABASE_URL),
+    SUPABASE_ANON_KEY: Boolean(SUPABASE_ANON_KEY),
+  }
+  return json(200, { ok: Boolean(GROQ_API_KEY && SUPABASE_URL && SUPABASE_ANON_KEY), config })
 }
 export function PUT() {
   return GET()
