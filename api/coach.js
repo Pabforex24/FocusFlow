@@ -5,7 +5,9 @@
 import { coachMessages } from '../src/lib/coachContext.js'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile'
+// llama-3.3-70b-versatile a été retiré par Groq le 16/08/2026 ; gpt-oss-120b est son remplacement
+// de production recommandé (voir GROQ_MODEL pour changer sans redéployer de code).
+const DEFAULT_MODEL = 'openai/gpt-oss-120b'
 
 // Supabase : on accepte les noms serveur (SUPABASE_*) comme ceux du build (VITE_*), pour qu'une
 // seule paire de variables Vercel suffise (Vite n'expose au navigateur que les VITE_*, mais Vercel
@@ -84,7 +86,10 @@ export async function POST(request) {
         model: GROQ_MODEL || DEFAULT_MODEL,
         messages: coachMessages(context),
         temperature: 0.6,
-        max_tokens: 400,
+        // Les modèles gpt-oss raisonnent avant de répondre : on borne brièvement le raisonnement
+        // et on laisse assez de place pour la réponse finale.
+        reasoning_effort: 'low',
+        max_tokens: 1024,
       }),
     })
     const data = await res.json().catch(() => null)

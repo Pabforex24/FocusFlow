@@ -53,7 +53,7 @@ api/          Fonctions Vercel (serveur) : coach.js (Groq), notify.js (rappels p
 
 La page Coach affiche d'abord des conseils **locaux** (calculés dans le navigateur, disponibles hors-ligne). Le bouton « Analyser » envoie un résumé compact des données (sans email ni donnée personnelle) à `api/coach.js`, qui interroge Groq : **la clé API reste côté serveur**. Le conseil du jour est mis en cache localement.
 
-Variables Vercel : `GROQ_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (+ option `GROQ_MODEL`, défaut `llama-3.3-70b-versatile`).
+Variables Vercel : `GROQ_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (+ option `GROQ_MODEL`, défaut `openai/gpt-oss-120b`).
 
 ## Notifications push
 
