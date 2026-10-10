@@ -61,10 +61,11 @@ function StartModal({ challenge, onClose }) {
   )
 }
 
-function CustomForm({ challenge, onClose }) {
+function CustomForm({ challenge, template, onClose }) {
   const { actions } = useData()
-  const [form, setForm] = useState({ title: challenge?.title ?? '', description: challenge?.description ?? '', duration_days: challenge?.duration_days ?? 30, color: challenge?.color ?? DOMAIN_COLORS[0] })
-  const [blueprints, setBlueprints] = useState(challenge?.blueprints?.length ? challenge.blueprints : [{ title: '', duration: '', frequency: 'daily' }])
+  const source = challenge ?? template
+  const [form, setForm] = useState({ title: source?.title ?? '', description: source?.description ?? '', duration_days: source?.duration_days ?? source?.durationDays ?? 30, color: source?.color ?? DOMAIN_COLORS[0] })
+  const [blueprints, setBlueprints] = useState(source?.blueprints?.length ? source.blueprints.map((b) => ({ ...b })) : [{ title: '', duration: '', frequency: 'daily' }])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const setBp = (i, k, v) => setBlueprints((l) => l.map((b, idx) => (idx === i ? { ...b, [k]: v } : b)))
@@ -85,8 +86,9 @@ function CustomForm({ challenge, onClose }) {
   }
 
   return (
-    <Modal title={challenge ? 'Modifier le challenge' : 'Nouveau challenge'} icon={Flag} onClose={onClose}>
+    <Modal title={challenge || template ? 'Modifier le challenge' : 'Nouveau challenge'} icon={Flag} onClose={onClose}>
       <form className="space-y-4" onSubmit={submit} noValidate>
+        {template && <Alert tone="info">Une copie du catalogue sera enregistrée dans « Mes challenges ».</Alert>}
         <Field label="Titre"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={60} autoFocus placeholder="Ex. Lecture quotidienne" /></Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Durée (jours)"><Input type="number" min="1" max="365" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} /></Field>
@@ -246,7 +248,7 @@ export default function Challenges() {
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-fg">Catalogue</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{CHALLENGE_CATALOGUE.map((c) => templateCard(c, c.icon))}</div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{CHALLENGE_CATALOGUE.map((c) => templateCard(c, c.icon, <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ template: c }) }]} />))}</div>
         </section>
 
         {customChallenges.length > 0 && (
@@ -260,7 +262,7 @@ export default function Challenges() {
       </div>
 
       {starting && <StartModal challenge={starting} onClose={() => setStarting(null)} />}
-      {customForm && <CustomForm challenge={customForm.challenge} onClose={() => setCustomForm(null)} />}
+      {customForm && <CustomForm challenge={customForm.challenge} template={customForm.template} onClose={() => setCustomForm(null)} />}
       {toStop && (
         <ConfirmDialog title="Supprimer ce challenge ?" message="Toutes ses tâches (y compris celles déjà faites) seront supprimées." onCancel={() => setToStop(null)}
           onConfirm={async () => { await actions.stopChallenge(toStop.id); setToStop(null) }} />
