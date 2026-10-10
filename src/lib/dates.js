@@ -57,12 +57,14 @@ export function monthKey(year, monthIndex, day) {
 }
 
 // Jours d'une période (bornes incluses) qui respectent une fréquence.
-export function occurrenceDates(startKey, endKey, frequency = 'daily') {
+// `weekdays` : indices 0 = lundi … 6 = dimanche, utilisés quand frequency === 'custom'.
+export function occurrenceDates(startKey, endKey, frequency = 'daily', weekdays = []) {
   const result = []
   for (let key = startKey; key <= endKey; key = addDays(key, 1)) {
     const wd = weekdayIndex(key)
     if (frequency === 'workdays' && wd > 4) continue
     if (frequency === 'weekend' && wd < 5) continue
+    if (frequency === 'custom' && !weekdays.includes(wd)) continue
     result.push(key)
   }
   return result

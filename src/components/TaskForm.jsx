@@ -5,9 +5,12 @@ import { Button } from './ui/Button.jsx'
 import { Field, Input, Select } from './ui/Input.jsx'
 import { Segmented } from './ui/Segmented.jsx'
 import { useData } from '../contexts/DataContext.jsx'
+import { weekdayIndex } from '../lib/dates.js'
+import { cn } from '../lib/cn.js'
 
 const PRIORITIES = [{ value: 'low', label: 'Basse' }, { value: 'medium', label: 'Normale' }, { value: 'high', label: 'Haute' }]
-const REPEATS = [['none', 'Aucune'], ['daily', 'Tous les jours'], ['workdays', 'Jours ouvrés'], ['weekend', 'Week-end']]
+const REPEATS = [['none', 'Aucune'], ['daily', 'Tous les jours'], ['workdays', 'Jours ouvrés'], ['weekend', 'Week-end'], ['custom', 'Jours choisis']]
+const WEEKDAYS = [['Lun', 0], ['Mar', 1], ['Mer', 2], ['Jeu', 3], ['Ven', 4], ['Sam', 5], ['Dim', 6]]
 
 export default function TaskForm({ task, defaultDay, onClose }) {
   const { domains, goals, actions } = useData()
@@ -16,17 +19,23 @@ export default function TaskForm({ task, defaultDay, onClose }) {
     title: task?.title ?? '', domain_id: task?.domain_id ?? '', goal_id: task?.goal_id ?? '',
     scheduled_on: task?.scheduled_on ?? defaultDay, duration: task?.duration ?? '', priority: task?.priority ?? 'medium',
   })
-  const [repeat, setRepeat] = useState({ frequency: 'none', days: 14 })
+  const [repeat, setRepeat] = useState({ frequency: 'none', days: 14, weekdays: [weekdayIndex(task?.scheduled_on ?? defaultDay)] })
   const [errors, setErrors] = useState({})
   const [busy, setBusy] = useState(false)
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const goalOptions = goals.filter((g) => !form.domain_id || g.domain_id === form.domain_id)
+  const toggleWeekday = (i) => setRepeat((r) => {
+    const set = new Set(r.weekdays)
+    if (set.has(i)) set.delete(i); else set.add(i)
+    return { ...r, weekdays: [...set].sort((a, b) => a - b) }
+  })
 
   const submit = async (e) => {
     e.preventDefault()
     const found = {}
     if (!form.title.trim()) found.title = 'Donnez un titre à la tâche.'
     if (!form.scheduled_on) found.scheduled_on = 'Choisissez une date.'
+    if (!editing && repeat.frequency === 'custom' && repeat.weekdays.length === 0) found.weekdays = 'Choisissez au moins un jour.'
     setErrors(found)
     if (Object.keys(found).length) return
     setBusy(true)
@@ -59,9 +68,27 @@ export default function TaskForm({ task, defaultDay, onClose }) {
         </div>
         <Field label="Priorité"><Segmented fill value={form.priority} onChange={(v) => setForm((f) => ({ ...f, priority: v }))} options={PRIORITIES} /></Field>
         {!editing && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Répéter"><Select value={repeat.frequency} onChange={(e) => setRepeat((r) => ({ ...r, frequency: e.target.value }))}>{REPEATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
-            {repeat.frequency !== 'none' && <Field label="Sur combien de jours" hint="De 1 à 90"><Input type="number" min="1" max="90" value={repeat.days} onChange={(e) => setRepeat((r) => ({ ...r, days: e.target.value }))} /></Field>}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Répéter"><Select value={repeat.frequency} onChange={(e) => setRepeat((r) => ({ ...r, frequency: e.target.value }))}>{REPEATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
+              {repeat.frequency !== 'none' && <Field label="Sur combien de jours" hint="De 1 à 90"><Input type="number" min="1" max="90" value={repeat.days} onChange={(e) => setRepeat((r) => ({ ...r, days: e.target.value }))} /></Field>}
+            </div>
+            {repeat.frequency === 'custom' && (
+              <Field label="Jours de la semaine" error={errors.weekdays}>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Jours de la semaine">
+                  {WEEKDAYS.map(([label, i]) => {
+                    const on = repeat.weekdays.includes(i)
+                    return (
+                      <button key={i} type="button" aria-pressed={on} onClick={() => toggleWeekday(i)}
+                        className={cn('min-h-11 min-w-12 rounded-xl border px-3 text-sm font-semibold transition active:scale-95',
+                          on ? 'border-transparent btn-brand' : 'border-line bg-surface text-muted hover:text-fg')}>
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </Field>
+            )}
           </div>
         )}
         <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">

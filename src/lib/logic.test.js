@@ -24,6 +24,10 @@ describe('dates', () => {
     expect(occurrenceDates('2026-09-28', '2026-10-04', 'workdays')).toHaveLength(5)
     expect(occurrenceDates('2026-09-28', '2026-10-04', 'weekend')).toEqual(['2026-10-03', '2026-10-04'])
   })
+  it('fréquence personnalisée : jours choisis', () => {
+    expect(occurrenceDates('2026-09-28', '2026-10-04', 'custom', [0, 2, 4])).toEqual(['2026-09-28', '2026-09-30', '2026-10-02'])
+    expect(occurrenceDates('2026-09-28', '2026-10-04', 'custom', [])).toEqual([])
+  })
 })
 
 describe('niveaux et XP', () => {

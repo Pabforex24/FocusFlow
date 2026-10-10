@@ -170,7 +170,7 @@ export function DataProvider({ children }) {
     addTask: (task, repeat) => act(async () => {
       if (repeat && repeat.frequency !== 'none') {
         const days = Math.min(Math.max(Number(repeat.days) || 7, 1), 90)
-        const dates = occurrenceDates(task.scheduled_on, addDays(task.scheduled_on, days - 1), repeat.frequency)
+        const dates = occurrenceDates(task.scheduled_on, addDays(task.scheduled_on, days - 1), repeat.frequency, repeat.weekdays)
         if (dates.length === 0) throw new AppError('Aucune date ne correspond à cette répétition.')
         const rows = await api.createTasks(userId, dates.map((d) => ({ ...task, scheduled_on: d })))
         patch('tasks', (l) => [...l, ...rows])
