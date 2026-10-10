@@ -13,11 +13,16 @@ const PUSH_TTL = 3600    // la notification expire après 1 h si l'appareil rest
 
 export const maxDuration = 60
 
+// Supabase : on accepte les noms serveur (SUPABASE_*) comme ceux du build (VITE_*), pour qu'une
+// seule paire de variables Vercel suffise (Vite n'expose au navigateur que les VITE_*, mais Vercel
+// les fournit aussi au runtime des fonctions).
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+
 const json = (status, body) => Response.json(body, { status })
 
 // Petit client REST Supabase en service_role (contourne la RLS : push_log n'a aucune politique).
 const rest = (path, init = {}) =>
-  fetch(`${process.env.SUPABASE_URL}/rest/v1/${path}`, {
+  fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...init,
     headers: {
       apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -97,7 +102,7 @@ async function processUser(profile, now) {
 }
 
 export async function POST(request) {
-  const { CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env
+  const { CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env
   const publicKey = process.env.VITE_VAPID_PUBLIC_KEY
   if (!CRON_SECRET || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT || !publicKey) {
     console.error('[notify] variables manquantes (CRON_SECRET / SUPABASE_* / VAPID_*)')
@@ -134,7 +139,7 @@ export async function POST(request) {
 // GET = diagnostic protégé par le même secret que le cron. N'envoie rien : permet de vérifier
 // que la fonction est déployée et que toutes les variables serveur sont bien présentes.
 export function GET(request) {
-  const { CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env
+  const { CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env
   const publicKey = process.env.VITE_VAPID_PUBLIC_KEY
   if (!CRON_SECRET || (request.headers.get('authorization') ?? '') !== `Bearer ${CRON_SECRET}`) {
     return json(401, { error: 'Non autorisé.' })

@@ -6,6 +6,12 @@ import { coachMessages } from '../src/lib/coachContext.js'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile'
+
+// Supabase : on accepte les noms serveur (SUPABASE_*) comme ceux du build (VITE_*), pour qu'une
+// seule paire de variables Vercel suffise (Vite n'expose au navigateur que les VITE_*, mais Vercel
+// les fournit aussi au runtime des fonctions).
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 const TIMEOUT_MS = 20_000
 const MAX_BODY_CHARS = 20_000
 const RATE_LIMIT = 10 // demandes par utilisateur et par minute (best effort, par instance chaude)
@@ -34,8 +40,8 @@ async function verifySession(request) {
   const token = (request.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
   if (!token) return null
   try {
-    const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: process.env.SUPABASE_ANON_KEY ?? '', Authorization: `Bearer ${token}` },
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_ANON_KEY ?? '', Authorization: `Bearer ${token}` },
     })
     if (!res.ok) return null
     return await res.json()
@@ -45,7 +51,7 @@ async function verifySession(request) {
 }
 
 export async function POST(request) {
-  const { GROQ_API_KEY, GROQ_MODEL, SUPABASE_URL, SUPABASE_ANON_KEY } = process.env
+  const { GROQ_API_KEY, GROQ_MODEL } = process.env
   if (!GROQ_API_KEY || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error('[coach] variables manquantes (GROQ_API_KEY / SUPABASE_URL / SUPABASE_ANON_KEY)')
     return json(503, { error: 'Coach IA non configuré sur le serveur.' })
@@ -100,12 +106,15 @@ export async function POST(request) {
 // La route n'existe que pour le bouton « Analyser » : les autres méthodes sont rejetées.
 // GET est un diagnostic : indique quelles variables serveur sont présentes (pas leurs valeurs).
 export function GET() {
-  const { GROQ_API_KEY, GROQ_MODEL, SUPABASE_URL, SUPABASE_ANON_KEY } = process.env
+  const { GROQ_API_KEY, GROQ_MODEL } = process.env
   const config = {
     GROQ_API_KEY: Boolean(GROQ_API_KEY),
     GROQ_MODEL: Boolean(GROQ_MODEL),
     SUPABASE_URL: Boolean(SUPABASE_URL),
     SUPABASE_ANON_KEY: Boolean(SUPABASE_ANON_KEY),
+    // Pour le diagnostic : on indique aussi les variables VITE_* déjà présentes.
+    VITE_SUPABASE_URL: Boolean(process.env.VITE_SUPABASE_URL),
+    VITE_SUPABASE_ANON_KEY: Boolean(process.env.VITE_SUPABASE_ANON_KEY),
   }
   return json(200, { ok: Boolean(GROQ_API_KEY && SUPABASE_URL && SUPABASE_ANON_KEY), config })
 }
