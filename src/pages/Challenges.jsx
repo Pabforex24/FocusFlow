@@ -17,7 +17,8 @@ import { ProgressBar, ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { CHALLENGE_CATALOGUE, challengeProgress } from '../lib/challenges.js'
 import { diffDays, formatShort } from '../lib/dates.js'
-import { DOMAIN_COLORS } from '../lib/icons.js'
+import { DOMAIN_COLORS, DOMAIN_ICON_KEYS, ICONS } from '../lib/icons.js'
+import { cn } from '../lib/cn.js'
 
 const FREQ = [['daily', 'Tous les jours'], ['workdays', 'Jours ouvrés'], ['weekend', 'Week-end'], ['custom', 'Personnalisée']]
 const FREQ_LABEL = Object.fromEntries(FREQ)
@@ -67,7 +68,7 @@ function StartModal({ challenge, onClose }) {
 function CustomForm({ challenge, template, onClose }) {
   const { actions } = useData()
   const source = challenge ?? template
-  const [form, setForm] = useState({ title: source?.title ?? '', description: source?.description ?? '', duration_days: source?.duration_days ?? source?.durationDays ?? 30, color: source?.color ?? DOMAIN_COLORS[0] })
+  const [form, setForm] = useState({ title: source?.title ?? '', description: source?.description ?? '', duration_days: source?.duration_days ?? source?.durationDays ?? 30, color: source?.color ?? DOMAIN_COLORS[0], icon: source?.icon ?? 'flag' })
   const [blueprints, setBlueprints] = useState(source?.blueprints?.length ? source.blueprints.map((b) => ({ weekdays: [], ...b })) : [{ title: '', duration: '', frequency: 'daily', weekdays: [] }])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -84,7 +85,7 @@ function CustomForm({ challenge, template, onClose }) {
     if (clean.some((b) => b.frequency === 'custom' && !b.weekdays?.length)) return setError('Choisissez au moins un jour pour chaque tâche personnalisée.')
     setError('')
     setBusy(true)
-    const payload = { title: form.title.trim(), description: form.description.trim(), duration_days: days, color: form.color, blueprints: clean }
+    const payload = { title: form.title.trim(), description: form.description.trim(), duration_days: days, color: form.color, icon: form.icon, blueprints: clean }
     const ok = challenge ? await actions.editCustomChallenge(challenge.id, payload) : await actions.addCustomChallenge(payload)
     setBusy(false)
     if (ok) onClose()
@@ -98,14 +99,28 @@ function CustomForm({ challenge, template, onClose }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Durée (jours)"><Input type="number" min="1" max="365" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} /></Field>
           <Field label="Couleur">
-            <div className="flex min-h-11 items-center gap-2" role="radiogroup" aria-label="Couleur">
-              {DOMAIN_COLORS.slice(0, 5).map((c) => (
+            <div className="flex min-h-11 flex-wrap items-center gap-2" role="radiogroup" aria-label="Couleur">
+              {DOMAIN_COLORS.map((c) => (
                 <button key={c} type="button" role="radio" aria-checked={form.color === c} aria-label={c} onClick={() => setForm({ ...form, color: c })}
-                  className="size-8 rounded-full transition active:scale-90" style={{ backgroundColor: c, boxShadow: form.color === c ? `0 0 0 3px var(--surface), 0 0 0 5px ${c}` : undefined }} />
+                  className="size-7 rounded-full transition active:scale-90" style={{ backgroundColor: c, boxShadow: form.color === c ? `0 0 0 3px var(--surface), 0 0 0 5px ${c}` : undefined }} />
               ))}
             </div>
           </Field>
         </div>
+        <Field label="Icône">
+          <div className="grid max-h-52 grid-cols-8 gap-2 overflow-y-auto" role="radiogroup" aria-label="Icône">
+            {DOMAIN_ICON_KEYS.map((key) => {
+              const Icon = ICONS[key]
+              return (
+                <button key={key} type="button" role="radio" aria-checked={form.icon === key} aria-label={key} onClick={() => setForm({ ...form, icon: key })}
+                  className={cn('grid aspect-square place-items-center rounded-xl border transition', form.icon === key ? 'border-transparent text-white' : 'border-line text-muted hover:bg-surface-2')}
+                  style={form.icon === key ? { backgroundColor: form.color } : undefined}>
+                  <Icon className="size-5" aria-hidden />
+                </button>
+              )
+            })}
+          </div>
+        </Field>
         <Field label="Description" hint="Optionnel"><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={200} /></Field>
 
         <div className="space-y-2.5">
@@ -261,7 +276,7 @@ export default function Challenges() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-fg">Mes challenges</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {customChallenges.map((c) => templateCard(c, 'flag', <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ challenge: c }) }, { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => setToDelete(c) }]} />))}
+              {customChallenges.map((c) => templateCard(c, c.icon ?? 'flag', <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ challenge: c }) }, { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => setToDelete(c) }]} />))}
             </div>
           </section>
         )}

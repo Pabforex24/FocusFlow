@@ -41,7 +41,7 @@ function DomainForm({ domain, onClose }) {
       <form className="space-y-5" onSubmit={submit} noValidate>
         <Field label="Nom" error={error}><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} autoFocus placeholder="Ex. Sport, Études, Trading…" /></Field>
         <Field label="Icône">
-          <div className="grid grid-cols-8 gap-2" role="radiogroup" aria-label="Icône">
+          <div className="grid max-h-52 grid-cols-8 gap-2 overflow-y-auto" role="radiogroup" aria-label="Icône">
             {DOMAIN_ICON_KEYS.map((key) => {
               const Icon = ICONS[key]
               return (

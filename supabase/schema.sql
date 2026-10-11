@@ -71,7 +71,8 @@ create table public.custom_challenges (
   description   text not null default '',
   duration_days integer not null default 30 check (duration_days between 1 and 365),
   color         text not null default '#7B61FF',
-  blueprints    jsonb not null default '[]',  -- [{title, duration, frequency}]
+  icon          text not null default 'flag',
+  blueprints    jsonb not null default '[]',  -- [{title, duration, frequency, weekdays?}]
   created_at    timestamptz not null default now()
 );
 
