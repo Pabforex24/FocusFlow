@@ -64,6 +64,18 @@ Rappel quotidien à l'heure choisie (dans le fuseau de l'utilisateur) et alerte 
 - Clés VAPID : `npx web-push generate-vapid-keys` (sujet = `mailto:…` ou URL du site).
 - Limites : sur iOS, seules les PWA installées reçoivent des notifications (Partager → écran d'accueil, iOS ≥ 16.4) ; le service worker n'étant actif qu'en production, l'activation ne fonctionne pas en `npm run dev`.
 
+### Session Focus
+
+Pendant une session, le service worker affiche une **notification persistante** (temps restant, mise à jour chaque minute) puis une **notification de fin** avec son et vibration. L'onglet peut être en arrière-plan ; si l'app est complètement fermée par le système, le minuteur JS s'arrête (limite PWA) et la notification de fin n'arrive qu'au retour dans l'app. Le bouton **Profil → Notifications → Tester** vérifie que l'appareil affiche bien les notifications locales (permission + service worker).
+
+### Dépannage des rappels
+
+1. **Profil → Notifications → Tester** doit afficher une notification immédiate. Sinon : permission navigateur, ou PWA non installée sur iOS.
+2. Si le test marche mais pas le rappel : vérifier que `remind_enabled = true` et `remind_hour` dans `profiles`.
+3. Côté serveur, ouvrir `GET /api/notify` avec l'en-tête `Authorization: Bearer <CRON_SECRET>` : la réponse liste les variables présentes (`config`). Toute variable `false` bloque l'envoi.
+4. Vérifier la tâche planifiée : `select * from cron.job where jobname = 'focusflow-notify';` puis `select * from cron.job_run_details order by start_time desc limit 10;`. Rejouer `supabase/setup_cron_notify.sql` si elle manque.
+5. Le rappel « quotidien » n'est envoyé que s'il reste des tâches le jour même, à l'heure locale choisie (±10 min) ; l'alerte « série » à partir de 21 h si aucune tâche faite et série ≥ 2.
+
 ## PWA
 
 `public/manifest.webmanifest` + `public/sw.js` (fichiers de l'app en cache, navigation réseau d'abord, **Supabase jamais intercepté**, et gestion des notifications `push` / `notificationclick`). Le service worker n'est actif qu'en production (`npm run build`).

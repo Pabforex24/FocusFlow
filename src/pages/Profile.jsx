@@ -12,7 +12,9 @@ import { useSignOut } from '../components/Layout.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
+import { useToast } from '../contexts/ToastContext.jsx'
 import { usePushNotifications } from '../hooks/usePushNotifications.js'
+import { showTestNotification } from '../lib/focusNotify.js'
 import { formatShort } from '../lib/dates.js'
 import { cn } from '../lib/cn.js'
 
@@ -75,9 +77,16 @@ export default function Profile() {
   const { preference, setTheme, palette, setPalette } = useTheme()
   const signOut = useSignOut()
   const push = usePushNotifications()
+  const toast = useToast()
   const hardcore = profile?.hardcore_mode ?? false
   const name = profile?.display_name || user.email
   const initials = name.slice(0, 2).toUpperCase()
+
+  const testNotify = async () => {
+    const ok = await showTestNotification()
+    if (ok) toast.success('Notification de test envoyée.')
+    else toast.error('Impossible d\'afficher la notification (permission ou service worker).')
+  }
 
   return (
     <>
@@ -158,6 +167,10 @@ export default function Profile() {
               </select>
             </label>
           )}
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-muted">Vérifier que cet appareil affiche bien les notifications.</p>
+            <Button variant="secondary" icon={Bell} onClick={testNotify}>Tester</Button>
+          </div>
           {push.braveHint && !push.enabled && <Alert tone="warning">Brave désactive les notifications push par défaut. Ouvrez <code className="rounded bg-surface-2 px-1 py-0.5 text-xs">brave://settings/privacy</code> et activez « Use Google services for push messaging », puis réactivez le rappel.</Alert>}
           {push.denied && <Alert tone="warning">Notifications bloquées par le navigateur. Autorisez-les dans les réglages du site, puis réactivez le rappel.</Alert>}
           {!push.supported && <Alert tone="info">Ce navigateur ne prend pas en charge les notifications.</Alert>}

@@ -8,6 +8,13 @@ import { Button } from '../components/ui/Button.jsx'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog.jsx'
 import { Field, Select } from '../components/ui/Input.jsx'
 import { Segmented } from '../components/ui/Segmented.jsx'
+import {
+  closeFocusNotification,
+  requestFocusPermission,
+  showFocusDone,
+  showFocusStart,
+  updateFocusNotification,
+} from '../lib/focusNotify.js'
 
 // Le minuteur se base sur l'heure réelle (endsAt) : il survit à la mise en veille et aux changements de page.
 // Seul cet état éphémère est gardé en localStorage ; les données restent dans Supabase.
@@ -44,6 +51,8 @@ export function FocusProvider({ children }) {
   const [picker, setPicker] = useState(null) // { task } quand le sélecteur est ouvert
   const [confirmAbandon, setConfirmAbandon] = useState(false)
   const finishingRef = useRef(false)
+  const notifiedMinuteRef = useRef(null)
+  const restoredRef = useRef(false)
 
   useEffect(() => {
     if (!session) return undefined
@@ -53,6 +62,24 @@ export function FocusProvider({ children }) {
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', tick) }
   }, [session])
 
+  // Notification persistante : mise à jour une fois par minute (au changement de minute restante).
+  useEffect(() => {
+    if (!session) { notifiedMinuteRef.current = null; return }
+    const remaining = session.endsAt - now
+    if (remaining <= 0) return
+    const minutes = Math.ceil(remaining / 60_000)
+    if (minutes === notifiedMinuteRef.current) return
+    notifiedMinuteRef.current = minutes
+    updateFocusNotification(session, remaining)
+  }, [now, session])
+
+  // Session retrouvée au démarrage (app rouverte en plein milieu) : ré-affiche la notification.
+  useEffect(() => {
+    if (restoredRef.current) return
+    restoredRef.current = true
+    if (session) showFocusStart(session)
+  }, [session])
+
   const clear = useCallback(() => { localStorage.removeItem(STORAGE_KEY); setSession(null); finishingRef.current = false }, [])
 
   // Fin de session : enregistre une seule fois, une fois les données chargées.
@@ -60,17 +87,19 @@ export function FocusProvider({ children }) {
     if (!session || now < session.endsAt || finishingRef.current || status !== 'ready' || !online) return
     finishingRef.current = true
     actions.recordFocus({ minutes: session.minutes, taskId: session.taskId }).then((ok) => {
-      if (ok) clear()
+      if (ok) { showFocusDone(session); clear() }
       else { finishingRef.current = false; toast.error('Session non enregistrée : nouvelle tentative dans un instant.') }
     })
   }, [now, session, status, online, actions, clear, toast])
 
   const start = useCallback((minutes, task) => {
     const next = { endsAt: Date.now() + minutes * 60_000, minutes, taskId: task?.id ?? null, taskTitle: task?.title ?? null }
+    const permission = requestFocusPermission() // dans le geste utilisateur (clic « Démarrer »)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
     setSession(next)
     setNow(Date.now())
     setPicker(null)
+    permission.then((granted) => { if (granted) showFocusStart(next) })
   }, [])
 
   const value = useMemo(() => ({
@@ -88,7 +117,7 @@ export function FocusProvider({ children }) {
         {picker && <FocusPicker task={picker.task} tasks={tasks.filter((t) => t.scheduled_on === today && !t.done)} disabled={Boolean(session)} onStart={start} onClose={() => setPicker(null)} />}
         {confirmAbandon && (
           <ConfirmDialog title="Abandonner la session ?" message="Vous ne gagnerez pas les 30 XP de cette session." confirmLabel="Abandonner"
-            onConfirm={() => { clear(); setConfirmAbandon(false) }} onCancel={() => setConfirmAbandon(false)} />
+            onConfirm={() => { closeFocusNotification(); clear(); setConfirmAbandon(false) }} onCancel={() => setConfirmAbandon(false)} />
         )}
       </FocusTimerContext.Provider>
     </FocusContext.Provider>

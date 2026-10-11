@@ -299,7 +299,7 @@ export function DataProvider({ children }) {
       const row = await api.updateProfile(userId, patch)
       setData((d) => ({ ...d, profile: row }))
     }),
-  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays, data.pausePeriods])
+  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays, data.pausePeriods, data.tasks])
 
   const derived = useMemo(() => {
     const pauseDays = (data.pausePeriods ?? []).flatMap((p) => occurrenceDates(p.start_date, p.end_date, 'daily'))
