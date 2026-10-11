@@ -152,7 +152,7 @@ export default function Tasks() {
         )}
       </div>
 
-      {form && <TaskForm task={form.task} defaultDay={day} onClose={() => setForm(null)} />}
+      {form && <TaskForm task={form.task} defaultDay={day < today ? today : day} onClose={() => setForm(null)} />}
       {postpone && <PostponeDialog task={postpone} onClose={() => setPostpone(null)} />}
       {catchup && overdue.length > 0 && <CatchUpModal overdue={overdue} onClose={() => setCatchup(false)} />}
       {toDelete && (

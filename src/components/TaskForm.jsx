@@ -6,7 +6,7 @@ import { Field, Input, Select } from './ui/Input.jsx'
 import { Segmented } from './ui/Segmented.jsx'
 import { WeekdayPicker } from './ui/WeekdayPicker.jsx'
 import { useData } from '../contexts/DataContext.jsx'
-import { weekdayIndex } from '../lib/dates.js'
+import { weekdayIndex, todayKey } from '../lib/dates.js'
 import { GENERATED_TASK_XP } from '../lib/challenges.js'
 
 const PRIORITIES = [{ value: 'low', label: 'Basse' }, { value: 'medium', label: 'Normale' }, { value: 'high', label: 'Haute' }]
@@ -30,6 +30,7 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
     const found = {}
     if (!form.title.trim()) found.title = 'Donnez un titre à la tâche.'
     if (!form.scheduled_on) found.scheduled_on = 'Choisissez une date.'
+    else if (!editing && form.scheduled_on < todayKey()) found.scheduled_on = 'Choisissez une date à partir d\'aujourd\'hui.'
     if (!editing && repeat.frequency === 'custom' && repeat.weekdays.length === 0) found.weekdays = 'Choisissez au moins un jour.'
     setErrors(found)
     if (Object.keys(found).length) return
@@ -49,7 +50,7 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
       <form className="space-y-4" onSubmit={submit} noValidate>
         <Field label="Titre" error={errors.title}><Input value={form.title} onChange={set('title')} maxLength={140} autoFocus placeholder="Ex. 30 minutes de lecture" /></Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Date" error={errors.scheduled_on}><Input type="date" value={form.scheduled_on} onChange={set('scheduled_on')} /></Field>
+          <Field label="Date" error={errors.scheduled_on}><Input type="date" value={form.scheduled_on} min={editing ? undefined : todayKey()} onChange={set('scheduled_on')} /></Field>
           <Field label="Durée" hint="Optionnel, ex. 30min"><Input value={form.duration} onChange={set('duration')} maxLength={20} placeholder="30min" /></Field>
           <Field label="Domaine">
             <Select value={form.domain_id} onChange={(e) => setForm((f) => ({ ...f, domain_id: e.target.value, goal_id: '' }))}>
