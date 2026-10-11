@@ -7,11 +7,12 @@ import { Segmented } from './ui/Segmented.jsx'
 import { WeekdayPicker } from './ui/WeekdayPicker.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { weekdayIndex } from '../lib/dates.js'
+import { GENERATED_TASK_XP } from '../lib/challenges.js'
 
 const PRIORITIES = [{ value: 'low', label: 'Basse' }, { value: 'medium', label: 'Normale' }, { value: 'high', label: 'Haute' }]
 const REPEATS = [['none', 'Aucune'], ['daily', 'Tous les jours'], ['workdays', 'Jours ouvrés'], ['weekend', 'Week-end'], ['custom', 'Personnalisée']]
 
-export default function TaskForm({ task, defaultDay, onClose }) {
+export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
   const { domains, goals, actions } = useData()
   const editing = Boolean(task)
   const [form, setForm] = useState({
@@ -37,7 +38,8 @@ export default function TaskForm({ task, defaultDay, onClose }) {
       title: form.title.trim(), domain_id: form.domain_id || null, goal_id: form.goal_id || null,
       scheduled_on: form.scheduled_on, duration: form.duration.trim() || null, priority: form.priority,
     }
-    const ok = editing ? await actions.editTask(task.id, payload) : await actions.addTask(payload, repeat)
+    if (challengeId && !editing) { payload.challenge_active_id = challengeId; payload.xp_value = GENERATED_TASK_XP }
+    const ok = editing ? await actions.editTask(task.id, payload) : await actions.addTask(payload, challengeId ? undefined : repeat)
     setBusy(false)
     if (ok) onClose()
   }
@@ -61,7 +63,7 @@ export default function TaskForm({ task, defaultDay, onClose }) {
           </Field>
         </div>
         <Field label="Priorité"><Segmented fill value={form.priority} onChange={(v) => setForm((f) => ({ ...f, priority: v }))} options={PRIORITIES} /></Field>
-        {!editing && (
+        {!editing && !challengeId && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Répéter"><Select value={repeat.frequency} onChange={(e) => setRepeat((r) => ({ ...r, frequency: e.target.value }))}>{REPEATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>

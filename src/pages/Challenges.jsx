@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarClock, Flag, Hourglass, ListChecks, Pencil, Play, Plus, Trash2, Trophy } from 'lucide-react'
+import { CalendarClock, Flag, Hourglass, ListChecks, Pencil, Play, Plus, Replace, Trash2, Trophy } from 'lucide-react'
 import DomainTile from '../components/DomainTile.jsx'
 import Modal from '../components/Modal.jsx'
+import TaskForm from '../components/TaskForm.jsx'
+import PostponeDialog from '../components/PostponeDialog.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Card } from '../components/ui/Card.jsx'
@@ -18,6 +20,7 @@ import { useData } from '../contexts/DataContext.jsx'
 import { CHALLENGE_CATALOGUE, challengeProgress } from '../lib/challenges.js'
 import { diffDays, formatShort } from '../lib/dates.js'
 import { DOMAIN_COLORS, DOMAIN_ICON_KEYS, ICONS } from '../lib/icons.js'
+import { challengeTasks } from '../lib/tasks.js'
 import { cn } from '../lib/cn.js'
 
 const FREQ = [['daily', 'Tous les jours'], ['workdays', 'Jours ouvrés'], ['weekend', 'Week-end'], ['custom', 'Personnalisée']]
@@ -149,7 +152,7 @@ function CustomForm({ challenge, template, onClose }) {
   )
 }
 
-function ActiveChallengeCard({ active, tasks, domains, today, onDelete }) {
+function ActiveChallengeCard({ active, tasks, domains, today, onManage, onDelete }) {
   const p = challengeProgress(active, tasks)
   const totalDays = diffDays(active.start_date, active.end_date) + 1
   const elapsed = Math.min(totalDays, Math.max(0, diffDays(active.start_date, today) + 1))
@@ -179,7 +182,7 @@ function ActiveChallengeCard({ active, tasks, domains, today, onDelete }) {
             </div>
           </div>
         </div>
-        <Menu items={[{ label: 'Supprimer le challenge', icon: Trash2, danger: true, onClick: onDelete }]} />
+        <Menu items={[{ label: 'Gérer les tâches', icon: ListChecks, onClick: onManage }, { label: 'Supprimer le challenge', icon: Trash2, danger: true, onClick: onDelete }]} />
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
@@ -218,12 +221,59 @@ function ActiveChallengeCard({ active, tasks, domains, today, onDelete }) {
   )
 }
 
+function ManageTasksModal({ active, onClose }) {
+  const { tasks, today, actions } = useData()
+  const [editTask, setEditTask] = useState(null)
+  const [adding, setAdding] = useState(false)
+  const [postpone, setPostpone] = useState(null)
+  const [toDelete, setToDelete] = useState(null)
+  const list = challengeTasks(tasks, active.id)
+  const doneCount = list.filter((t) => t.done).length
+
+  return (
+    <Modal title="Tâches du challenge" description={`${active.title} · ${doneCount}/${list.length} faites`} icon={ListChecks} size="lg" onClose={onClose}>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-muted">Remplacez, reportez ou supprimez les tâches devenues inutiles.</p>
+          <Button icon={Plus} variant="secondary" size="sm" onClick={() => setAdding(true)}>Ajouter</Button>
+        </div>
+        {list.length === 0 ? (
+          <EmptyState icon={ListChecks} title="Aucune tâche">Ce challenge n'a plus de tâches.</EmptyState>
+        ) : (
+          <ul className="space-y-2">
+            {list.map((t) => (
+              <li key={t.id} className="flex items-center gap-2 rounded-2xl border border-line bg-surface-2/40 p-3">
+                <div className="min-w-0 flex-1">
+                  <p className={cn('truncate text-sm font-medium', t.done ? 'text-subtle line-through' : 'text-fg')}>{t.title}</p>
+                  <p className="text-xs text-muted">{formatShort(t.scheduled_on)}{t.duration ? ` · ${t.duration}` : ''}{t.done ? ' · faite' : t.scheduled_on < today ? ' · en retard' : ''}</p>
+                </div>
+                <Button size="sm" variant="secondary" icon={Replace} onClick={() => setEditTask(t)}>Remplacer</Button>
+                {!t.done && <IconButton icon={CalendarClock} label="Reporter à une date" variant="secondary" size="sm" onClick={() => setPostpone(t)} />}
+                <IconButton icon={Trash2} label="Supprimer" variant="danger-soft" size="sm" onClick={() => setToDelete(t)} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {editTask && <TaskForm task={editTask} onClose={() => setEditTask(null)} />}
+      {adding && <TaskForm challengeId={active.id} defaultDay={today} onClose={() => setAdding(false)} />}
+      {postpone && <PostponeDialog task={postpone} onClose={() => setPostpone(null)} />}
+      {toDelete && (
+        <ConfirmDialog title="Supprimer cette tâche ?" message={`« ${toDelete.title} » sera retirée du challenge.`} onCancel={() => setToDelete(null)}
+          onConfirm={async () => { await actions.removeTask(toDelete.id); setToDelete(null) }} />
+      )}
+    </Modal>
+  )
+}
+
 export default function Challenges() {
   const { activeChallenges, customChallenges, tasks, domains, today, actions } = useData()
   const [starting, setStarting] = useState(null)
   const [customForm, setCustomForm] = useState(null)
   const [toStop, setToStop] = useState(null)
   const [toDelete, setToDelete] = useState(null)
+  const [manage, setManage] = useState(null)
 
   const asChallenge = (c) => ({ id: c.id, title: c.title, durationDays: c.durationDays ?? c.duration_days, color: c.color, blueprints: c.blueprints })
   const running = (id) => activeChallenges.some((a) => a.challenge_id === id && a.end_date >= today)
@@ -262,7 +312,7 @@ export default function Challenges() {
             <EmptyState icon={Flag} title="Aucun challenge actif">Choisissez-en un dans le catalogue ci-dessous pour remplir automatiquement votre planning.</EmptyState>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {activeChallenges.map((a) => <ActiveChallengeCard key={a.id} active={a} tasks={tasks} domains={domains} today={today} onDelete={() => setToStop(a)} />)}
+              {activeChallenges.map((a) => <ActiveChallengeCard key={a.id} active={a} tasks={tasks} domains={domains} today={today} onManage={() => setManage(a)} onDelete={() => setToStop(a)} />)}
             </div>
           )}
         </section>
@@ -283,6 +333,7 @@ export default function Challenges() {
       </div>
 
       {starting && <StartModal challenge={starting} onClose={() => setStarting(null)} />}
+      {manage && <ManageTasksModal active={manage} onClose={() => setManage(null)} />}
       {customForm && <CustomForm challenge={customForm.challenge} template={customForm.template} onClose={() => setCustomForm(null)} />}
       {toStop && (
         <ConfirmDialog title="Supprimer ce challenge ?" message="Toutes ses tâches (y compris celles déjà faites) seront supprimées." onCancel={() => setToStop(null)}

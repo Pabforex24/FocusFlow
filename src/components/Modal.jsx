@@ -23,6 +23,10 @@ function useScrollLock() {
   }, [])
 }
 
+// Pile des modales ouvertes : seule la plus récente réagit à Échap (évite de fermer
+// la modale parente quand une sous-modale est ouverte).
+const modalStack = []
+
 const sizes = { sm: 'sm:max-w-md', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl' }
 const iconTones = {
   brand: 'bg-brand-500/10 text-brand-600 dark:text-brand-300',
@@ -35,9 +39,15 @@ export default function Modal({ title, description, icon: Icon, tone = 'brand', 
   const dialogRef = useRef(null)
   useFocusTrap(dialogRef)
   useEffect(() => {
-    const onKey = (event) => event.key === 'Escape' && onClose()
+    const entry = {}
+    modalStack.push(entry)
+    const onKey = (event) => { if (event.key === 'Escape' && modalStack[modalStack.length - 1] === entry) onClose() }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      const i = modalStack.indexOf(entry)
+      if (i >= 0) modalStack.splice(i, 1)
+    }
   }, [onClose])
 
   return createPortal(

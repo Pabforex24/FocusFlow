@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { addDays, diffDays, occurrenceDates, startOfWeekKey, toKey, fromKey } from './dates.js'
+import { overdueTasks, spreadDates, challengeTasks } from './tasks.js'
 import { computeLevel, computeStats, computeBadges, xpForLevel } from './gamification.js'
 import { buildChallengeTasks, challengeEndKey, challengeProgress } from './challenges.js'
 import { monthSummary, goalProgress, lastDays } from './stats.js'
@@ -27,6 +28,27 @@ describe('dates', () => {
   it('fréquence personnalisée : jours choisis', () => {
     expect(occurrenceDates('2026-09-28', '2026-10-04', 'custom', [0, 2, 4])).toEqual(['2026-09-28', '2026-09-30', '2026-10-02'])
     expect(occurrenceDates('2026-09-28', '2026-10-04', 'custom', [])).toEqual([])
+  })
+})
+
+describe('tâches (retard, répartition, challenge)', () => {
+  const t = (day, done = false, extra = {}) => ({ id: day, scheduled_on: day, done, created_at: day, ...extra })
+  it('overdueTasks : non faites et strictement avant aujourd\'hui', () => {
+    const tasks = [t('2026-10-01'), t('2026-10-05'), t('2026-10-03', true)]
+    expect(overdueTasks(tasks, '2026-10-05').map((x) => x.scheduled_on)).toEqual(['2026-10-01'])
+  })
+  it('spreadDates répartit en tourniquet sur N jours', () => {
+    expect(spreadDates(['a', 'b', 'c', 'd'], '2026-10-05', 2)).toEqual([
+      { id: 'a', day: '2026-10-05' },
+      { id: 'b', day: '2026-10-06' },
+      { id: 'c', day: '2026-10-05' },
+      { id: 'd', day: '2026-10-06' },
+    ])
+    expect(spreadDates(['a'], '2026-10-05', 0)).toEqual([{ id: 'a', day: '2026-10-05' }])
+  })
+  it('challengeTasks trie par date', () => {
+    const tasks = [t('2026-10-03', false, { challenge_active_id: 'c1' }), t('2026-10-01', false, { challenge_active_id: 'c1' }), t('2026-10-02', false, { challenge_active_id: 'c2' })]
+    expect(challengeTasks(tasks, 'c1').map((x) => x.scheduled_on)).toEqual(['2026-10-01', '2026-10-03'])
   })
 })
 

@@ -8,6 +8,7 @@ import { loadSnapshot, saveSnapshot } from '../lib/snapshot.js'
 import { addDays, occurrenceDates, startOfWeekKey, todayKey } from '../lib/dates.js'
 import { computeBadges, computeStats } from '../lib/gamification.js'
 import { buildChallengeTasks, challengeEndKey, isChallengeFinished } from '../lib/challenges.js'
+import { spreadDates } from '../lib/tasks.js'
 
 const DataContext = createContext(null)
 
@@ -199,6 +200,21 @@ export function DataProvider({ children }) {
       const row = await api.updateTask(task.id, { scheduled_on: addDays(task.scheduled_on, 1), postponed: true })
       patch('tasks', (l) => replaceIn(l, row))
     }, 'Tâche reportée à demain'),
+    moveTasksTo: (ids, day) => act(async () => {
+      const rows = await Promise.all(ids.map((id) => api.updateTask(id, { scheduled_on: day, postponed: true })))
+      const byId = new Map(rows.map((r) => [r.id, r]))
+      patch('tasks', (l) => l.map((t) => byId.get(t.id) ?? t))
+    }, ids.length > 1 ? 'Tâches reportées' : 'Tâche reportée'),
+    spreadTasks: (ids, startDay, days) => act(async () => {
+      const plan = spreadDates(ids, startDay, days)
+      const rows = await Promise.all(plan.map(({ id, day }) => api.updateTask(id, { scheduled_on: day, postponed: true })))
+      const byId = new Map(rows.map((r) => [r.id, r]))
+      patch('tasks', (l) => l.map((t) => byId.get(t.id) ?? t))
+    }, 'Tâches réparties'),
+    removeTasks: (ids) => act(async () => {
+      await Promise.all(ids.map((id) => api.deleteTask(id)))
+      patch('tasks', (l) => l.filter((t) => !ids.includes(t.id)))
+    }, ids.length > 1 ? 'Tâches supprimées' : 'Tâche supprimée'),
 
     // Challenges
     startCatalogueChallenge: ({ challenge, startKey, domainId, goalId }) => act(async () => {

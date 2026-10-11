@@ -1,4 +1,4 @@
-import { ArrowRightToLine, Check, Clock, Pencil, Target, Timer, Trash2, ChevronsUp } from 'lucide-react'
+import { ArrowRightToLine, CalendarClock, Check, Clock, Pencil, Target, Timer, Trash2, ChevronsUp } from 'lucide-react'
 import { useData } from '../contexts/DataContext.jsx'
 import { useFocus } from '../contexts/FocusContext.jsx'
 import { Badge } from './ui/Badge.jsx'
@@ -6,7 +6,7 @@ import { Menu } from './ui/Menu.jsx'
 import { cn } from '../lib/cn.js'
 
 // compact : version pour l'accueil (sans menu d'actions).
-export default function TaskItem({ task, onEdit, onDelete, compact = false }) {
+export default function TaskItem({ task, onEdit, onDelete, onPostpone, compact = false }) {
   const { domains, goals, actions } = useData()
   const { openPicker } = useFocus()
   const domain = domains.find((d) => d.id === task.domain_id)
@@ -17,6 +17,7 @@ export default function TaskItem({ task, onEdit, onDelete, compact = false }) {
     : [
         { label: 'Session Focus', icon: Timer, onClick: () => openPicker(task) },
         { label: 'Reporter à demain', icon: ArrowRightToLine, onClick: () => actions.postponeTask(task) },
+        ...(onPostpone ? [{ label: 'Reporter à une date…', icon: CalendarClock, onClick: () => onPostpone(task) }] : []),
         { label: 'Modifier', icon: Pencil, onClick: () => onEdit(task) },
         { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => onDelete(task) },
       ]
