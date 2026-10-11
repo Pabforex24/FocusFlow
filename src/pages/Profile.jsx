@@ -14,7 +14,9 @@ import { useData } from '../contexts/DataContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { useToast } from '../contexts/ToastContext.jsx'
 import { usePushNotifications } from '../hooks/usePushNotifications.js'
+import { sendTestPush } from '../services/api.js'
 import { showTestNotification } from '../lib/focusNotify.js'
+import { toUserMessage } from '../lib/errors.js'
 import { formatShort } from '../lib/dates.js'
 import { cn } from '../lib/cn.js'
 
@@ -83,9 +85,15 @@ export default function Profile() {
   const initials = name.slice(0, 2).toUpperCase()
 
   const testNotify = async () => {
-    const ok = await showTestNotification()
-    if (ok) toast.success('Notification de test envoyée.')
-    else toast.error('Impossible d\'afficher la notification (permission ou service worker).')
+    const local = await showTestNotification()
+    try {
+      const res = await sendTestPush()
+      if (res.ok) toast.success(`Push de test envoyé (${res.sent}/${res.total} appareil${res.total > 1 ? 's' : ''}).`)
+      else if (res.reason === 'no-subscription') toast.error('Aucun appareil abonné : active d\'abord le rappel ci-dessus.')
+      else toast.error('Envoi push refusé — vérifie les clés VAPID côté serveur.')
+    } catch (error) {
+      toast.error(local ? 'Notification locale OK, mais l\'envoi serveur a échoué.' : toUserMessage(error))
+    }
   }
 
   return (

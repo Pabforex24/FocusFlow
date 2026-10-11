@@ -124,3 +124,16 @@ export const savePushSubscription = (userId, sub) => {
 
 export const removePushSubscription = (endpoint) =>
   run(client().from('push_subscriptions').delete().eq('endpoint', endpoint))
+
+// Test de bout en bout : demande au serveur d'envoyer un push aux appareils de l'utilisateur.
+// Sert au bouton « Tester » du Profil (distingue un problème navigateur d'un problème serveur).
+export async function sendTestPush() {
+  const db = client()
+  const { data } = await db.auth.getSession()
+  const token = data?.session?.access_token
+  if (!token) throw new AppError('Session expirée. Reconnectez-vous.')
+  const res = await fetch('/api/push-test', { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) throw new AppError(body?.error || 'Test push impossible.')
+  return body
+}

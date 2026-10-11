@@ -70,7 +70,7 @@ Pendant une session, le service worker affiche une **notification persistante** 
 
 ### Dépannage des rappels
 
-1. **Profil → Notifications → Tester** doit afficher une notification immédiate. Sinon : permission navigateur, ou PWA non installée sur iOS.
+1. **Profil → Notifications → Tester** : affiche une notification locale *et* demande au serveur (`api/push-test.js`) d'envoyer un vrai push aux appareils abonnés. Si le toast indique « Aucun appareil abonné », réactiver l'interrupteur ; si l'envoi échoue, vérifier les variables VAPID côté serveur.
 2. Si le test marche mais pas le rappel : vérifier que `remind_enabled = true` et `remind_hour` dans `profiles`.
 3. Côté serveur, ouvrir `GET /api/notify` avec l'en-tête `Authorization: Bearer <CRON_SECRET>` : la réponse liste les variables présentes (`config`). Toute variable `false` bloque l'envoi.
 4. Vérifier la tâche planifiée : `select * from cron.job where jobname = 'focusflow-notify';` puis `select * from cron.job_run_details order by start_time desc limit 10;`. Rejouer `supabase/setup_cron_notify.sql` si elle manque.
