@@ -87,6 +87,7 @@ export async function startChallenge(userId, active, taskRows) {
   }
 }
 // Les tâches du challenge sont supprimées par cascade (on delete cascade).
+export const updateActiveChallenge = (id, patch) => updateOne('active_challenges', id, patch)
 export const deleteActiveChallenge = (id) => removeOne('active_challenges', id)
 
 export const createCustomChallenge = (userId, c) => insertOne('custom_challenges', { ...c, user_id: userId })

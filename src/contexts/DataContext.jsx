@@ -238,6 +238,19 @@ export function DataProvider({ children }) {
         tasks: d.tasks.filter((t) => t.challenge_active_id !== id),
       }))
     }, 'Challenge supprimé'),
+    finishChallenge: (active) => act(async () => {
+      const yesterday = addDays(todayKey(), -1)
+      const endKey = yesterday < active.start_date ? active.start_date : yesterday
+      const pending = data.tasks.filter((t) => t.challenge_active_id === active.id && !t.done)
+      const updated = await api.updateActiveChallenge(active.id, { end_date: endKey })
+      const detached = await Promise.all(pending.map((t) => api.updateTask(t.id, { challenge_active_id: null })))
+      const byId = new Map(detached.map((r) => [r.id, r]))
+      setData((d) => ({
+        ...d,
+        activeChallenges: d.activeChallenges.map((a) => (a.id === active.id ? updated : a)),
+        tasks: d.tasks.map((t) => byId.get(t.id) ?? t),
+      }))
+    }, 'Challenge terminé'),
     addCustomChallenge: (c) => act(async () => { const row = await api.createCustomChallenge(userId, c); patch('customChallenges', (l) => [row, ...l]) }, 'Challenge créé'),
     editCustomChallenge: (id, p) => act(async () => { const row = await api.updateCustomChallenge(id, p); patch('customChallenges', (l) => replaceIn(l, row)) }, 'Challenge modifié'),
     removeCustomChallenge: (id) => act(async () => { await api.deleteCustomChallenge(id); patch('customChallenges', (l) => l.filter((c) => c.id !== id)) }, 'Challenge supprimé'),

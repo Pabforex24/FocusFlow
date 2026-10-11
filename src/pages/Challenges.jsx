@@ -152,7 +152,7 @@ function CustomForm({ challenge, template, onClose }) {
   )
 }
 
-function ActiveChallengeCard({ active, tasks, domains, today, onManage, onDelete }) {
+function ActiveChallengeCard({ active, tasks, domains, today, onManage, onFinish, onDelete }) {
   const p = challengeProgress(active, tasks)
   const totalDays = diffDays(active.start_date, active.end_date) + 1
   const elapsed = Math.min(totalDays, Math.max(0, diffDays(active.start_date, today) + 1))
@@ -182,7 +182,11 @@ function ActiveChallengeCard({ active, tasks, domains, today, onManage, onDelete
             </div>
           </div>
         </div>
-        <Menu items={[{ label: 'Gérer les tâches', icon: ListChecks, onClick: onManage }, { label: 'Supprimer le challenge', icon: Trash2, danger: true, onClick: onDelete }]} />
+        <Menu items={[
+          { label: 'Gérer les tâches', icon: ListChecks, onClick: onManage },
+          ...(finished ? [] : [{ label: 'Terminer maintenant', icon: Flag, onClick: onFinish }]),
+          { label: 'Supprimer le challenge', icon: Trash2, danger: true, onClick: onDelete },
+        ]} />
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
@@ -274,6 +278,7 @@ export default function Challenges() {
   const [toStop, setToStop] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [manage, setManage] = useState(null)
+  const [toFinish, setToFinish] = useState(null)
 
   const asChallenge = (c) => ({ id: c.id, title: c.title, durationDays: c.durationDays ?? c.duration_days, color: c.color, blueprints: c.blueprints })
   const running = (id) => activeChallenges.some((a) => a.challenge_id === id && a.end_date >= today)
@@ -312,7 +317,7 @@ export default function Challenges() {
             <EmptyState icon={Flag} title="Aucun challenge actif">Choisissez-en un dans le catalogue ci-dessous pour remplir automatiquement votre planning.</EmptyState>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {activeChallenges.map((a) => <ActiveChallengeCard key={a.id} active={a} tasks={tasks} domains={domains} today={today} onManage={() => setManage(a)} onDelete={() => setToStop(a)} />)}
+              {activeChallenges.map((a) => <ActiveChallengeCard key={a.id} active={a} tasks={tasks} domains={domains} today={today} onManage={() => setManage(a)} onFinish={() => setToFinish(a)} onDelete={() => setToStop(a)} />)}
             </div>
           )}
         </section>
@@ -336,8 +341,12 @@ export default function Challenges() {
       {manage && <ManageTasksModal active={manage} onClose={() => setManage(null)} />}
       {customForm && <CustomForm challenge={customForm.challenge} template={customForm.template} onClose={() => setCustomForm(null)} />}
       {toStop && (
-        <ConfirmDialog title="Supprimer ce challenge ?" message="Toutes ses tâches (y compris celles déjà faites) seront supprimées." onCancel={() => setToStop(null)}
+        <ConfirmDialog title="Supprimer le challenge ?" message="Toutes ses tâches (y compris celles déjà faites) seront supprimées." onCancel={() => setToStop(null)}
           onConfirm={async () => { await actions.stopChallenge(toStop.id); setToStop(null) }} />
+      )}
+      {toFinish && (
+        <ConfirmDialog title="Terminer le challenge maintenant ?" message="Il sera clôturé aujourd'hui. Les tâches restantes seront détachées et conservées comme tâches normales." onCancel={() => setToFinish(null)}
+          onConfirm={async () => { await actions.finishChallenge(toFinish); setToFinish(null) }} />
       )}
       {toDelete && (
         <ConfirmDialog title="Supprimer ce modèle ?" message={`« ${toDelete.title} » sera supprimé. Les challenges déjà démarrés restent actifs.`} onCancel={() => setToDelete(null)}

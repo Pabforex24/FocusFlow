@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { DataProvider, useData } from './DataContext.jsx'
 import * as api from '../services/api.js'
 import { loadSnapshot, saveSnapshot } from '../lib/snapshot.js'
+import { addDays, todayKey } from '../lib/dates.js'
 
 vi.mock('../services/api.js')
 vi.mock('./AuthContext.jsx', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }))
@@ -166,5 +167,21 @@ describe('DataContext', () => {
     expect(result.current.focusSessions).toHaveLength(0)
     expect(result.current.tasks.find((t) => t.id === 't1').done).toBe(false)
     expect(toast.error).toHaveBeenCalled()
+  })
+
+  it('terminer un challenge : clôture et détache les tâches restantes', async () => {
+    const snap = snapshot()
+    const active = { id: 'a1', challenge_id: 'ch1', title: 'Sport 30', color: '#111', start_date: '2026-10-01', end_date: '2026-10-30' }
+    snap.activeChallenges = [active]
+    snap.tasks = [task('t1', { challenge_active_id: 'a1', done: true }), task('t2', { challenge_active_id: 'a1', done: false })]
+    api.loadAll.mockResolvedValue(snap)
+    api.updateActiveChallenge.mockImplementation((id, patch) => Promise.resolve({ ...active, ...patch }))
+    api.updateTask.mockImplementation((id, patch) => Promise.resolve({ ...snap.tasks.find((t) => t.id === id), ...patch }))
+    const { result } = await setup()
+    await act(async () => { await result.current.actions.finishChallenge(result.current.activeChallenges[0]) })
+    expect(api.updateActiveChallenge).toHaveBeenCalledWith('a1', { end_date: addDays(todayKey(), -1) })
+    expect(api.updateTask).toHaveBeenCalledTimes(1)
+    expect(result.current.tasks.find((t) => t.id === 't2').challenge_active_id).toBeNull()
+    expect(result.current.tasks.find((t) => t.id === 't1').challenge_active_id).toBe('a1')
   })
 })
