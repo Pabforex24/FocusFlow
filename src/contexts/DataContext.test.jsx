@@ -70,6 +70,40 @@ describe('DataContext', () => {
     expect(toast.error).toHaveBeenCalledTimes(1)
   })
 
+  it('une répétition crée des occurrences partageant un même series_id', async () => {
+    const { result } = await setup()
+    api.createTasks.mockImplementation((userId, rows) => Promise.resolve(rows.map((r, i) => ({ ...r, id: `n${i}` }))))
+    await act(async () => {
+      await result.current.actions.addTask({ title: 'Sport', scheduled_on: '2026-10-05', done: false, xp_value: 10 }, { frequency: 'daily', days: 3 })
+    })
+    const created = result.current.tasks.filter((t) => t.title === 'Sport')
+    expect(created).toHaveLength(3)
+    const series = new Set(created.map((t) => t.series_id))
+    expect(series.size).toBe(1)
+    expect([...series][0]).toBeTruthy()
+  })
+
+  it('supprimer une occurrence d\'une répétition supprime toute la série', async () => {
+    const snap = snapshot()
+    snap.tasks = [task('t1', { series_id: 's1' }), task('t2', { series_id: 's1' }), task('t3')]
+    api.loadAll.mockResolvedValue(snap)
+    api.deleteTasksBySeries.mockResolvedValue(null)
+    const { result } = await setup()
+    await act(async () => { await result.current.actions.removeTask('t1') })
+    expect(api.deleteTasksBySeries).toHaveBeenCalledWith('s1')
+    expect(api.deleteTask).not.toHaveBeenCalled()
+    expect(result.current.tasks.map((t) => t.id)).toEqual(['t3'])
+  })
+
+  it('supprimer une tâche isolée n\'appelle que deleteTask', async () => {
+    const { result } = await setup()
+    api.deleteTask.mockResolvedValue(null)
+    await act(async () => { await result.current.actions.removeTask('t3') })
+    expect(api.deleteTask).toHaveBeenCalledWith('t3')
+    expect(api.deleteTasksBySeries).not.toHaveBeenCalled()
+    expect(result.current.tasks.map((t) => t.id)).toEqual(['t1', 't2'])
+  })
+
   it('supprimer un domaine retire ses objectifs et détache ses tâches', async () => {
     const { result } = await setup()
     api.deleteDomain.mockResolvedValue(null)

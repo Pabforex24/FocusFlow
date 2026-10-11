@@ -60,9 +60,11 @@ create table public.tasks (
   xp_value            integer not null default 10,
   priority            text not null default 'medium' check (priority in ('low','medium','high')),
   postponed           boolean not null default false,
+  series_id           uuid,
   created_at          timestamptz not null default now()
 );
 create index tasks_user_day_idx on public.tasks(user_id, scheduled_on);
+create index tasks_series_idx on public.tasks(series_id);
 
 create table public.custom_challenges (
   id            uuid primary key default gen_random_uuid(),

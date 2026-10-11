@@ -156,7 +156,11 @@ export default function Tasks() {
       {postpone && <PostponeDialog task={postpone} onClose={() => setPostpone(null)} />}
       {catchup && overdue.length > 0 && <CatchUpModal overdue={overdue} onClose={() => setCatchup(false)} />}
       {toDelete && (
-        <ConfirmDialog title="Supprimer la tâche ?" message={`« ${toDelete.title} » sera supprimée définitivement.`}
+        <ConfirmDialog
+          title={toDelete.series_id ? 'Supprimer la série complète ?' : 'Supprimer la tâche ?'}
+          message={toDelete.series_id
+            ? `« ${toDelete.title} » fait partie d'une répétition : toutes ses occurrences (tous les jours) seront supprimées.`
+            : `« ${toDelete.title} » sera supprimée définitivement.`}
           onConfirm={async () => { await actions.removeTask(toDelete.id); setToDelete(null) }} onCancel={() => setToDelete(null)} />
       )}
     </>

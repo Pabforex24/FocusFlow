@@ -18,6 +18,10 @@ const EMPTY = {
 }
 const STALE_AFTER_MS = 30_000
 
+// Identifiant partagé par toutes les occurrences d'une même répétition (suppression groupée).
+const newSeriesId = () =>
+  globalThis.crypto?.randomUUID?.() ?? `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+
 export function DataProvider({ children }) {
   const { user } = useAuth()
   const toast = useToast()
@@ -173,7 +177,10 @@ export function DataProvider({ children }) {
         const days = Math.min(Math.max(Number(repeat.days) || 7, 1), 90)
         const dates = occurrenceDates(task.scheduled_on, addDays(task.scheduled_on, days - 1), repeat.frequency, repeat.weekdays)
         if (dates.length === 0) throw new AppError('Aucune date ne correspond à cette répétition.')
-        const rows = await api.createTasks(userId, dates.map((d) => ({ ...task, scheduled_on: d })))
+        // Toutes les occurrences d'une même répétition partagent un series_id : supprimer l'une
+        // supprime toute la série (voir removeTask).
+        const seriesId = dates.length > 1 ? newSeriesId() : null
+        const rows = await api.createTasks(userId, dates.map((d) => ({ ...task, scheduled_on: d, series_id: seriesId })))
         patch('tasks', (l) => [...l, ...rows])
       } else {
         const row = await api.createTask(userId, task)
@@ -181,7 +188,16 @@ export function DataProvider({ children }) {
       }
     }, 'Tâche ajoutée'),
     editTask: (id, p) => act(async () => { const row = await api.updateTask(id, p); patch('tasks', (l) => replaceIn(l, row)) }, 'Tâche modifiée'),
-    removeTask: (id) => act(async () => { await api.deleteTask(id); patch('tasks', (l) => l.filter((t) => t.id !== id)) }, 'Tâche supprimée'),
+    removeTask: (id) => act(async () => {
+      const target = data.tasks.find((t) => t.id === id)
+      if (target?.series_id) {
+        await api.deleteTasksBySeries(target.series_id)
+        patch('tasks', (l) => l.filter((t) => t.series_id !== target.series_id))
+      } else {
+        await api.deleteTask(id)
+        patch('tasks', (l) => l.filter((t) => t.id !== id))
+      }
+    }, 'Tâche supprimée'),
 
     // Cocher : mise à jour immédiate, retour arrière si le serveur refuse.
     toggleTask: async (task) => {

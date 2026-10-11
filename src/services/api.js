@@ -74,6 +74,8 @@ export const createTasks = (userId, rows) =>
   run(client().from('tasks').insert(rows.map((r) => ({ ...r, user_id: userId }))).select())
 export const updateTask = (id, patch) => updateOne('tasks', id, patch)
 export const deleteTask = (id) => removeOne('tasks', id)
+// Suppression d'une série récurrente entière (toutes les occurrences partagent series_id).
+export const deleteTasksBySeries = (seriesId) => run(client().from('tasks').delete().eq('series_id', seriesId))
 
 // ── Challenges ────────────────────────────────────────────────────────────────
 // Démarrage en deux temps avec retour arrière : pas de challenge "vide" si l'insertion des tâches échoue.
