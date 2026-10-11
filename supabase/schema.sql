@@ -83,6 +83,16 @@ create table public.rest_days (
   unique (user_id, day)
 );
 
+create table public.pause_periods (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  start_date date not null,
+  end_date   date not null,
+  label      text,
+  created_at timestamptz not null default now(),
+  check (end_date >= start_date)
+);
+
 create table public.focus_sessions (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references auth.users(id) on delete cascade,
@@ -120,6 +130,7 @@ create index goals_domain_idx           on public.goals(domain_id);
 create index active_challenges_user_idx on public.active_challenges(user_id);
 create index custom_challenges_user_idx on public.custom_challenges(user_id);
 create index focus_sessions_user_idx    on public.focus_sessions(user_id, completed_on);
+create index pause_periods_user_idx     on public.pause_periods(user_id, start_date);
 create index tasks_goal_idx             on public.tasks(goal_id);
 create index tasks_domain_idx           on public.tasks(domain_id);
 create index tasks_challenge_idx        on public.tasks(challenge_active_id);
@@ -169,6 +180,9 @@ create policy "own custom" on public.custom_challenges for all
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
 create policy "own rest days" on public.rest_days for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+create policy "own pauses" on public.pause_periods for all
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
 create policy "own focus" on public.focus_sessions for all

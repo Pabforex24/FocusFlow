@@ -5,7 +5,7 @@ import { useToast } from './ToastContext.jsx'
 import { toUserMessage, AppError } from '../lib/errors.js'
 import { reportError } from '../lib/report.js'
 import { loadSnapshot, saveSnapshot } from '../lib/snapshot.js'
-import { addDays, occurrenceDates, startOfWeekKey, todayKey } from '../lib/dates.js'
+import { addDays, occurrenceDates, overlapDays, startOfWeekKey, todayKey } from '../lib/dates.js'
 import { computeBadges, computeStats } from '../lib/gamification.js'
 import { buildChallengeTasks, challengeEndKey, isChallengeFinished } from '../lib/challenges.js'
 import { spreadDates } from '../lib/tasks.js'
@@ -14,7 +14,7 @@ const DataContext = createContext(null)
 
 const EMPTY = {
   profile: null, domains: [], goals: [], tasks: [], activeChallenges: [],
-  customChallenges: [], restDays: [], focusSessions: [],
+  customChallenges: [], restDays: [], pausePeriods: [], focusSessions: [],
 }
 const STALE_AFTER_MS = 30_000
 
@@ -265,6 +265,26 @@ export function DataProvider({ children }) {
       patch('restDays', (l) => [...l, day])
     }, 'Imprévu déclaré : votre série est protégée'),
 
+    // Pause multi-jours : neutralise des jours et décale la fin des challenges chevauchés.
+    addPause: ({ start_date, end_date, label }) => act(async () => {
+      if (end_date < start_date) throw new AppError('La date de fin doit suivre la date de début.')
+      const row = await api.createPausePeriod(userId, { start_date, end_date, label: label?.trim() || null })
+      const overlapped = data.activeChallenges
+        .map((a) => ({ a, days: overlapDays(a.start_date, a.end_date, start_date, end_date) }))
+        .filter((x) => x.days > 0)
+      const updated = await Promise.all(overlapped.map(({ a, days }) => api.updateActiveChallenge(a.id, { end_date: addDays(a.end_date, days) })))
+      const byId = new Map(updated.map((r) => [r.id, r]))
+      setData((d) => ({
+        ...d,
+        pausePeriods: [...(d.pausePeriods ?? []), row],
+        activeChallenges: d.activeChallenges.map((a) => byId.get(a.id) ?? a),
+      }))
+    }, 'Pause enregistrée'),
+    removePause: (id) => act(async () => {
+      await api.deletePausePeriod(id)
+      patch('pausePeriods', (l) => l.filter((p) => p.id !== id))
+    }, 'Pause supprimée'),
+
     recordFocus: ({ minutes, taskId }) => act(async () => {
       const { session, task } = await api.recordFocus({ minutes, taskId: taskId || null, completedOn: todayKey() })
       patch('focusSessions', (l) => [...l, session])
@@ -279,12 +299,13 @@ export function DataProvider({ children }) {
       const row = await api.updateProfile(userId, patch)
       setData((d) => ({ ...d, profile: row }))
     }),
-  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays])
+  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays, data.pausePeriods])
 
   const derived = useMemo(() => {
+    const pauseDays = (data.pausePeriods ?? []).flatMap((p) => occurrenceDates(p.start_date, p.end_date, 'daily'))
     const challengesDone = data.activeChallenges.filter((a) => isChallengeFinished(a, data.tasks, today)).length
     const stats = computeStats({
-      tasks: data.tasks, restDays: data.restDays, focusSessions: data.focusSessions,
+      tasks: data.tasks, restDays: data.restDays, pauseDays, focusSessions: data.focusSessions,
       hardcore: data.profile?.hardcore_mode ?? false, challengesDone, today,
     })
     return { stats, badges: computeBadges(stats) }

@@ -60,9 +60,10 @@ function computeStreaks(days, restSet, today) {
  * Toutes les statistiques sont DÉRIVÉES des données (tâches, jours de repos, sessions focus).
  * Rien n'est stocké en double : impossible d'avoir un XP ou une série désynchronisés.
  */
-export function computeStats({ tasks, restDays = [], focusSessions = [], hardcore = false, challengesDone = 0, today = todayKey() }) {
+export function computeStats({ tasks, restDays = [], pauseDays = [], focusSessions = [], hardcore = false, challengesDone = 0, today = todayKey() }) {
   const days = groupByDay(tasks)
-  const restSet = new Set(restDays)
+  // Les jours de pause (indisponibilité) protègent comme un imprévu : ni pénalité, ni rupture de série.
+  const restSet = new Set([...restDays, ...pauseDays])
 
   let xp = 0
   let totalDone = 0

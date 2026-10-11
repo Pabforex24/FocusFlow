@@ -41,7 +41,7 @@ export async function loadAll(userId) {
   // à tort comme données réelles et on écraserait la copie locale. On exige donc une session.
   const { data: auth } = await db.auth.getSession()
   if (!auth?.session) throw new AppError('Session expirée ou introuvable. Reconnectez-vous.')
-  const [profile, domains, goals, tasks, activeChallenges, customChallenges, restDays, focusSessions] = await Promise.all([
+  const [profile, domains, goals, tasks, activeChallenges, customChallenges, restDays, pausePeriods, focusSessions] = await Promise.all([
     run(db.from('profiles').select('*').eq('id', userId).maybeSingle()),
     readAll('domains', '*', [['created_at']]),
     readAll('goals', '*', [['created_at']]),
@@ -49,9 +49,10 @@ export async function loadAll(userId) {
     readAll('active_challenges', '*', [['created_at', false]]),
     readAll('custom_challenges', '*', [['created_at', false]]),
     readAll('rest_days', 'day', [['day']]),
+    readAll('pause_periods', '*', [['start_date']]),
     readAll('focus_sessions', '*', [['created_at']]),
   ])
-  return { profile, domains, goals, tasks, activeChallenges, customChallenges, restDays: restDays.map((r) => r.day), focusSessions }
+  return { profile, domains, goals, tasks, activeChallenges, customChallenges, restDays: restDays.map((r) => r.day), pausePeriods, focusSessions }
 }
 
 const insertOne = (table, row) => run(client().from(table).insert(row).select().single())
@@ -97,6 +98,9 @@ export const deleteCustomChallenge = (id) => removeOne('custom_challenges', id)
 // ── Profil, repos, focus ──────────────────────────────────────────────────────
 export const updateProfile = (id, patch) => updateOne('profiles', id, patch)
 export const addRestDay = (userId, day) => insertOne('rest_days', { user_id: userId, day })
+
+export const createPausePeriod = (userId, p) => insertOne('pause_periods', { ...p, user_id: userId })
+export const deletePausePeriod = (id) => removeOne('pause_periods', id)
 // Session Focus + cochage de la tâche liée en UNE transaction (fonction SQL, migration 002) :
 // les deux réussissent ou échouent ensemble. Renvoie { session, task } (task peut être null).
 export const recordFocus = ({ minutes, taskId, completedOn }) =>

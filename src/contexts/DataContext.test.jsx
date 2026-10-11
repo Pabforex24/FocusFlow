@@ -19,7 +19,7 @@ const snapshot = () => ({
   domains: [{ id: 'd1', name: 'Sport' }, { id: 'd2', name: 'Travail' }],
   goals: [{ id: 'g1', domain_id: 'd1' }, { id: 'g2', domain_id: 'd2' }],
   tasks: [task('t1', { domain_id: 'd1', goal_id: 'g1' }), task('t2', { domain_id: 'd2', goal_id: 'g2' }), task('t3')],
-  activeChallenges: [], customChallenges: [], restDays: [], focusSessions: [],
+  activeChallenges: [],   customChallenges: [], restDays: [], pausePeriods: [], focusSessions: [],
 })
 
 async function setup() {
@@ -183,5 +183,19 @@ describe('DataContext', () => {
     expect(api.updateTask).toHaveBeenCalledTimes(1)
     expect(result.current.tasks.find((t) => t.id === 't2').challenge_active_id).toBeNull()
     expect(result.current.tasks.find((t) => t.id === 't1').challenge_active_id).toBe('a1')
+  })
+
+  it('une pause décale la fin des challenges chevauchés', async () => {
+    const snap = snapshot()
+    const active = { id: 'a1', challenge_id: 'ch1', title: 'Sport 30', color: '#111', start_date: '2026-10-01', end_date: '2026-10-30' }
+    snap.activeChallenges = [active]
+    api.loadAll.mockResolvedValue(snap)
+    api.createPausePeriod.mockResolvedValue({ id: 'p1', start_date: '2026-10-10', end_date: '2026-10-12', label: null })
+    api.updateActiveChallenge.mockImplementation((id, patch) => Promise.resolve({ ...active, ...patch }))
+    const { result } = await setup()
+    await act(async () => { await result.current.actions.addPause({ start_date: '2026-10-10', end_date: '2026-10-12', label: '  Vacances  ' }) })
+    expect(api.createPausePeriod).toHaveBeenCalledWith('u1', { start_date: '2026-10-10', end_date: '2026-10-12', label: 'Vacances' })
+    expect(api.updateActiveChallenge).toHaveBeenCalledWith('a1', { end_date: '2026-11-02' })
+    expect(result.current.pausePeriods).toHaveLength(1)
   })
 })

@@ -1,7 +1,9 @@
-import { Bell, Check, Flame, LogOut, Monitor, Moon, RefreshCw, ShieldAlert, Sun, Trophy } from 'lucide-react'
+import { useState } from 'react'
+import { Bell, Check, Flame, LogOut, Monitor, Moon, Pause, RefreshCw, ShieldAlert, Sun, Trash2, Trophy } from 'lucide-react'
 import { Alert } from '../components/ui/Alert.jsx'
-import { Button } from '../components/ui/Button.jsx'
+import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Card, CardHeader } from '../components/ui/Card.jsx'
+import { Field, Input } from '../components/ui/Input.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { ProgressBar } from '../components/ui/ProgressBar.jsx'
 import { Segmented } from '../components/ui/Segmented.jsx'
@@ -11,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { usePushNotifications } from '../hooks/usePushNotifications.js'
+import { formatShort } from '../lib/dates.js'
 import { cn } from '../lib/cn.js'
 
 // Heures proposées pour le rappel quotidien (heure locale).
@@ -23,6 +26,48 @@ const PALETTE_CHOICES = [
   { value: 'charcoal', label: 'Royal Charcoal', hint: 'Graphite argent', swatch: 'linear-gradient(135deg, #4c4e51 0%, #1e2023 55%, #0e0f11 100%)', accent: '#c8ccd4' },
   { value: 'navy', label: 'Navy Mirage', hint: 'Bleu marine', swatch: 'linear-gradient(135deg, #35577d 0%, #141e30 55%, #070d16 100%)', accent: '#9dbbe0' },
 ]
+
+function PauseCard() {
+  const { pausePeriods, today, actions } = useData()
+  const [start, setStart] = useState(today)
+  const [end, setEnd] = useState(today)
+  const [label, setLabel] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const save = async () => {
+    if (end < start) return
+    setBusy(true)
+    const ok = await actions.addPause({ start_date: start, end_date: end, label })
+    setBusy(false)
+    if (ok) { setLabel(''); setStart(today); setEnd(today) }
+  }
+
+  return (
+    <Card className="space-y-4">
+      <CardHeader title="Pauses · indisponibilité" description="Les jours couverts ne comptent pas (ni pénalité, ni série perdue) et décalent la fin des challenges en cours." />
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Du"><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></Field>
+        <Field label="Au"><Input type="date" value={end} min={start} onChange={(e) => setEnd(e.target.value)} /></Field>
+      </div>
+      <Field label="Motif" hint="Optionnel"><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Vacances, maladie…" /></Field>
+      <Button icon={Pause} onClick={save} disabled={busy || end < start}>Enregistrer la pause</Button>
+      {pausePeriods.length > 0 && (
+        <ul className="space-y-2 border-t border-line pt-3">
+          {pausePeriods.map((p) => (
+            <li key={p.id} className="flex items-center gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"><Pause className="size-4" aria-hidden /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-fg">{formatShort(p.start_date)} → {formatShort(p.end_date)}</p>
+                {p.label && <p className="truncate text-xs text-muted">{p.label}</p>}
+              </div>
+              <IconButton icon={Trash2} label="Supprimer la pause" variant="danger-soft" size="sm" onClick={() => actions.removePause(p.id)} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
+}
 
 export default function Profile() {
   const { user } = useAuth()
@@ -92,6 +137,8 @@ export default function Profile() {
           </div>
           <Switch checked={hardcore} onChange={actions.setHardcore} label="Mode Hardcore" />
         </Card>
+
+        <PauseCard />
 
         <Card className="space-y-4">
           <CardHeader title="Notifications" description="Rappel quotidien et alerte de série" />

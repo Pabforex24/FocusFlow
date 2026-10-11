@@ -56,6 +56,13 @@ export function monthKey(year, monthIndex, day) {
   return `${year}-${pad(monthIndex + 1)}-${pad(day)}`
 }
 
+// Nombre de jours communs à deux périodes (bornes incluses), 0 si disjointes.
+export function overlapDays(aStart, aEnd, bStart, bEnd) {
+  const start = aStart > bStart ? aStart : bStart
+  const end = aEnd < bEnd ? aEnd : bEnd
+  return end < start ? 0 : diffDays(start, end) + 1
+}
+
 // Jours d'une période (bornes incluses) qui respectent une fréquence.
 // `weekdays` : indices 0 = lundi … 6 = dimanche, utilisés quand frequency === 'custom'.
 export function occurrenceDates(startKey, endKey, frequency = 'daily', weekdays = []) {

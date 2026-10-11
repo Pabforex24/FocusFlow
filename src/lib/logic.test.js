@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { addDays, diffDays, occurrenceDates, startOfWeekKey, toKey, fromKey } from './dates.js'
+import { addDays, diffDays, occurrenceDates, overlapDays, startOfWeekKey, toKey, fromKey } from './dates.js'
 import { overdueTasks, spreadDates, challengeTasks } from './tasks.js'
 import { computeLevel, computeStats, computeBadges, xpForLevel } from './gamification.js'
 import { buildChallengeTasks, challengeEndKey, challengeProgress } from './challenges.js'
@@ -28,6 +28,11 @@ describe('dates', () => {
   it('fréquence personnalisée : jours choisis', () => {
     expect(occurrenceDates('2026-09-28', '2026-10-04', 'custom', [0, 2, 4])).toEqual(['2026-09-28', '2026-09-30', '2026-10-02'])
     expect(occurrenceDates('2026-09-28', '2026-10-04', 'custom', [])).toEqual([])
+  })
+  it('overlapDays : jours communs à deux périodes', () => {
+    expect(overlapDays('2026-09-01', '2026-09-30', '2026-09-28', '2026-10-05')).toBe(3)
+    expect(overlapDays('2026-09-01', '2026-09-10', '2026-09-20', '2026-09-25')).toBe(0)
+    expect(overlapDays('2026-09-01', '2026-09-30', '2026-09-05', '2026-09-06')).toBe(2)
   })
 })
 
@@ -96,6 +101,15 @@ describe('série (streak)', () => {
   it('un jour de repos protège la série sans l\'incrémenter', () => {
     const tasks = [task('2026-09-28', true), task('2026-09-30', true)]
     expect(computeStats({ tasks, restDays: ['2026-09-29'], today: '2026-09-30' }).streak).toBe(2)
+  })
+  it('les jours de pause protègent comme un imprévu (série et pénalité)', () => {
+    const tasks = [task('2026-09-28', true), task('2026-09-29', false), task('2026-09-30', true)]
+    const bare = computeStats({ tasks, today: '2026-09-30' })
+    expect(bare.missedDays).toBe(1)
+    expect(bare.streak).toBe(1)
+    const paused = computeStats({ tasks, pauseDays: ['2026-09-29'], today: '2026-09-30' })
+    expect(paused.missedDays).toBe(0)
+    expect(paused.streak).toBe(2)
   })
   it('aucune donnée : tout à zéro', () => {
     expect(computeStats({ tasks: [], today: '2026-09-30' })).toMatchObject({ xp: 0, level: 1, streak: 0 })
