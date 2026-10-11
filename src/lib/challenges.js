@@ -47,7 +47,7 @@ export function challengeEndKey(startKey, durationDays) {
 export function buildChallengeTasks({ blueprints, startKey, endKey, domainId, goalId = null }) {
   const rows = []
   for (const bp of blueprints) {
-    for (const day of occurrenceDates(startKey, endKey, bp.frequency)) {
+    for (const day of occurrenceDates(startKey, endKey, bp.frequency, bp.weekdays ?? [])) {
       rows.push({
         title: bp.title,
         duration: bp.duration || null,
