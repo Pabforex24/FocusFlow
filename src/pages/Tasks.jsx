@@ -86,13 +86,14 @@ export default function Tasks() {
   const done = dayTasks.filter((t) => t.done)
   const pct = dayTasks.length ? Math.round((done.length / dayTasks.length) * 100) : 0
   const isRest = restDays.includes(day)
+  const isPast = day < today
   const label = day === today ? "Aujourd'hui" : day === addDays(today, 1) ? 'Demain' : day === addDays(today, -1) ? 'Hier' : null
 
   return (
     <>
       <PageHeader title="Tâches" subtitle={formatLong(day)}>
         <Button variant="secondary" icon={Timer} onClick={() => openPicker()}>Focus</Button>
-        <Button icon={Plus} onClick={() => setForm({})}>Nouvelle tâche</Button>
+        {!isPast && <Button icon={Plus} onClick={() => setForm({})}>Nouvelle tâche</Button>}
       </PageHeader>
 
       <div className="mb-4 flex items-center justify-between gap-2">
@@ -130,9 +131,9 @@ export default function Tasks() {
         )}
 
         {dayTasks.length === 0 ? (
-          <EmptyState icon={day < today ? CalendarX : CalendarCheck} title="Rien de prévu ce jour"
-            action={<Button icon={Plus} onClick={() => setForm({})}>Ajouter une tâche</Button>}>
-            Planifiez une action simple pour avancer vers vos objectifs.
+          <EmptyState icon={isPast ? CalendarX : CalendarCheck} title="Rien de prévu ce jour"
+            action={isPast ? undefined : <Button icon={Plus} onClick={() => setForm({})}>Ajouter une tâche</Button>}>
+            {isPast ? 'Ce jour est passé : impossible d\'y ajouter une tâche.' : 'Planifiez une action simple pour avancer vers vos objectifs.'}
           </EmptyState>
         ) : (
           <>
