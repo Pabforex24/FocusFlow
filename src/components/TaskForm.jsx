@@ -28,7 +28,7 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
     scheduled_on: task?.scheduled_on ?? defaultDay ?? '', duration: task?.duration ?? '', priority: task?.priority ?? 'medium',
   })
   const [repeat, setRepeat] = useState(() => isSeries
-    ? { frequency: storedRepeat.frequency ?? 'daily', mode: 'until', until: seriesEnd, days: diffDays(seriesStart, seriesEnd) + 1, weekdays: storedRepeat.weekdays ?? [] }
+    ? { frequency: storedRepeat.frequency ?? 'daily', mode: 'days', days: diffDays(seriesStart, seriesEnd) + 1, until: seriesEnd, weekdays: storedRepeat.weekdays ?? [] }
     : { frequency: 'none', mode: 'days', days: 14, until: addDays(defaultDay ?? todayKey(), 13), weekdays: [weekdayIndex(defaultDay ?? todayKey())] })
   const [errors, setErrors] = useState({})
   const [busy, setBusy] = useState(false)
