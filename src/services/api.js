@@ -76,6 +76,9 @@ export const updateTask = (id, patch) => updateOne('tasks', id, patch)
 export const deleteTask = (id) => removeOne('tasks', id)
 // Suppression d'une série récurrente entière (toutes les occurrences partagent series_id).
 export const deleteTasksBySeries = (seriesId) => run(client().from('tasks').delete().eq('series_id', seriesId))
+// Opérations groupées, utilisées pour reconstruire une série après modification de la répétition.
+export const updateTasks = (ids, patch) => run(client().from('tasks').update(patch).in('id', ids).select())
+export const deleteTasks = (ids) => run(client().from('tasks').delete().in('id', ids))
 
 // ── Challenges ────────────────────────────────────────────────────────────────
 // Démarrage en deux temps avec retour arrière : pas de challenge "vide" si l'insertion des tâches échoue.

@@ -26,7 +26,7 @@ src/
     ui/       Design system : Button, Card, Badge, ProgressBar/Ring, StatCard, Input/Field,
               Alert, Menu, Switch, Segmented, EmptyState, ErrorState, ConfirmDialog…
   pages/      Dashboard, Tasks, Goals, Domains, Challenges, Monthly (Statistiques), Coach, Profile, Login
-api/          Fonctions Vercel (serveur) : coach.js (Groq), notify.js (rappels push planifiés)
+api/          Fonctions Vercel (serveur) : coach.js (Groq), notify.js (rappels push planifiés), push-test.js (test push d'un appareil)
 ```
 
 ### Règles de conception (pourquoi c'est plus stable)
@@ -34,6 +34,7 @@ api/          Fonctions Vercel (serveur) : coach.js (Groq), notify.js (rappels p
 - **Supabase est la source de vérité.** Pas de store persisté en localStorage, pas de delta sync : une modification est envoyée au serveur, puis l'écran est mis à jour avec la ligne renvoyée. Les suppressions se propagent, car l'app recharge tout au retour sur l'écran (si > 30 s), au retour du réseau et à la connexion.
 - **XP, niveau, série, badges sont calculés**, jamais stockés : impossible d'avoir des compteurs désynchronisés entre appareils.
 - **Dates = jours locaux `YYYY-MM-DD`** (colonne SQL `date`), plus de décalage UTC.
+- **Tâches récurrentes** : une répétition crée des occurrences concrètes partageant un `series_id` et sa règle (`repeat`, colonne JSON) ; la modifier ou la supprimer agit sur toute la série, en conservant les jours déjà faits. La répétition se choisit en nombre de jours **ou** jusqu'à une date de fin (idem au démarrage d'un challenge).
 - **Plus de données « seed »** : un compte neuf est vide. Les challenges demandent un domaine au démarrage.
 - **Erreurs** : chaque action affiche un message compréhensible (`lib/errors.js`) ; un `ErrorBoundary` évite l'écran blanc.
 - **Sécurité** : RLS sur toutes les tables, clé anon seulement dans le navigateur.

@@ -8,7 +8,7 @@ import { loadSnapshot, saveSnapshot } from '../lib/snapshot.js'
 import { addDays, occurrenceDates, overlapDays, startOfWeekKey, todayKey } from '../lib/dates.js'
 import { computeBadges, computeStats } from '../lib/gamification.js'
 import { buildChallengeTasks, challengeEndKey, isChallengeFinished } from '../lib/challenges.js'
-import { spreadDates } from '../lib/tasks.js'
+import { recurrenceDates, repeatConfig, spreadDates } from '../lib/tasks.js'
 
 const DataContext = createContext(null)
 
@@ -171,16 +171,16 @@ export function DataProvider({ children }) {
       }))
     }, 'Objectif supprimé'),
 
-    // Tâches. `repeat` = { frequency, days } crée des occurrences concrètes (pas de modèle caché).
+    // Tâches. `repeat` = { frequency, mode, days|until, weekdays } crée des occurrences concrètes
+    // (pas de modèle caché). Toutes les occurrences d'une répétition partagent un series_id et la
+    // même règle `repeat` : on peut donc la modifier ou la supprimer d'un coup.
     addTask: (task, repeat) => act(async () => {
       if (repeat && repeat.frequency !== 'none') {
-        const days = Math.min(Math.max(Number(repeat.days) || 7, 1), 90)
-        const dates = occurrenceDates(task.scheduled_on, addDays(task.scheduled_on, days - 1), repeat.frequency, repeat.weekdays)
+        const dates = recurrenceDates(task.scheduled_on, repeat)
         if (dates.length === 0) throw new AppError('Aucune date ne correspond à cette répétition.')
-        // Toutes les occurrences d'une même répétition partagent un series_id : supprimer l'une
-        // supprime toute la série (voir removeTask).
-        const seriesId = dates.length > 1 ? newSeriesId() : null
-        const rows = await api.createTasks(userId, dates.map((d) => ({ ...task, scheduled_on: d, series_id: seriesId })))
+        const seriesId = newSeriesId()
+        const config = repeatConfig(repeat)
+        const rows = await api.createTasks(userId, dates.map((d) => ({ ...task, scheduled_on: d, series_id: seriesId, repeat: config })))
         patch('tasks', (l) => [...l, ...rows])
       } else {
         const row = await api.createTask(userId, task)
@@ -188,6 +188,30 @@ export function DataProvider({ children }) {
       }
     }, 'Tâche ajoutée'),
     editTask: (id, p) => act(async () => { const row = await api.updateTask(id, p); patch('tasks', (l) => replaceIn(l, row)) }, 'Tâche modifiée'),
+    // Reconstruit une série (à la création d'une répétition depuis une tâche simple, ou à la
+    // modification de sa répétition). Les occurrences déjà faites sont conservées telles quelles.
+    saveSeries: (anchor, fields, repeat) => act(async () => {
+      const seriesId = anchor.series_id ?? newSeriesId()
+      const existing = data.tasks.filter((t) => t.series_id === seriesId || t.id === anchor.id)
+      const start = repeat?.start ?? existing.reduce((min, t) => (t.scheduled_on < min ? t.scheduled_on : min), existing[0].scheduled_on)
+      const dates = recurrenceDates(start, repeat)
+      if (dates.length === 0) throw new AppError('Aucune date ne correspond à cette répétition.')
+      const config = repeatConfig(repeat)
+      const doneRows = existing.filter((t) => t.done)
+      const removable = existing.filter((t) => !t.done)
+      const doneDates = new Set(doneRows.map((t) => t.scheduled_on))
+      const row = { ...fields, xp_value: anchor.xp_value, series_id: seriesId, repeat: config }
+      const toInsert = dates.filter((d) => !doneDates.has(d)).map((d) => ({ ...row, scheduled_on: d }))
+
+      if (removable.length) await api.deleteTasks(removable.map((t) => t.id))
+      const updatedDone = doneRows.length ? await api.updateTasks(doneRows.map((t) => t.id), row) : []
+      const inserted = toInsert.length ? await api.createTasks(userId, toInsert) : []
+
+      setData((d) => ({
+        ...d,
+        tasks: [...d.tasks.filter((t) => t.series_id !== seriesId && t.id !== anchor.id), ...updatedDone, ...inserted],
+      }))
+    }, 'Tâche modifiée'),
     removeTask: (id) => act(async () => {
       const target = data.tasks.find((t) => t.id === id)
       if (target?.series_id) {
@@ -233,11 +257,12 @@ export function DataProvider({ children }) {
     }, ids.length > 1 ? 'Tâches supprimées' : 'Tâche supprimée'),
 
     // Challenges
-    startCatalogueChallenge: ({ challenge, startKey, domainId, goalId }) => act(async () => {
+    startCatalogueChallenge: ({ challenge, startKey, endKey: endKeyIn, domainId, goalId }) => act(async () => {
       if (data.activeChallenges.some((a) => a.challenge_id === challenge.id && a.end_date >= todayKey())) {
         throw new AppError('Ce challenge est déjà en cours.')
       }
-      const endKey = challengeEndKey(startKey, challenge.durationDays)
+      const endKey = endKeyIn || challengeEndKey(startKey, challenge.durationDays)
+      if (endKey < startKey) throw new AppError('La date de fin doit suivre la date de début.')
       const rows = buildChallengeTasks({ blueprints: challenge.blueprints, startKey, endKey, domainId, goalId })
       const { challenge: created, tasks } = await api.startChallenge(
         userId,
@@ -315,7 +340,7 @@ export function DataProvider({ children }) {
       const row = await api.updateProfile(userId, patch)
       setData((d) => ({ ...d, profile: row }))
     }),
-  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays, data.pausePeriods, data.tasks])
+  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays, data.tasks])
 
   const derived = useMemo(() => {
     const pauseDays = (data.pausePeriods ?? []).flatMap((p) => occurrenceDates(p.start_date, p.end_date, 'daily'))

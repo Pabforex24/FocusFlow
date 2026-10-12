@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { addDays, diffDays, occurrenceDates, overlapDays, startOfWeekKey, toKey, fromKey } from './dates.js'
-import { overdueTasks, spreadDates, challengeTasks } from './tasks.js'
+import { overdueTasks, spreadDates, challengeTasks, recurrenceDates, repeatConfig } from './tasks.js'
 import { computeLevel, computeStats, computeBadges, xpForLevel } from './gamification.js'
 import { buildChallengeTasks, challengeEndKey, challengeProgress } from './challenges.js'
 import { monthSummary, goalProgress, lastDays } from './stats.js'
@@ -54,6 +54,15 @@ describe('tâches (retard, répartition, challenge)', () => {
   it('challengeTasks trie par date', () => {
     const tasks = [t('2026-10-03', false, { challenge_active_id: 'c1' }), t('2026-10-01', false, { challenge_active_id: 'c1' }), t('2026-10-02', false, { challenge_active_id: 'c2' })]
     expect(challengeTasks(tasks, 'c1').map((x) => x.scheduled_on)).toEqual(['2026-10-01', '2026-10-03'])
+  })
+  it('recurrenceDates : nombre de jours OU date de fin', () => {
+    expect(recurrenceDates('2026-10-05', { frequency: 'daily', mode: 'days', days: 3 })).toEqual(['2026-10-05', '2026-10-06', '2026-10-07'])
+    expect(recurrenceDates('2026-10-05', { frequency: 'daily', mode: 'until', until: '2026-10-08' })).toEqual(['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08'])
+    expect(recurrenceDates('2026-10-05', { frequency: 'workdays', mode: 'until', until: '2026-10-11' })).toEqual(['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'])
+    expect(recurrenceDates('2026-10-10', { frequency: 'daily', mode: 'until', until: '2026-10-01' })).toEqual([])
+  })
+  it('repeatConfig ne garde que fréquence et jours', () => {
+    expect(repeatConfig({ frequency: 'custom', days: 30, weekdays: [0, 2] })).toEqual({ frequency: 'custom', weekdays: [0, 2] })
   })
 })
 

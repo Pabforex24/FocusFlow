@@ -61,6 +61,7 @@ create table public.tasks (
   priority            text not null default 'medium' check (priority in ('low','medium','high')),
   postponed           boolean not null default false,
   series_id           uuid,
+  repeat              jsonb,
   created_at          timestamptz not null default now()
 );
 create index tasks_user_day_idx on public.tasks(user_id, scheduled_on);

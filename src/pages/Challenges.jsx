@@ -16,9 +16,10 @@ import { Menu } from '../components/ui/Menu.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { WeekdayPicker } from '../components/ui/WeekdayPicker.jsx'
 import { ProgressBar, ProgressRing } from '../components/ui/ProgressBar.jsx'
+import { Segmented } from '../components/ui/Segmented.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { CHALLENGE_CATALOGUE, challengeProgress } from '../lib/challenges.js'
-import { diffDays, formatShort } from '../lib/dates.js'
+import { addDays, diffDays, formatShort } from '../lib/dates.js'
 import { DOMAIN_COLORS, DOMAIN_ICON_KEYS, ICONS } from '../lib/icons.js'
 import { challengeTasks } from '../lib/tasks.js'
 import { cn } from '../lib/cn.js'
@@ -31,6 +32,9 @@ const freqText = (b) => `${FREQ_LABEL[b.frequency] ?? b.frequency}${b.frequency 
 function StartModal({ challenge, onClose }) {
   const { domains, goals, today, actions } = useData()
   const [startKey, setStartKey] = useState(today)
+  const [mode, setMode] = useState('days')
+  const [days, setDays] = useState(challenge.durationDays)
+  const [until, setUntil] = useState(addDays(today, challenge.durationDays - 1))
   const [domainId, setDomainId] = useState(domains[0]?.id ?? '')
   const [goalId, setGoalId] = useState('')
   const [busy, setBusy] = useState(false)
@@ -44,24 +48,37 @@ function StartModal({ challenge, onClose }) {
     )
   }
 
+  const endKey = mode === 'days' ? addDays(startKey, Math.max(1, Math.floor(Number(days) || 1)) - 1) : until
+  const invalid = !startKey || !endKey || endKey < startKey
+
   const submit = async (e) => {
     e.preventDefault()
+    if (invalid) return
     setBusy(true)
-    const ok = await actions.startCatalogueChallenge({ challenge, startKey, domainId, goalId: goalId || null })
+    const ok = await actions.startCatalogueChallenge({ challenge, startKey, endKey, domainId, goalId: goalId || null })
     setBusy(false)
     if (ok) onClose()
   }
 
   return (
     <Modal title={`Démarrer : ${challenge.title}`} icon={Play} onClose={onClose}>
-      <form className="space-y-4" onSubmit={submit}>
-        <p className="text-sm text-muted">{challenge.durationDays} jours. Les tâches sont créées à l'avance dans votre planning.</p>
+      <form className="space-y-4" onSubmit={submit} noValidate>
+        <p className="text-sm text-muted">Les tâches sont créées à l'avance dans votre planning.</p>
         <Field label="Date de début"><Input type="date" value={startKey} min={today} onChange={(e) => setStartKey(e.target.value)} /></Field>
+        <Field label="Durée du challenge">
+          <Segmented fill value={mode} onChange={setMode} options={[{ value: 'days', label: 'Nombre de jours' }, { value: 'until', label: 'Date de fin' }]} />
+        </Field>
+        {mode === 'days' ? (
+          <Field label="Nombre de jours" hint="De 1 à 365"><Input type="number" min="1" max="365" value={days} onChange={(e) => setDays(e.target.value)} /></Field>
+        ) : (
+          <Field label="Jusqu'au (inclus)" error={invalid ? 'La date de fin doit être après le début.' : undefined}><Input type="date" min={startKey} value={until} onChange={(e) => setUntil(e.target.value)} /></Field>
+        )}
+        <p className="text-xs text-subtle">{invalid ? 'Choisissez une date de fin valide.' : `Du ${formatShort(startKey)} au ${formatShort(endKey)} · ${diffDays(startKey, endKey) + 1} jours.`}</p>
         <Field label="Domaine des tâches"><Select value={domainId} onChange={(e) => { setDomainId(e.target.value); setGoalId('') }}>{domains.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
         <Field label="Objectif lié" hint="Optionnel"><Select value={goalId} onChange={(e) => setGoalId(e.target.value)}><option value="">Aucun</option>{goals.filter((g) => g.domain_id === domainId).map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</Select></Field>
         <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose}>Annuler</Button>
-          <Button type="submit" loading={busy} disabled={!startKey}>Démarrer</Button>
+          <Button type="submit" loading={busy} disabled={invalid}>Démarrer</Button>
         </div>
       </form>
     </Modal>

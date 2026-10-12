@@ -104,6 +104,37 @@ describe('DataContext', () => {
     expect(result.current.tasks.map((t) => t.id)).toEqual(['t1', 't2'])
   })
 
+  it('modifier la répétition reconstruit la série en conservant les jours faits', async () => {
+    const snap = snapshot()
+    snap.tasks = [
+      task('a', { series_id: 's1', scheduled_on: '2026-10-05', repeat: { frequency: 'daily', weekdays: [] } }),
+      task('b', { series_id: 's1', scheduled_on: '2026-10-06' }),
+      task('c', { series_id: 's1', scheduled_on: '2026-10-07', done: true, done_at: 'x' }),
+    ]
+    api.loadAll.mockResolvedValue(snap)
+    api.deleteTasks.mockResolvedValue(null)
+    api.updateTasks.mockImplementation((ids, patch) => Promise.resolve(ids.map((id) => ({ ...snap.tasks.find((t) => t.id === id), ...patch }))))
+    api.createTasks.mockImplementation((userId, rows) => Promise.resolve(rows.map((r, i) => ({ ...r, id: `new${i}` }))))
+    const { result } = await setup()
+    await act(async () => {
+      await result.current.actions.saveSeries(result.current.tasks.find((t) => t.id === 'a'), { title: 'Sport', priority: 'medium' }, { frequency: 'daily', mode: 'days', days: 2, weekdays: [], start: '2026-10-05' })
+    })
+    expect(api.deleteTasks).toHaveBeenCalledWith(['a', 'b'])
+    const series = result.current.tasks.filter((t) => t.series_id === 's1')
+    expect(series.map((t) => t.scheduled_on).sort()).toEqual(['2026-10-05', '2026-10-06', '2026-10-07'])
+    expect(series.find((t) => t.scheduled_on === '2026-10-07').done).toBe(true)
+  })
+
+  it('démarrer un challenge avec une date de fin explicite', async () => {
+    const { result } = await setup()
+    api.startChallenge.mockResolvedValue({ challenge: { id: 'ac1' }, tasks: [] })
+    const challenge = { id: 'c1', title: 'T', color: '#000', durationDays: 21, blueprints: [{ title: 'X', frequency: 'daily' }] }
+    await act(async () => {
+      await result.current.actions.startCatalogueChallenge({ challenge, startKey: '2026-09-01', endKey: '2026-09-05', domainId: 'd1', goalId: null })
+    })
+    expect(api.startChallenge).toHaveBeenCalledWith('u1', expect.objectContaining({ start_date: '2026-09-01', end_date: '2026-09-05' }), expect.any(Array))
+  })
+
   it('supprimer un domaine retire ses objectifs et détache ses tâches', async () => {
     const { result } = await setup()
     api.deleteDomain.mockResolvedValue(null)
