@@ -68,17 +68,26 @@ export function computeStats({ tasks, restDays = [], pauseDays = [], focusSessio
   let xp = 0
   let totalDone = 0
   let perfectDays = 0
-  let missedDays = 0
   for (const t of tasks) if (t.done) { xp += t.xp_value; totalDone += 1 }
   xp += focusSessions.length * FOCUS_XP
 
+  // Jours manqués : un jour passé sans tâche faite, MAIS AUSSI un jour qu'une tâche non faite a
+  // quitté en étant reportée (`postponed_from`). Sans ça, reporter/rattraper effacerait la sanction.
+  const missed = new Set()
   for (const [key, day] of Object.entries(days)) {
-    if (day.total > 0 && day.done === day.total) { xp += PERFECT_DAY_XP; perfectDays += 1 }
-    if (key < today && day.done === 0 && !restSet.has(key)) {
-      missedDays += 1
-      xp -= hardcore ? PENALTY_HARDCORE : PENALTY_NORMAL
-    }
+    if (key < today && day.done === 0 && !restSet.has(key)) missed.add(key)
   }
+  for (const t of tasks) {
+    if (t.postponed_from && t.postponed_from < today && !restSet.has(t.postponed_from)) missed.add(t.postponed_from)
+  }
+  const missedDays = missed.size
+
+  // Une journée n'est « parfaite » que si aucune tâche n'en a été reportée : le report ne doit
+  // pas transformer un jour raté en bonus (les tâches restantes semblant toutes faites).
+  for (const [key, day] of Object.entries(days)) {
+    if (day.total > 0 && day.done === day.total && !missed.has(key)) { xp += PERFECT_DAY_XP; perfectDays += 1 }
+  }
+  xp -= missedDays * (hardcore ? PENALTY_HARDCORE : PENALTY_NORMAL)
   xp = Math.max(0, xp)
 
   const { streak, longest } = computeStreaks(days, restSet, today)

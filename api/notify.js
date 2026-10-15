@@ -63,7 +63,7 @@ async function processUser(profile, now) {
   const since = addDays(today, -HISTORY_DAYS)
 
   const [tasks, rests, sessions, subs] = await Promise.all([
-    select(`tasks?user_id=eq.${profile.id}&scheduled_on=gte.${since}&select=id,scheduled_on,done`),
+    select(`tasks?user_id=eq.${profile.id}&scheduled_on=gte.${since}&select=id,scheduled_on,done,postponed_from`),
     select(`rest_days?user_id=eq.${profile.id}&select=day`),
     select(`focus_sessions?user_id=eq.${profile.id}&completed_on=gte.${since}&select=id`),
     select(`push_subscriptions?user_id=eq.${profile.id}&select=endpoint,p256dh,auth`),

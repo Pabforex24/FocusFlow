@@ -94,6 +94,28 @@ describe('niveaux et XP', () => {
     const s = computeStats({ tasks: [task('2026-09-01', false)], today: '2026-09-30' })
     expect(s.xp).toBe(0)
   })
+  it('le report d\'une tâche non faite ne supprime pas la sanction du jour d\'origine', () => {
+    // Tâche prévue le 28 puis reportée au 30 : le 28 reste compté comme manqué.
+    const tasks = [task('2026-09-30', false, { postponed_from: '2026-09-28' })]
+    const s = computeStats({ tasks, today: '2026-09-30' })
+    expect(s.missedDays).toBe(1)
+  })
+  it('terminer une tâche reportée ne lève pas la sanction du jour d\'origine', () => {
+    const tasks = [task('2026-09-30', true, { postponed_from: '2026-09-28' })]
+    const s = computeStats({ tasks, today: '2026-10-01' })
+    expect(s.missedDays).toBe(1) // le 28 reste manqué malgré la tâche faite le 30
+    expect(s.xp).toBe(Math.max(0, 10 + 50 - 15))
+  })
+  it('un jour n\'est pas « parfait » si une tâche en a été reportée', () => {
+    const tasks = [task('2026-09-28', true), task('2026-09-30', false, { postponed_from: '2026-09-28' })]
+    const s = computeStats({ tasks, today: '2026-09-30' })
+    expect(s.missedDays).toBe(1)
+    expect(s.perfectDays).toBe(0)
+  })
+  it('un imprévu protège aussi le jour d\'origine d\'une tâche reportée', () => {
+    const tasks = [task('2026-09-30', false, { postponed_from: '2026-09-28' })]
+    expect(computeStats({ tasks, restDays: ['2026-09-28'], today: '2026-09-30' }).missedDays).toBe(0)
+  })
 })
 
 describe('série (streak)', () => {

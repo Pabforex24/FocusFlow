@@ -60,6 +60,7 @@ create table public.tasks (
   xp_value            integer not null default 10,
   priority            text not null default 'medium' check (priority in ('low','medium','high')),
   postponed           boolean not null default false,
+  postponed_from      date,          -- jour quitté en reportant (gèle la sanction du jour manqué)
   series_id           uuid,
   repeat              jsonb,
   created_at          timestamptz not null default now()

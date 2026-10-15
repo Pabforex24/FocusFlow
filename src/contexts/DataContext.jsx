@@ -22,6 +22,12 @@ const STALE_AFTER_MS = 30_000
 const newSeriesId = () =>
   globalThis.crypto?.randomUUID?.() ?? `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 
+// Date d'origine à figer quand une tâche encore non faite quitte un jour déjà passé (report/rattrapage/
+// modification de date) : `computeStats` la relit pour garder la sanction du jour manqué acquise.
+// On conserve la toute première date figée ; un report anticipé (jour futur) ne fige rien.
+const postponeOrigin = (task, nextDay) => task.postponed_from
+  ?? (!task.done && nextDay !== task.scheduled_on && task.scheduled_on < todayKey() ? task.scheduled_on : null)
+
 export function DataProvider({ children }) {
   const { user } = useAuth()
   const toast = useToast()
@@ -187,7 +193,13 @@ export function DataProvider({ children }) {
         patch('tasks', (l) => [...l, row])
       }
     }, 'Tâche ajoutée'),
-    editTask: (id, p) => act(async () => { const row = await api.updateTask(id, p); patch('tasks', (l) => replaceIn(l, row)) }, 'Tâche modifiée'),
+    editTask: (id, p) => act(async () => {
+      const target = data.tasks.find((t) => t.id === id)
+      const fields = { ...p }
+      if (p.scheduled_on && target) fields.postponed_from = postponeOrigin(target, p.scheduled_on)
+      const row = await api.updateTask(id, fields)
+      patch('tasks', (l) => replaceIn(l, row))
+    }, 'Tâche modifiée'),
     // Reconstruit une série (à la création d'une répétition depuis une tâche simple, ou à la
     // modification de sa répétition). Les occurrences déjà faites sont conservées telles quelles.
     saveSeries: (anchor, fields, repeat) => act(async () => {
@@ -237,17 +249,24 @@ export function DataProvider({ children }) {
       return ok
     },
     postponeTask: (task) => act(async () => {
-      const row = await api.updateTask(task.id, { scheduled_on: addDays(task.scheduled_on, 1), postponed: true })
+      const day = addDays(task.scheduled_on, 1)
+      const row = await api.updateTask(task.id, { scheduled_on: day, postponed: true, postponed_from: postponeOrigin(task, day) })
       patch('tasks', (l) => replaceIn(l, row))
     }, 'Tâche reportée à demain'),
     moveTasksTo: (ids, day) => act(async () => {
-      const rows = await Promise.all(ids.map((id) => api.updateTask(id, { scheduled_on: day, postponed: true })))
+      const rows = await Promise.all(ids.map((id) => {
+        const task = data.tasks.find((t) => t.id === id)
+        return api.updateTask(id, { scheduled_on: day, postponed: true, postponed_from: task ? postponeOrigin(task, day) : null })
+      }))
       const byId = new Map(rows.map((r) => [r.id, r]))
       patch('tasks', (l) => l.map((t) => byId.get(t.id) ?? t))
     }, ids.length > 1 ? 'Tâches reportées' : 'Tâche reportée'),
     spreadTasks: (ids, startDay, days) => act(async () => {
       const plan = spreadDates(ids, startDay, days)
-      const rows = await Promise.all(plan.map(({ id, day }) => api.updateTask(id, { scheduled_on: day, postponed: true })))
+      const rows = await Promise.all(plan.map(({ id, day }) => {
+        const task = data.tasks.find((t) => t.id === id)
+        return api.updateTask(id, { scheduled_on: day, postponed: true, postponed_from: task ? postponeOrigin(task, day) : null })
+      }))
       const byId = new Map(rows.map((r) => [r.id, r]))
       patch('tasks', (l) => l.map((t) => byId.get(t.id) ?? t))
     }, 'Tâches réparties'),

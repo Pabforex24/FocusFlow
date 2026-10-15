@@ -44,7 +44,7 @@ api/          Fonctions Vercel (serveur) : coach.js (Groq), notify.js (rappels p
 | Élément | Règle |
 |---|---|
 | XP | tâche `xp_value` (10, ou 20 si générée par challenge) · session Focus +30 · journée 100 % +50 |
-| Pénalité | jour passé avec tâches mais aucune faite : −15 XP (−30 en Hardcore), sauf jour d'imprévu ; XP jamais < 0 |
+| Pénalité | jour passé avec tâches mais aucune faite : −15 XP (−30 en Hardcore), sauf jour d'imprévu ; XP jamais < 0 ; reportée ou faite plus tard, une tâche non faite garde la sanction de son jour d'origine |
 | Niveau | passer du niveau n au suivant coûte n×100+50 XP |
 | Série | jours consécutifs avec ≥ 1 tâche faite ; aujourd'hui non fait ne casse pas la série ; un imprévu la protège |
 | Imprévu | 1 par semaine (lundi → dimanche) |
