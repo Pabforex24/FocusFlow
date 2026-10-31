@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Lock, Mail, Target, Timer, TrendingUp, User } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, Target, Timer, TrendingUp, User } from 'lucide-react'
 import Logo from '../components/layout/Logo.jsx'
 import { Alert } from '../components/ui/Alert.jsx'
 import { Button } from '../components/ui/Button.jsx'
@@ -23,9 +24,10 @@ function IconInput({ icon: Icon, ...props }) {
   )
 }
 
-export default function Login() {
+export default function Login({ initialMode = 'login' }) {
   const { signIn, signUp, resetPassword } = useAuth()
-  const [mode, setMode] = useState('login')
+  const navigate = useNavigate()
+  const [mode, setMode] = useState(initialMode)
   const [form, setForm] = useState({ email: '', password: '', name: '' })
   const [show, setShow] = useState(false)
   const [error, setError] = useState('')
@@ -34,7 +36,12 @@ export default function Login() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const login = mode === 'login'
   const forgot = mode === 'forgot'
-  const switchMode = (next) => { setMode(next); setError(''); setNotice('') }
+  const switchMode = (next) => {
+    setMode(next)
+    setError('')
+    setNotice('')
+    if (next === 'login' || next === 'signup') navigate(next === 'signup' ? '/signup' : '/login', { replace: true })
+  }
 
   const submit = async (e) => {
     e.preventDefault()
@@ -64,7 +71,7 @@ export default function Login() {
     <div className="grid min-h-dvh lg:grid-cols-2">
       <aside className="relative hidden flex-col justify-between overflow-hidden hero-surface p-12 text-white lg:flex">
         <div className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-white/10 blur-3xl" aria-hidden />
-        <div className="relative flex items-center gap-2.5 text-lg font-bold">FocusFlow</div>
+        <Link to="/" className="relative flex items-center gap-2.5 text-lg font-bold">FocusFlow</Link>
         <div className="relative max-w-md space-y-6">
           <h2 className="text-4xl leading-tight font-bold tracking-tight">Agissez chaque jour, avancez vers vos objectifs.</h2>
           <ul className="space-y-4">
@@ -77,42 +84,51 @@ export default function Login() {
       </aside>
 
       <main className="flex items-center justify-center p-5 pt-safe pb-safe sm:p-8">
-        <form onSubmit={submit} noValidate className="w-full max-w-sm animate-fade-up space-y-5">
-          <Logo className="lg:hidden" />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-fg">{forgot ? 'Mot de passe oublié' : login ? 'Bon retour !' : 'Créer votre compte'}</h1>
-            <p className="mt-1 text-sm text-muted">{forgot ? 'Entrez votre e-mail : nous vous envoyons un lien pour en choisir un nouveau.' : login ? 'Connectez-vous pour retrouver vos tâches.' : 'Quelques secondes pour commencer.'}</p>
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex items-center justify-between">
+            <Link to="/" aria-label="Accueil FocusFlow" className="rounded-xl lg:hidden"><Logo /></Link>
+            <Link to="/" className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-fg">
+              <ArrowLeft className="size-4" aria-hidden />
+              Accueil
+            </Link>
           </div>
 
-          {mode === 'signup' && <Field label="Prénom"><IconInput icon={User} value={form.name} onChange={set('name')} maxLength={40} autoComplete="given-name" placeholder="Votre prénom" /></Field>}
-          <Field label="Email"><IconInput icon={Mail} type="email" value={form.email} onChange={set('email')} autoComplete="email" placeholder="vous@exemple.com" /></Field>
-          {!forgot && <Field label="Mot de passe">
-            <div className="relative">
-              <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-subtle" aria-hidden />
-              <Input className="pr-12 pl-10" type={show ? 'text' : 'password'} value={form.password} onChange={set('password')} autoComplete={login ? 'current-password' : 'new-password'} placeholder={login ? 'Votre mot de passe' : `${MIN_PASSWORD} caractères minimum`} />
-              <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-subtle hover:bg-surface-2 hover:text-fg">
-                {show ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-              </button>
+          <form onSubmit={submit} noValidate className="w-full max-w-sm animate-fade-up space-y-5">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-fg">{forgot ? 'Mot de passe oublié' : login ? 'Bon retour !' : 'Créer votre compte'}</h1>
+              <p className="mt-1 text-sm text-muted">{forgot ? 'Entrez votre e-mail : nous vous envoyons un lien pour en choisir un nouveau.' : login ? 'Connectez-vous pour retrouver vos tâches.' : 'Quelques secondes pour commencer.'}</p>
             </div>
-          </Field>}
-          {login && <p className="-mt-2 text-right"><button type="button" onClick={() => switchMode('forgot')} className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">Mot de passe oublié ?</button></p>}
 
-          {error && <Alert tone="danger">{error}</Alert>}
-          {notice && <Alert tone="success">{notice}</Alert>}
+            {mode === 'signup' && <Field label="Prénom"><IconInput icon={User} value={form.name} onChange={set('name')} maxLength={40} autoComplete="given-name" placeholder="Votre prénom" /></Field>}
+            <Field label="Email"><IconInput icon={Mail} type="email" value={form.email} onChange={set('email')} autoComplete="email" placeholder="vous@exemple.com" /></Field>
+            {!forgot && <Field label="Mot de passe">
+              <div className="relative">
+                <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-subtle" aria-hidden />
+                <Input className="pr-12 pl-10" type={show ? 'text' : 'password'} value={form.password} onChange={set('password')} autoComplete={login ? 'current-password' : 'new-password'} placeholder={login ? 'Votre mot de passe' : `${MIN_PASSWORD} caractères minimum`} />
+                <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-subtle hover:bg-surface-2 hover:text-fg">
+                  {show ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+                </button>
+              </div>
+            </Field>}
+            {login && <p className="-mt-2 text-right"><button type="button" onClick={() => switchMode('forgot')} className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">Mot de passe oublié ?</button></p>}
 
-          <Button type="submit" size="lg" className="w-full" loading={busy}>{forgot ? 'Envoyer le lien' : login ? 'Se connecter' : 'Créer mon compte'}</Button>
-          <p className="text-center text-sm text-muted">
-            {forgot ? (
-              <button type="button" onClick={() => switchMode('login')} className="font-semibold text-brand-600 hover:underline dark:text-brand-300">Retour à la connexion</button>
-            ) : (
-              <>
-                {login ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}
-                <button type="button" onClick={() => switchMode(login ? 'signup' : 'login')} className="font-semibold text-brand-600 hover:underline dark:text-brand-300">{login ? "S'inscrire" : 'Se connecter'}</button>
-              </>
-            )}
-          </p>
-        </form>
+            {error && <Alert tone="danger">{error}</Alert>}
+            {notice && <Alert tone="success">{notice}</Alert>}
+
+            <Button type="submit" size="lg" className="w-full" loading={busy}>{forgot ? 'Envoyer le lien' : login ? 'Se connecter' : 'Créer mon compte'}</Button>
+            <p className="text-center text-sm text-muted">
+              {forgot ? (
+                <button type="button" onClick={() => switchMode('login')} className="font-semibold text-brand-600 hover:underline dark:text-brand-300">Retour à la connexion</button>
+              ) : (
+                <>
+                  {login ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}
+                  <button type="button" onClick={() => switchMode(login ? 'signup' : 'login')} className="font-semibold text-brand-600 hover:underline dark:text-brand-300">{login ? "S'inscrire" : 'Se connecter'}</button>
+                </>
+              )}
+            </p>
+          </form>
+        </div>
       </main>
     </div>
   )

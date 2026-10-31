@@ -11,6 +11,7 @@ import Coach from './pages/Coach.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Domains from './pages/Domains.jsx'
 import Goals from './pages/Goals.jsx'
+import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
 import Monthly from './pages/Monthly.jsx'
 import Profile from './pages/Profile.jsx'
@@ -29,11 +30,22 @@ function SetupNotice() {
   )
 }
 
+function PublicRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login initialMode="login" />} />
+      <Route path="/signup" element={<Login initialMode="signup" />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
 export default function App() {
   const { user, loading, recovery } = useAuth()
   if (!isSupabaseConfigured) return <SetupNotice />
   if (loading) return <div className="grid min-h-dvh place-items-center bg-bg"><Spinner className="size-8" /></div>
-  if (!user) return <Login />
+  if (!user) return <PublicRoutes />
   if (recovery) return <ResetPassword />
 
   return (

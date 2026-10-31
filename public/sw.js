@@ -6,7 +6,7 @@
 //  - Supabase (autre origine) n'est JAMAIS intercepté : les données viennent toujours du serveur.
 // Mise à jour : la nouvelle version attend (état "waiting") jusqu'à ce que l'utilisateur clique sur
 // « Actualiser » dans le bandeau (voir src/lib/pwa.js). Augmentez VERSION pour vider les anciens caches.
-const VERSION = 'v2'
+const VERSION = 'v3'
 const SHELL_CACHE = `focusflow-shell-${VERSION}`
 const ASSET_CACHE = `focusflow-assets-${VERSION}`
 const MAX_ASSETS = 60
@@ -39,6 +39,9 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+
+  // Médias : le navigateur gère seul les requêtes Range et son cache HTTP.
+  if (url.pathname.startsWith('/media/')) return
 
   if (request.mode === 'navigate') {
     // Réseau d'abord. La page d'accueil la plus récente est gardée en cache : hors-ligne, elle référence les bons fichiers.

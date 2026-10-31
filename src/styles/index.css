@@ -8,6 +8,7 @@
    Clair  = fonds blanc cassé légèrement verts, mêmes accents. */
 :root {
   color-scheme: light;
+  --veil-rgb: 4 7 7;    /* voile des médias d'accueil */
   --bg: #f2f7f4;        /* fond de l'application */
   --surface: #ffffff;   /* cartes, modales, barres */
   --surface-2: #e8f0ec; /* zones secondaires, survols, pistes de progression */
@@ -57,6 +58,7 @@
 /* ── Palette « Walnut » : choisie dans Profil > Apparence (attribut data-palette sur <html>).
    Elle remplace seulement les couleurs ; la palette « Forêt » ci-dessus reste la valeur par défaut. ── */
 :root[data-palette='walnut'] {
+  --veil-rgb: 9 6 5;
   --bg: #f6f1ed;
   --surface: #ffffff;
   --surface-2: #efe8e2;
@@ -118,6 +120,7 @@
 
 /* ── Palette « Royal Charcoal » (Profil > Apparence) ── */
 :root[data-palette='charcoal'] {
+  --veil-rgb: 14 15 17;
   --bg: #f3f4f6;
   --surface: #ffffff;
   --surface-2: #e9ebee;
@@ -163,6 +166,7 @@
 
 /* ── Palette « Navy Mirage » (Profil > Apparence) ── */
 :root[data-palette='navy'] {
+  --veil-rgb: 8 13 22;
   --bg: #eef3f9;
   --surface: #ffffff;
   --surface-2: #e3ebf5;
