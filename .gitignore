@@ -4,3 +4,5 @@ dist
 .env.local
 .DS_Store
 focusflow_rappel*
+note.txt
+chrome-test3.log
