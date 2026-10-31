@@ -96,7 +96,7 @@ export default function FocusDetail() {
 
   return (
     <main className="focus-detail fixed inset-0 z-40 overflow-hidden text-fg" onPointerDown={revealControls}>
-      <div className="grid h-dvh place-items-center px-3 py-16 sm:px-8">
+      <div className="grid h-dvh place-items-center px-3 py-16">
         <FocusTimerDisplay style={style} remainingMs={remainingMs} totalMs={totalMs} paused={paused} />
       </div>
 

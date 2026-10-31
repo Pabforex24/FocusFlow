@@ -19,7 +19,7 @@
 
 .focus-time-main {
   font-family: var(--font-display);
-  font-size: clamp(2.9rem, 18vw, 10rem);
+  font-size: clamp(3.2rem, 19.8vw, 10rem);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: .95;
@@ -28,7 +28,7 @@
 }
 
 .focus-timer:not(.is-hours) .focus-time-main {
-  font-size: clamp(3.8rem, 24vw, 15rem);
+  font-size: clamp(5rem, 31.8vw, 15rem);
 }
 
 .focus-colon {
@@ -37,6 +37,7 @@
 }
 
 .focus-timer--thin .focus-time-main {
+  font-size: clamp(3.5rem, 22vw, 10rem);
   font-weight: 200;
   letter-spacing: -.065em;
 }
@@ -52,20 +53,19 @@
 
 .focus-timer--minimal .focus-time-main {
   font-family: var(--font-sans);
+  font-size: clamp(3.8rem, 24.2vw, 10rem);
   font-weight: 600;
   letter-spacing: -.055em;
 }
 
-/* Cartes façon calendrier à pages / flip clock. */
-.focus-timer--flip,
-.focus-timer--calendar {
-  font-size: clamp(2.4rem, 15vw, 9rem);
-}
+.focus-timer--thin:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 34vw, 15rem); }
+.focus-timer--minimal:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 37.4vw, 15rem); }
 
-.focus-timer--flip:not(.is-hours),
-.focus-timer--calendar:not(.is-hours) {
-  font-size: clamp(2.8rem, 18vw, 9rem);
-}
+/* Cartes façon calendrier à pages / flip clock. */
+.focus-timer--flip { font-size: clamp(2.8rem, 17.8vw, 9rem); }
+.focus-timer--calendar { font-size: clamp(2.6rem, 16.6vw, 9rem); }
+.focus-timer--flip:not(.is-hours) { font-size: clamp(4rem, 28vw, 9rem); }
+.focus-timer--calendar:not(.is-hours) { font-size: clamp(3.8rem, 26vw, 9rem); }
 
 .focus-groups {
   display: flex;
@@ -174,7 +174,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: min(78vw, 58vh, 40rem);
+  width: min(92vw, 58vh, 40rem);
   aspect-ratio: 1;
 }
 
@@ -195,8 +195,8 @@
 }
 
 .focus-timer--ring .focus-ring__content { position: relative; z-index: 1; }
-.focus-timer--ring .focus-time-main { font-size: clamp(2rem, 11vw, 6.4rem); }
-.focus-timer--ring:not(.is-hours) .focus-time-main { font-size: clamp(2.7rem, 16vw, 9rem); }
+.focus-timer--ring .focus-time-main { font-size: clamp(3.2rem, min(20vw, 12.5vh), 6.4rem); }
+.focus-timer--ring:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 31.2vw, 9rem); }
 
 /* Pause : on garde le style visible, les chiffres sont simplement atténués. */
 .focus-timer.is-paused .focus-card__value,
@@ -217,15 +217,19 @@
 
 /* Paysage bas : on privilégie la hauteur pour ne jamais déborder. */
 @media (orientation: landscape) and (max-height: 560px) {
-  .focus-time-main { font-size: min(18vh, 12vw); }
-  .focus-timer:not(.is-hours) .focus-time-main { font-size: min(22vh, 15vw); }
-  .focus-timer--flip,
-  .focus-timer--calendar { font-size: min(18vh, 12vw); }
-  .focus-timer--flip:not(.is-hours),
-  .focus-timer--calendar:not(.is-hours) { font-size: min(22vh, 15vw); }
-  .focus-timer--ring .focus-ring { width: min(62vh, 58vw); }
-  .focus-timer--ring .focus-time-main { font-size: min(11vh, 7vw); }
-  .focus-timer--ring:not(.is-hours) .focus-time-main { font-size: min(15vh, 9vw); }
+  .focus-time-main { font-size: min(43vh, 19.8vw); }
+  .focus-timer--thin .focus-time-main { font-size: min(48vh, 22vw); }
+  .focus-timer--minimal .focus-time-main { font-size: min(52vh, 24.2vw); }
+  .focus-timer:not(.is-hours) .focus-time-main { font-size: min(66vh, 31.8vw); }
+  .focus-timer--thin:not(.is-hours) .focus-time-main { font-size: min(70.5vh, 34vw); }
+  .focus-timer--minimal:not(.is-hours) .focus-time-main { font-size: min(77vh, 37.4vw); }
+  .focus-timer--flip { font-size: min(44vh, 17.8vw); }
+  .focus-timer--calendar { font-size: min(44vh, 16.6vw); }
+  .focus-timer--flip:not(.is-hours) { font-size: min(58vh, 28vw); }
+  .focus-timer--calendar:not(.is-hours) { font-size: min(58vh, 26vw); }
+  .focus-timer--ring .focus-ring { width: min(72vh, 92vw); }
+  .focus-timer--ring .focus-time-main { font-size: min(15.5vh, 20vw); }
+  .focus-timer--ring:not(.is-hours) .focus-time-main { font-size: min(24vh, 31.2vw); }
 }
 
 @media (prefers-reduced-motion: reduce) {
