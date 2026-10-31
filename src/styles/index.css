@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./focus.css";
 
 /* Dark mode piloté par la classe "dark" sur <html> (voir ThemeContext) */
 @custom-variant dark (&:where(.dark, .dark *));

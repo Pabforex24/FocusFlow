@@ -1,0 +1,148 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Check, Palette, Pause, Play, Square } from 'lucide-react'
+import FocusTimerDisplay from '../components/focus/FocusTimerDisplay.jsx'
+import Modal from '../components/Modal.jsx'
+import { Button } from '../components/ui/Button.jsx'
+import { useFocus, useFocusTimer } from '../contexts/FocusContext.jsx'
+import { FOCUS_STYLES, readFocusStyle, saveFocusStyle } from '../lib/focusStyles.js'
+import { cn } from '../lib/cn.js'
+
+const CONTROLS_TIMEOUT = 4500
+const PREVIEW_MS = 25 * 60_000
+
+function useWakeLock() {
+  useEffect(() => {
+    let sentinel = null
+    let cancelled = false
+    const acquire = async () => {
+      if (cancelled || document.visibilityState !== 'visible' || !('wakeLock' in navigator)) return
+      try { sentinel = await navigator.wakeLock.request('screen') } catch { return }
+      sentinel?.addEventListener('release', () => { sentinel = null })
+    }
+    const onVisibility = () => { if (document.visibilityState === 'visible' && !sentinel) acquire() }
+    acquire()
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisibility)
+      if (sentinel) sentinel.release?.().catch(() => {})
+    }
+  }, [])
+}
+
+export default function FocusDetail() {
+  const { active, abandon, pause, resume } = useFocus()
+  const { remainingMs, totalMs, paused } = useFocusTimer()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from
+  const [style, setStyle] = useState(readFocusStyle)
+  const [styleOpen, setStyleOpen] = useState(false)
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const [activity, setActivity] = useState(0)
+  const hadSessionRef = useRef(Boolean(active))
+
+  useWakeLock()
+
+  useEffect(() => {
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previous }
+  }, [])
+
+  useEffect(() => () => {
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (active) { hadSessionRef.current = true; return }
+    if (hadSessionRef.current) navigate(from || '/tasks', { replace: true })
+  }, [active, from, navigate])
+
+  const revealControls = useCallback(() => {
+    setControlsVisible(true)
+    setActivity((value) => value + 1)
+  }, [])
+
+  useEffect(() => {
+    if (!controlsVisible || styleOpen) return undefined
+    const timer = setTimeout(() => setControlsVisible(false), CONTROLS_TIMEOUT)
+    return () => clearTimeout(timer)
+  }, [controlsVisible, styleOpen, activity])
+
+  useEffect(() => {
+    const onKey = () => revealControls()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [revealControls])
+
+  const chooseStyle = (next) => {
+    setStyle(next)
+    saveFocusStyle(next)
+  }
+
+  if (!active) {
+    return (
+      <main className="focus-detail grid min-h-dvh place-items-center px-5 text-fg">
+        <div className="w-full max-w-sm rounded-3xl border border-line bg-surface/90 p-6 text-center shadow-pop backdrop-blur-xl">
+          <p className="font-display text-lg font-semibold">Aucune session Focus en cours</p>
+          <p className="mt-1 text-sm text-muted">Lancez une session depuis l’application pour ouvrir le détail du minuteur.</p>
+          <Button className="mt-5 w-full" icon={ArrowLeft} onClick={() => navigate('/tasks')}>Retour aux tâches</Button>
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="focus-detail fixed inset-0 z-40 overflow-hidden text-fg" onPointerDown={revealControls}>
+      <div className="grid h-dvh place-items-center px-3 py-16 sm:px-8">
+        <FocusTimerDisplay style={style} remainingMs={remainingMs} totalMs={totalMs} paused={paused} />
+      </div>
+
+      {controlsVisible && (
+        <div className="pointer-events-none absolute inset-0 z-10 animate-fade-in">
+          <div className="pt-safe px-3 sm:px-5">
+            <div className="pointer-events-auto mt-3 inline-flex sm:mt-5">
+              <Button variant="secondary" icon={ArrowLeft} onClick={() => (from ? navigate(-1) : navigate('/tasks', { replace: true }))}>Retour</Button>
+            </div>
+          </div>
+
+          <div className="pb-safe absolute inset-x-0 bottom-0 px-3 pb-4 sm:px-5 sm:pb-6">
+            <div className="pointer-events-auto mx-auto flex w-fit max-w-full flex-wrap items-center justify-center gap-2 rounded-2xl border border-line bg-surface/90 p-2 shadow-pop backdrop-blur-xl">
+              <Button variant={paused ? 'primary' : 'secondary'} icon={paused ? Play : Pause} onClick={paused ? resume : pause}>
+                {paused ? 'Reprendre' : 'Pause'}
+              </Button>
+              <Button variant="danger-soft" icon={Square} onClick={abandon}>Abandonner</Button>
+              <Button variant="secondary" icon={Palette} onClick={() => { setStyleOpen(true); revealControls() }}>Style</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {styleOpen && (
+        <Modal title="Style du minuteur" description="Le changement est immédiat et sera conservé pour la prochaine session." icon={Palette} size="md" onClose={() => setStyleOpen(false)}>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {FOCUS_STYLES.map((item) => {
+              const selected = style === item.id
+              return (
+                <button key={item.id} type="button" aria-pressed={selected} onClick={() => chooseStyle(item.id)}
+                  className={cn('group relative flex min-h-28 flex-col justify-between gap-3 rounded-2xl border p-3 text-left transition active:scale-[0.98]',
+                    selected ? 'border-brand-500 bg-brand-500/8 ring-2 ring-brand-500/25' : 'border-line bg-surface-2/40 hover:border-brand-500/40 hover:bg-surface-2/70')}>
+                  <span className="grid h-16 place-items-center overflow-hidden rounded-xl bg-surface/70">
+                    <FocusTimerDisplay style={item.id} remainingMs={PREVIEW_MS} totalMs={PREVIEW_MS} preview />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-fg">{item.label}</span>
+                    <span className="block text-xs leading-snug text-subtle">{item.description}</span>
+                  </span>
+                  {selected && <span className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-brand-500 text-brand-950"><Check className="size-3.5" aria-hidden /></span>}
+                </button>
+              )
+            })}
+          </div>
+        </Modal>
+      )}
+    </main>
+  )
+}

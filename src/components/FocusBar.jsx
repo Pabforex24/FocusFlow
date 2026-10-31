@@ -1,26 +1,44 @@
-import { Square, Timer } from 'lucide-react'
-import { useFocus, useFocusTimer, formatClock } from '../contexts/FocusContext.jsx'
+import { Link, useLocation } from 'react-router-dom'
+import { Pause, Play, Square, Timer } from 'lucide-react'
+import { useFocus, useFocusTimer } from '../contexts/FocusContext.jsx'
+import { formatFocusTime } from '../lib/focus.js'
 import { ProgressBar } from './ui/ProgressBar.jsx'
+
+function requestDetailFullscreen() {
+  if (document.fullscreenElement || !document.documentElement.requestFullscreen) return
+  document.documentElement.requestFullscreen().catch(() => {})
+}
 
 // Barre flottante visible sur toutes les pages tant qu'une session Focus est en cours.
 // Seul composant abonné au tick horodaté : les pages ne se re-rendent pas chaque seconde.
 export default function FocusBar() {
-  const { active, abandon } = useFocus()
-  const { remainingMs } = useFocusTimer()
+  const { active, abandon, pause, resume } = useFocus()
+  const { remainingMs, paused } = useFocusTimer()
+  const { pathname, search } = useLocation()
   if (!active) return null
-  const total = active.minutes * 60_000
-  const elapsed = ((total - remainingMs) / total) * 100
+  const total = active.totalMs
+  const elapsed = total ? ((total - remainingMs) / total) * 100 : 0
 
   return (
-    <div role="timer" className="fixed inset-x-3 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-30 animate-fade-up rounded-2xl border border-brand-400/20 bg-linear-to-br from-brand-700 to-brand-950 p-3.5 text-white shadow-pop md:inset-x-auto md:right-6 md:bottom-6 md:w-80">
+    <div role="timer" aria-label={`Temps restant : ${formatFocusTime(remainingMs, total)}`}
+      className="fixed inset-x-3 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-30 animate-fade-up rounded-2xl border border-brand-400/20 bg-linear-to-br from-brand-700 to-brand-950 p-3.5 text-white shadow-pop md:inset-x-auto md:right-6 md:bottom-6 md:w-80">
       <div className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15"><Timer className="size-5" aria-hidden /></span>
+        <Link to="/focus" state={{ from: `${pathname}${search}` }} onClick={requestDetailFullscreen}
+          aria-label="Ouvrir le détail Focus" title="Ouvrir le détail Focus"
+          className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/15 transition hover:bg-white/25 active:scale-95">
+          <Timer className="size-5" aria-hidden />
+        </Link>
         <div className="min-w-0 flex-1">
-          <p className="text-xl leading-tight font-bold tabular-nums">{formatClock(remainingMs)}</p>
-          <p className="truncate text-xs text-white/75">{active.taskTitle ?? 'Session Focus en cours'}</p>
+          <p className="text-xl leading-tight font-bold tabular-nums">{formatFocusTime(remainingMs, total)}</p>
+          <p className="truncate text-xs text-white/75">{paused ? 'En pause' : active.taskTitle ?? 'Session Focus en cours'}</p>
         </div>
-        <button type="button" onClick={abandon} aria-label="Abandonner la session"
-          className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 transition hover:bg-white/25 active:scale-95">
+        <button type="button" onClick={paused ? resume : pause} aria-label={paused ? 'Reprendre la session' : 'Mettre la session en pause'}
+          title={paused ? 'Reprendre' : 'Pause'}
+          className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/15 transition hover:bg-white/25 active:scale-95">
+          {paused ? <Play className="size-4" aria-hidden /> : <Pause className="size-4" aria-hidden />}
+        </button>
+        <button type="button" onClick={abandon} aria-label="Abandonner la session" title="Abandonner"
+          className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/15 transition hover:bg-white/25 active:scale-95">
           <Square className="size-4" aria-hidden />
         </button>
       </div>

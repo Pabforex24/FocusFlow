@@ -10,6 +10,7 @@ import Challenges from './pages/Challenges.jsx'
 import Coach from './pages/Coach.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Domains from './pages/Domains.jsx'
+import FocusDetail from './pages/FocusDetail.jsx'
 import Goals from './pages/Goals.jsx'
 import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Navigate to="/dashboard" replace />} />
           <Route path="/signup" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/focus" element={<FocusDetail />} />
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />

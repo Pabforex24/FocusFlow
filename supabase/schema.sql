@@ -237,7 +237,7 @@ begin
     alter table public.custom_challenges add constraint custom_color_fmt check (color ~ '^#[0-9a-fA-F]{6}$');
   end if;
   if not exists (select 1 from pg_constraint where conname = 'focus_minutes_range') then
-    alter table public.focus_sessions add constraint focus_minutes_range check (minutes between 1 and 600);
+    alter table public.focus_sessions add constraint focus_minutes_range check (minutes between 1 and 1440);
   end if;
 end $$;
 

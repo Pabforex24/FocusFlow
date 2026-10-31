@@ -5,6 +5,8 @@
 // « en cours » reste alors affichée mais la notification de fin n'arrive qu'au retour dans l'app.
 // Toutes les fonctions sont silencieuses (aucune erreur remontée) : les notifications sont un bonus.
 
+import { formatDurationLabel, formatFocusTime } from './focus.js'
+
 const TAG = 'focus-session'
 
 function canNotify() {
@@ -45,9 +47,10 @@ export async function showFocusStart(session) {
   const registration = await getRegistration()
   if (!registration) return
   const task = session.taskTitle || 'Session Focus'
+  const duration = session.totalMs ? formatFocusTime(session.totalMs, session.totalMs) : `${session.minutes} min`
   try {
     await registration.showNotification('Session Focus en cours', {
-      body: `${task} · ${session.minutes} min · fin à ${endTime(session.endsAt)}`,
+      body: `${task} · ${duration} · fin à ${endTime(session.endsAt)}`,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
       tag: TAG,
@@ -64,10 +67,10 @@ export async function showFocusStart(session) {
 export async function updateFocusNotification(session, remainingMs) {
   const registration = await getRegistration()
   if (!registration) return
-  const minutes = Math.max(0, Math.ceil(remainingMs / 60_000))
+  const remaining = formatDurationLabel(remainingMs)
   const task = session.taskTitle || 'Session Focus'
   try {
-    await registration.showNotification(`${minutes} min restantes`, {
+    await registration.showNotification(`${remaining} restantes`, {
       body: `${task} · fin à ${endTime(session.endsAt)}`,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
