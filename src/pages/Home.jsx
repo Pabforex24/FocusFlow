@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Sparkles, Target, Timer, TrendingUp } from 'lucide-react'
 import Logo from '../components/layout/Logo.jsx'
@@ -36,23 +36,35 @@ function StartLink({ to, variant = 'primary', className, children }) {
 }
 
 export default function Home() {
-  const reduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 767px)').matches)
+  const videoRef = useRef(null)
+  const [showVideo, setShowVideo] = useState(() => {
+    if (typeof window === 'undefined') return false
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false
+    const connection = navigator.connection
+    return !(connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType))
+  })
 
   useEffect(() => {
-    const query = window.matchMedia('(max-width: 767px)')
-    const onChange = () => setCompact(query.matches)
-    query.addEventListener('change', onChange)
-    return () => query.removeEventListener('change', onChange)
-  }, [])
+    if (!showVideo) return
+    const video = videoRef.current
+    if (!video) return
 
-  const showVideo = !compact && !reduceMotion
+    const attemptPlay = () => {
+      const promise = video.play()
+      if (promise) promise.catch(() => setShowVideo(false))
+    }
+
+    if (video.readyState >= 2) attemptPlay()
+    else video.addEventListener('canplay', attemptPlay, { once: true })
+    return () => video.removeEventListener('canplay', attemptPlay)
+  }, [showVideo])
 
   return (
     <main className="min-h-dvh bg-bg">
       <section className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-[#050808] text-white">
         {showVideo ? (
           <video
+            ref={videoRef}
             className="absolute inset-0 -z-20 size-full object-cover"
             src="/media/hero-pexels.mp4"
             poster="/media/hero-pexels-poster.jpg"
@@ -63,6 +75,7 @@ export default function Home() {
             preload="auto"
             aria-hidden="true"
             tabIndex={-1}
+            onError={() => setShowVideo(false)}
             style={{ transform: 'scaleX(-1)' }}
           />
         ) : (
@@ -86,33 +99,35 @@ export default function Home() {
         />
 
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8">
-          <header className="flex items-center justify-between py-5 sm:py-6">
-            <Link to="/" aria-label="Accueil FocusFlow" className="rounded-xl">
-              <Logo inverted />
+          <header className="flex items-center justify-between gap-3 py-5 sm:py-6">
+            <Link to="/" aria-label="Accueil FocusFlow" className="shrink-0 rounded-xl">
+              <Logo inverted textClassName="hidden min-[390px]:inline" />
             </Link>
-            <nav className="flex items-center gap-1.5 sm:gap-2">
+            <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <Link
                 to="/login"
-                className="rounded-xl px-3 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white sm:px-4"
+                className="rounded-xl px-2.5 py-2 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white sm:px-4 sm:py-2.5 sm:text-sm"
               >
-                Se connecter
+                <span className="sm:hidden">Connexion</span>
+                <span className="hidden sm:inline">Se connecter</span>
               </Link>
               <Link
                 to="/signup"
-                className="inline-flex h-10 items-center rounded-xl bg-white px-4 text-sm font-semibold text-brand-950 transition hover:bg-white/90 active:scale-[0.97]"
+                className="inline-flex h-9 items-center rounded-xl bg-white px-3 text-xs font-semibold text-brand-950 transition hover:bg-white/90 active:scale-[0.97] sm:h-10 sm:px-4 sm:text-sm"
               >
-                Créer un compte
+                <span className="sm:hidden">S'inscrire</span>
+                <span className="hidden sm:inline">Créer un compte</span>
               </Link>
             </nav>
           </header>
 
-          <div className="flex flex-1 items-center py-14 sm:py-20">
+          <div className="flex flex-1 items-center py-10 sm:py-20">
             <div className="max-w-3xl">
               <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white/85 backdrop-blur-md">
                 <Sparkles className="size-3.5 text-brand-300" aria-hidden />
                 Discipline personnelle, simplement
               </p>
-              <h1 className="mt-6 font-display text-[2.75rem] leading-[1.02] font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+              <h1 className="mt-6 font-display text-4xl leading-[1.05] font-semibold tracking-tight sm:text-6xl lg:text-7xl">
                 Moins de bruit.
                 <br />
                 <span className="text-brand-300">Plus de progrès.</span>
@@ -121,11 +136,11 @@ export default function Home() {
                 FocusFlow transforme vos objectifs en actions quotidiennes, protège votre concentration et rend vos progrès visibles.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <StartLink to="/signup">
+                <StartLink to="/signup" className="w-full sm:w-auto">
                   Commencer gratuitement
                   <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
                 </StartLink>
-                <StartLink to="/login" variant="secondary">J'ai déjà un compte</StartLink>
+                <StartLink to="/login" variant="secondary" className="w-full sm:w-auto">J'ai déjà un compte</StartLink>
               </div>
               <p className="mt-5 text-sm text-white/55">Gratuit · Sans carte bancaire · Prêt en quelques minutes</p>
             </div>
