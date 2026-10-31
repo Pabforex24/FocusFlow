@@ -19,7 +19,7 @@
 
 .focus-time-main {
   font-family: var(--font-display);
-  font-size: clamp(2.6rem, 13vw, 10rem);
+  font-size: clamp(2.9rem, 18vw, 10rem);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: .95;
@@ -28,7 +28,7 @@
 }
 
 .focus-timer:not(.is-hours) .focus-time-main {
-  font-size: clamp(3.6rem, 20vw, 15rem);
+  font-size: clamp(3.8rem, 24vw, 15rem);
 }
 
 .focus-colon {
@@ -59,7 +59,12 @@
 /* Cartes façon calendrier à pages / flip clock. */
 .focus-timer--flip,
 .focus-timer--calendar {
-  font-size: clamp(2.2rem, 12vw, 9rem);
+  font-size: clamp(2.4rem, 15vw, 9rem);
+}
+
+.focus-timer--flip:not(.is-hours),
+.focus-timer--calendar:not(.is-hours) {
+  font-size: clamp(2.8rem, 18vw, 9rem);
 }
 
 .focus-groups {
@@ -159,7 +164,7 @@
 .focus-separator {
   margin-top: .22em;
   font-family: var(--font-display);
-  font-size: .62em;
+  font-size: .52em;
   line-height: 1;
   opacity: .28;
 }
@@ -190,8 +195,8 @@
 }
 
 .focus-timer--ring .focus-ring__content { position: relative; z-index: 1; }
-.focus-timer--ring .focus-time-main { font-size: clamp(1.7rem, 9vw, 6.4rem); }
-.focus-timer--ring:not(.is-hours) .focus-time-main { font-size: clamp(2.5rem, 13vw, 9rem); }
+.focus-timer--ring .focus-time-main { font-size: clamp(2rem, 11vw, 6.4rem); }
+.focus-timer--ring:not(.is-hours) .focus-time-main { font-size: clamp(2.7rem, 16vw, 9rem); }
 
 /* Pause : on garde le style visible, les chiffres sont simplement atténués. */
 .focus-timer.is-paused .focus-card__value,
@@ -212,13 +217,15 @@
 
 /* Paysage bas : on privilégie la hauteur pour ne jamais déborder. */
 @media (orientation: landscape) and (max-height: 560px) {
-  .focus-time-main { font-size: min(13vh, 8vw); }
-  .focus-timer:not(.is-hours) .focus-time-main { font-size: min(20vh, 12vw); }
+  .focus-time-main { font-size: min(18vh, 12vw); }
+  .focus-timer:not(.is-hours) .focus-time-main { font-size: min(22vh, 15vw); }
   .focus-timer--flip,
-  .focus-timer--calendar { font-size: min(13vh, 8vw); }
-  .focus-timer--ring .focus-ring { width: min(56vh, 52vw); }
-  .focus-timer--ring .focus-time-main { font-size: min(8vh, 5vw); }
-  .focus-timer--ring:not(.is-hours) .focus-time-main { font-size: min(12vh, 7vw); }
+  .focus-timer--calendar { font-size: min(18vh, 12vw); }
+  .focus-timer--flip:not(.is-hours),
+  .focus-timer--calendar:not(.is-hours) { font-size: min(22vh, 15vw); }
+  .focus-timer--ring .focus-ring { width: min(62vh, 58vw); }
+  .focus-timer--ring .focus-time-main { font-size: min(11vh, 7vw); }
+  .focus-timer--ring:not(.is-hours) .focus-time-main { font-size: min(15vh, 9vw); }
 }
 
 @media (prefers-reduced-motion: reduce) {
