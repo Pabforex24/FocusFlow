@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronRight, Plus } from 'lucide-react'
+import { ChevronRight, Plus, Timer } from 'lucide-react'
 import Modal from '../Modal.jsx'
 import { CREATE_ACTIONS, MOBILE_LEFT, MOBILE_RIGHT, NAV_ITEMS, findNav } from './navigation.js'
+import { useFocus } from '../../contexts/FocusContext.jsx'
 import { cn } from '../../lib/cn.js'
 
 function Tab({ to, label, short, icon: Icon }) {
@@ -32,9 +33,11 @@ function SheetRow({ icon: Icon, label, hint, onClick }) {
 export default function MobileNav() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const { openPicker } = useFocus()
   const go = (to) => { setOpen(false); navigate(to) }
+  const startFocus = () => { setOpen(false); openPicker() }
   const shown = new Set([...MOBILE_LEFT, ...MOBILE_RIGHT])
-  const explore = NAV_ITEMS.filter((i) => !shown.has(i.to))
+  const explore = NAV_ITEMS.filter((i) => !shown.has(i.to) && i.to !== '/profile')
 
   return (
     <>
@@ -55,6 +58,8 @@ export default function MobileNav() {
         <Modal title="Que voulez-vous faire ?" icon={Plus} onClose={() => setOpen(false)}>
           <p className="mb-1 px-3 text-xs font-semibold tracking-wide text-subtle uppercase">Créer</p>
           {CREATE_ACTIONS.map((a) => <SheetRow key={a.to} {...a} onClick={() => go(a.to)} />)}
+          <p className="mt-3 mb-1 px-3 text-xs font-semibold tracking-wide text-subtle uppercase">Démarrer</p>
+          <SheetRow icon={Timer} label="Focus" hint="Un minuteur, une tâche, zéro distraction" onClick={startFocus} />
           <p className="mt-3 mb-1 px-3 text-xs font-semibold tracking-wide text-subtle uppercase">Explorer</p>
           {explore.map((i) => <SheetRow key={i.to} icon={i.icon} label={i.label} onClick={() => go(i.to)} />)}
         </Modal>

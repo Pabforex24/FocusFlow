@@ -12,8 +12,8 @@ export const NAV_ITEMS = [
   { to: '/profile', label: 'Profil', icon: UserRound },
 ]
 
-// Barre du bas sur mobile : 3 entrées, bouton "+", 3 entrées. Le reste (Domaines, Profil) est dans la feuille du "+" ;
-// le profil est aussi accessible par l'avatar en haut à droite. `short` = libellé court pour les petits écrans.
+// Barre du bas sur mobile : 3 entrées, bouton "+", 3 entrées. Domaines reste dans la feuille du "+" ;
+// le profil reste accessible par l'avatar en haut à droite. `short` = libellé court pour les petits écrans.
 export const MOBILE_LEFT = ['/dashboard', '/tasks', '/goals']
 export const MOBILE_RIGHT = ['/challenges', '/monthly', '/coach']
 

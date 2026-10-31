@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { CalendarCheck, CalendarClock, CalendarX, ChevronLeft, ChevronRight, ListChecks, Plus, ShieldCheck, Shuffle, Timer, Trash2 } from 'lucide-react'
+import { CalendarCheck, CalendarClock, CalendarX, ChevronLeft, ChevronRight, ListChecks, Plus, ShieldCheck, Shuffle, Trash2 } from 'lucide-react'
 import TaskForm from '../components/TaskForm.jsx'
 import TaskItem from '../components/TaskItem.jsx'
 import PostponeDialog from '../components/PostponeDialog.jsx'
@@ -13,7 +13,6 @@ import { Input } from '../components/ui/Input.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { useData } from '../contexts/DataContext.jsx'
-import { useFocus } from '../contexts/FocusContext.jsx'
 import { useOpenOnNew } from '../hooks/useOpenOnNew.js'
 import { addDays, formatLong, formatShort } from '../lib/dates.js'
 import { overdueTasks } from '../lib/tasks.js'
@@ -72,7 +71,6 @@ function CatchUpModal({ overdue, onClose }) {
 
 export default function Tasks() {
   const { tasks, today, restDays, actions } = useData()
-  const { openPicker } = useFocus()
   const [day, setDay] = useState(today)
   const [form, setForm] = useState(null) // null | { task? }
   const [toDelete, setToDelete] = useState(null)
@@ -92,7 +90,6 @@ export default function Tasks() {
   return (
     <>
       <PageHeader title="Tâches" subtitle={formatLong(day)}>
-        <Button variant="secondary" icon={Timer} onClick={() => openPicker()}>Focus</Button>
         {!isPast && <Button icon={Plus} onClick={() => setForm({})}>Nouvelle tâche</Button>}
       </PageHeader>
 
