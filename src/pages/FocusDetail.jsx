@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, Palette, Pause, Play, Square } from 'lucide-react'
+import { ArrowLeft, Check, Palette, Pause, Play, X } from 'lucide-react'
 import FocusTimerDisplay from '../components/focus/FocusTimerDisplay.jsx'
 import Modal from '../components/Modal.jsx'
 import { Button } from '../components/ui/Button.jsx'
@@ -113,7 +113,7 @@ export default function FocusDetail() {
               <Button variant={paused ? 'primary' : 'secondary'} icon={paused ? Play : Pause} onClick={paused ? resume : pause}>
                 {paused ? 'Reprendre' : 'Pause'}
               </Button>
-              <Button variant="danger-soft" icon={Square} onClick={abandon}>Abandonner</Button>
+              <Button variant="danger-soft" icon={X} onClick={abandon}>Abandonner</Button>
               <Button variant="secondary" icon={Palette} onClick={() => { setStyleOpen(true); revealControls() }}>Style</Button>
             </div>
           </div>
