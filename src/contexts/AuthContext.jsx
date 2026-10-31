@@ -75,6 +75,9 @@ export function AuthProvider({ children }) {
       if (error) throw error
       setRecovery(false)
     },
+    cancelRecovery() {
+      setRecovery(false)
+    },
     async signOut() {
       const { error } = await supabase.auth.signOut()
       await clearSnapshot()

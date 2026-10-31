@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Target, Timer, TrendingUp, User } from 'lucide-react'
 import Logo from '../components/layout/Logo.jsx'
 import { Alert } from '../components/ui/Alert.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { Field, Input } from '../components/ui/Input.jsx'
+import { Segmented } from '../components/ui/Segmented.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { toUserMessage } from '../lib/errors.js'
 import { MIN_PASSWORD } from '../lib/password.js'
@@ -33,6 +34,13 @@ export default function Login({ initialMode = 'login' }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    setMode(initialMode)
+    setError('')
+    setNotice('')
+  }, [initialMode])
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const login = mode === 'login'
   const forgot = mode === 'forgot'
@@ -69,9 +77,9 @@ export default function Login({ initialMode = 'login' }) {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      <aside className="relative hidden flex-col justify-between overflow-hidden hero-surface p-12 text-white lg:flex">
-        <div className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-white/10 blur-3xl" aria-hidden />
-        <Link to="/" className="relative flex items-center gap-2.5 text-lg font-bold">FocusFlow</Link>
+      <aside className="relative hidden animate-fade-in flex-col justify-between overflow-hidden hero-surface p-12 text-white lg:flex">
+        <div className="pointer-events-none absolute -right-24 -bottom-24 size-96 animate-float rounded-full bg-white/10 blur-3xl motion-reduce:animate-none" aria-hidden />
+        <Link to="/" aria-label="Retour à l'accueil" className="relative w-fit rounded-xl"><Logo inverted /></Link>
         <div className="relative max-w-md space-y-6">
           <h2 className="text-4xl leading-tight font-bold tracking-tight">Agissez chaque jour, avancez vers vos objectifs.</h2>
           <ul className="space-y-4">
@@ -85,15 +93,28 @@ export default function Login({ initialMode = 'login' }) {
 
       <main className="flex items-center justify-center p-5 pt-safe pb-safe sm:p-8">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 flex animate-fade-in items-center justify-between">
             <Link to="/" aria-label="Accueil FocusFlow" className="rounded-xl lg:hidden"><Logo /></Link>
-            <Link to="/" className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-fg">
+            <Link
+              to="/"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-2 text-sm font-medium text-muted shadow-xs transition hover:border-brand-400/40 hover:bg-surface-2 hover:text-fg"
+            >
               <ArrowLeft className="size-4" aria-hidden />
               Accueil
             </Link>
           </div>
 
-          <form onSubmit={submit} noValidate className="w-full max-w-sm animate-fade-up space-y-5">
+          {!forgot && (
+            <Segmented
+              fill
+              className="mb-6 animate-fade-in"
+              value={mode}
+              onChange={switchMode}
+              options={[{ value: 'login', label: 'Connexion' }, { value: 'signup', label: 'Inscription' }]}
+            />
+          )}
+
+          <form key={mode} onSubmit={submit} noValidate className="w-full max-w-sm animate-fade-up space-y-5">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-fg">{forgot ? 'Mot de passe oublié' : login ? 'Bon retour !' : 'Créer votre compte'}</h1>
               <p className="mt-1 text-sm text-muted">{forgot ? 'Entrez votre e-mail : nous vous envoyons un lien pour en choisir un nouveau.' : login ? 'Connectez-vous pour retrouver vos tâches.' : 'Quelques secondes pour commencer.'}</p>
@@ -119,7 +140,7 @@ export default function Login({ initialMode = 'login' }) {
             <Button type="submit" size="lg" className="w-full" loading={busy}>{forgot ? 'Envoyer le lien' : login ? 'Se connecter' : 'Créer mon compte'}</Button>
             <p className="text-center text-sm text-muted">
               {forgot ? (
-                <button type="button" onClick={() => switchMode('login')} className="font-semibold text-brand-600 hover:underline dark:text-brand-300">Retour à la connexion</button>
+                <button type="button" onClick={() => switchMode('login')} className="inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline dark:text-brand-300"><ArrowLeft className="size-4" aria-hidden />Retour à la connexion</button>
               ) : (
                 <>
                   {login ? 'Pas encore de compte ? ' : 'Déjà un compte ? '}

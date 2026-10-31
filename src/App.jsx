@@ -52,6 +52,9 @@ export default function App() {
     <DataProvider>
       <FocusProvider>
         <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/signup" element={<Navigate to="/dashboard" replace />} />
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tasks" element={<Tasks />} />
