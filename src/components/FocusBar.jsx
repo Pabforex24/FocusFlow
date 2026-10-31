@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Pause, Play, Square, Timer } from 'lucide-react'
+import { Pause, Play, Timer, X } from 'lucide-react'
 import { useFocus, useFocusTimer } from '../contexts/FocusContext.jsx'
 import { formatFocusTime } from '../lib/focus.js'
 import { ProgressBar } from './ui/ProgressBar.jsx'
@@ -38,8 +38,8 @@ export default function FocusBar() {
           {paused ? <Play className="size-4" aria-hidden /> : <Pause className="size-4" aria-hidden />}
         </button>
         <button type="button" onClick={abandon} aria-label="Abandonner la session" title="Abandonner"
-          className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/15 transition hover:bg-white/25 active:scale-95">
-          <Square className="size-4" aria-hidden />
+          className="grid size-11 shrink-0 place-items-center rounded-xl bg-rose-500/20 text-rose-200 transition hover:bg-rose-500/30 hover:text-rose-100 active:scale-95">
+          <X className="size-5" aria-hidden />
         </button>
       </div>
       <ProgressBar className="mt-3 bg-white/20" size="sm" value={elapsed} color="#ffffff" />
