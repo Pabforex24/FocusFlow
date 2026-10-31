@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Sparkles, Target, Timer, TrendingUp } from 'lucide-react'
+import { ArrowDown, ArrowRight, Target, Timer, TrendingUp } from 'lucide-react'
 import Logo from '../components/layout/Logo.jsx'
 import { cn } from '../lib/cn.js'
 
@@ -123,18 +123,11 @@ export default function Home() {
 
           <div className="flex flex-1 items-center py-10 sm:py-20">
             <div className="max-w-3xl">
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white/85 backdrop-blur-md">
-                <Sparkles className="size-3.5 text-brand-300" aria-hidden />
-                Discipline personnelle, simplement
-              </p>
-              <h1 className="mt-6 font-display text-4xl leading-[1.05] font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+              <h1 className="font-display text-4xl leading-[1.05] font-semibold tracking-tight sm:text-6xl lg:text-7xl">
                 Moins de bruit.
                 <br />
                 <span className="text-brand-300">Plus de progrès.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
-                FocusFlow transforme vos objectifs en actions quotidiennes, protège votre concentration et rend vos progrès visibles.
-              </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <StartLink to="/signup" className="w-full sm:w-auto">
                   Commencer gratuitement
@@ -142,19 +135,33 @@ export default function Home() {
                 </StartLink>
                 <StartLink to="/login" variant="secondary" className="w-full sm:w-auto">J'ai déjà un compte</StartLink>
               </div>
-              <p className="mt-5 text-sm text-white/55">Gratuit · Sans carte bancaire · Prêt en quelques minutes</p>
             </div>
           </div>
 
-          <ul className="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md sm:grid-cols-3">
+          <div className="flex justify-center pb-8 sm:pb-10">
+            <button
+              type="button"
+              onClick={() => document.getElementById('explorer')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="group inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20 active:scale-[0.97]"
+            >
+              Explorer
+              <ArrowDown className="size-4 transition group-hover:translate-y-0.5" aria-hidden />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="explorer" className="relative scroll-mt-4 py-10 sm:py-14">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8">
+          <ul className="grid gap-3 sm:grid-cols-3">
             {HERO_FEATURES.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex items-start gap-3 bg-[#050808]/60 p-4 sm:p-5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/10 text-brand-300">
+              <li key={title} className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card dark:bg-surface/70 sm:p-5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
                   <Icon className="size-5" aria-hidden />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold">{title}</p>
-                  <p className="mt-0.5 text-xs text-white/55">{text}</p>
+                  <p className="text-sm font-semibold text-fg">{title}</p>
+                  <p className="mt-0.5 text-xs text-muted">{text}</p>
                 </div>
               </li>
             ))}
@@ -211,7 +218,7 @@ export default function Home() {
       <footer className="border-t border-line py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-5 sm:flex-row sm:px-8">
           <Logo />
-          <p className="text-center text-sm text-muted">© {new Date().getFullYear()} FocusFlow. Discipline personnelle, simplement.</p>
+          <p className="text-center text-sm text-muted">© {new Date().getFullYear()} FocusFlow.</p>
           <nav className="flex gap-5 text-sm font-medium text-muted">
             <Link to="/login" className="transition hover:text-fg">Se connecter</Link>
             <Link to="/signup" className="transition hover:text-fg">Créer un compte</Link>
