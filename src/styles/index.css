@@ -9,6 +9,7 @@
 :root {
   color-scheme: light;
   --veil-rgb: 4 7 7;    /* voile des médias d'accueil */
+  --hero-veil-rgb: 242 247 244;
   --bg: #f2f7f4;        /* fond de l'application */
   --surface: #ffffff;   /* cartes, modales, barres */
   --surface-2: #e8f0ec; /* zones secondaires, survols, pistes de progression */
@@ -49,6 +50,7 @@
   --glow-c: rgb(79 178 134 / 0.05);
   --dot: rgb(111 207 164 / 0.06);
   --veil-rgb: 4 7 7;
+  --hero-veil-rgb: var(--veil-rgb);
   /* Texture minérale générée (SVG), sans fichier image */
   --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.08 0 0 0 0.02  0 0.26 0 0 0.06  0 0 0.18 0 0.05  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
 
@@ -59,6 +61,7 @@
    Elle remplace seulement les couleurs ; la palette « Forêt » ci-dessus reste la valeur par défaut. ── */
 :root[data-palette='walnut'] {
   --veil-rgb: 9 6 5;
+  --hero-veil-rgb: 246 241 237;
   --bg: #f6f1ed;
   --surface: #ffffff;
   --surface-2: #efe8e2;
@@ -115,12 +118,14 @@
   --glow-c: rgb(169 130 106 / 0.05);
   --dot: rgb(201 165 140 / 0.06);
   --veil-rgb: 9 6 5;
+  --hero-veil-rgb: var(--veil-rgb);
   --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.28 0 0 0 0.04  0 0.2 0 0 0.03  0 0 0.17 0 0.02  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
 }
 
 /* ── Palette « Royal Charcoal » (Profil > Apparence) ── */
 :root[data-palette='charcoal'] {
   --veil-rgb: 14 15 17;
+  --hero-veil-rgb: 243 244 246;
   --bg: #f3f4f6;
   --surface: #ffffff;
   --surface-2: #e9ebee;
@@ -161,12 +166,14 @@
   --glow-c: rgb(200 204 212 / 0.05);
   --dot: rgb(200 204 212 / 0.06);
   --veil-rgb: 14 15 17;
+  --hero-veil-rgb: var(--veil-rgb);
   --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.2 0 0 0 0.03  0 0.2 0 0 0.03  0 0 0.2 0 0.035  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
 }
 
 /* ── Palette « Navy Mirage » (Profil > Apparence) ── */
 :root[data-palette='navy'] {
   --veil-rgb: 8 13 22;
+  --hero-veil-rgb: 238 243 249;
   --bg: #eef3f9;
   --surface: #ffffff;
   --surface-2: #e3ebf5;
@@ -207,6 +214,7 @@
   --glow-c: rgb(157 187 224 / 0.05);
   --dot: rgb(157 187 224 / 0.06);
   --veil-rgb: 8 13 22;
+  --hero-veil-rgb: var(--veil-rgb);
   --texture: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'><filter id='n' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.009' numOctaves='5' seed='7'/><feColorMatrix type='saturate' values='0'/><feColorMatrix type='matrix' values='0.06 0 0 0 0.02  0 0.12 0 0 0.04  0 0 0.26 0 0.07  0 0 0 0 1'/></filter><rect width='1000' height='1000' filter='url(%23n)'/></svg>");
 }
 
