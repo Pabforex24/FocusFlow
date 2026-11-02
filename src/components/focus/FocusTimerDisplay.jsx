@@ -63,13 +63,14 @@ function RingClock({ parts, percentage }) {
 export default function FocusTimerDisplay({ style = 'flip', remainingMs, totalMs, paused = false, preview = false }) {
   const parts = splitFocusTime(remainingMs, totalMs)
   const percentage = totalMs > 0 ? Math.max(0, Math.min(1, remainingMs / totalMs)) : 0
-  const cardStyle = style === 'flip' || style === 'calendar'
+  const cardStyle = style === 'flip' || style === 'calendar' || style === 'glass'
+  const ringStyle = style === 'ring' || style === 'orbit'
 
   return (
     <div role={preview ? undefined : 'timer'} aria-hidden={preview || undefined}
       aria-label={preview ? undefined : `Temps restant : ${parts.text}`}
       className={cn('focus-timer', `focus-timer--${style}`, parts.showHours && 'is-hours', paused && 'is-paused', preview && 'is-preview')}>
-      {style === 'ring'
+      {ringStyle
         ? <RingClock parts={parts} percentage={percentage} />
         : cardStyle
           ? <CardClock parts={parts} calendar={style === 'calendar'} />

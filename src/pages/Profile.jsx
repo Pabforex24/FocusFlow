@@ -25,10 +25,14 @@ const REMIND_HOURS = Array.from({ length: 18 }, (_, i) => i + 6)
 
 // Aperçu fixe de chaque palette (indépendant de la palette active).
 const PALETTE_CHOICES = [
-  { value: 'foret', label: 'Forêt', hint: 'Vert profond', swatch: 'linear-gradient(135deg, #275d46 0%, #0a1512 70%, #050808 100%)', accent: '#6fcfa4' },
-  { value: 'walnut', label: 'Walnut', hint: 'Brun noyer', swatch: 'linear-gradient(135deg, #5e4b43 0%, #2e1f1b 55%, #0a0605 100%)', accent: '#c9a58c' },
-  { value: 'charcoal', label: 'Royal Charcoal', hint: 'Graphite argent', swatch: 'linear-gradient(135deg, #4c4e51 0%, #1e2023 55%, #0e0f11 100%)', accent: '#c8ccd4' },
-  { value: 'navy', label: 'Navy Mirage', hint: 'Bleu marine', swatch: 'linear-gradient(135deg, #35577d 0%, #141e30 55%, #070d16 100%)', accent: '#9dbbe0' },
+  { value: 'foret', label: 'Forêt', hint: 'Vert profond · nature', swatch: 'linear-gradient(135deg, #275d46 0%, #0a1512 70%, #050808 100%)', accent: '#6fcfa4' },
+  { value: 'walnut', label: 'Walnut', hint: 'Brun noyer · chaleureux', swatch: 'linear-gradient(135deg, #5e4b43 0%, #2e1f1b 55%, #0a0605 100%)', accent: '#c9a58c' },
+  { value: 'charcoal', label: 'Royal Charcoal', hint: 'Graphite argent · sobre', swatch: 'linear-gradient(135deg, #4c4e51 0%, #1e2023 55%, #0e0f11 100%)', accent: '#c8ccd4' },
+  { value: 'navy', label: 'Navy Mirage', hint: 'Bleu marine · nocturne', swatch: 'linear-gradient(135deg, #35577d 0%, #141e30 55%, #070d16 100%)', accent: '#9dbbe0' },
+  { value: 'amethyst', label: 'Améthyste', hint: 'Violet lumineux · créatif', swatch: 'linear-gradient(135deg, #7c3aed 0%, #2e1065 55%, #0b0613 100%)', accent: '#c084fc' },
+  { value: 'sunset', label: 'Coucher de soleil', hint: 'Corail et ambre · chaud', swatch: 'linear-gradient(135deg, #fb923c 0%, #9f1239 55%, #120806 100%)', accent: '#fdba74' },
+  { value: 'ocean', label: 'Océan', hint: 'Turquoise profond · frais', swatch: 'linear-gradient(135deg, #0d9488 0%, #164e63 55%, #04100f 100%)', accent: '#5eead4' },
+  { value: 'gold', label: 'Noir Doré', hint: 'Or et encre · luxueux', swatch: 'linear-gradient(135deg, #d4af37 0%, #4a3410 52%, #080704 100%)', accent: '#eacb6a' },
 ]
 
 function PauseCard() {
@@ -124,23 +128,33 @@ export default function Profile() {
         </Card>
 
         <Card>
-          <CardHeader title="Apparence" description="Choisissez le thème et la palette de l'application" />
+          <CardHeader title="Apparence" description="Choisissez le mode et une ambiance. Chaque palette adapte les couleurs, les halos et les fonds." />
           <Segmented fill value={preference} onChange={setTheme} options={[{ value: 'light', label: 'Clair', icon: Sun }, { value: 'dark', label: 'Sombre', icon: Moon }, { value: 'system', label: 'Auto', icon: Monitor }]} />
-          <p className="mt-5 mb-2 text-sm font-medium text-fg">Palette de couleurs</p>
-          <div role="radiogroup" aria-label="Palette de couleurs" className="grid grid-cols-2 gap-3">
+          <div className="mt-5 mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-fg">Palette de couleurs</p>
+              <p className="text-xs text-subtle">8 ambiances · clair et sombre</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-surface-2 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted">Appliqué instantanément</span>
+          </div>
+          <div role="radiogroup" aria-label="Palette de couleurs" className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {PALETTE_CHOICES.map(({ value, label, hint, swatch, accent }) => {
               const selected = palette === value
               return (
                 <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => setPalette(value)}
-                  className={cn('relative flex flex-col gap-2.5 rounded-2xl border p-2.5 text-left transition active:scale-[0.98]',
-                    selected ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-line hover:border-brand-500/40')}>
-                  <span className="relative block h-16 w-full overflow-hidden rounded-xl border border-white/10" style={{ backgroundImage: swatch }} aria-hidden>
-                    <span className="absolute right-2.5 bottom-2.5 size-3.5 rounded-full" style={{ backgroundColor: accent, boxShadow: `0 0 10px ${accent}99` }} />
+                  className={cn('group relative flex items-center gap-3 rounded-2xl border p-2.5 text-left transition active:scale-[0.99]',
+                    selected ? 'border-brand-500 bg-brand-500/8 ring-2 ring-brand-500/25' : 'border-line bg-surface-2/40 hover:border-brand-500/40 hover:bg-surface-2/70')}>
+                  <span className="relative block h-20 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10 sm:w-full"
+                    style={{ backgroundImage: `radial-gradient(120% 110% at 18% 0%, ${accent}55, transparent 55%), ${swatch}` }} aria-hidden>
+                    <span className="absolute left-2 top-2 h-1.5 w-10 rounded-full bg-white/35" />
+                    <span className="absolute bottom-2 left-2 h-7 w-16 rounded-md border border-white/15 bg-white/10 backdrop-blur-sm" />
+                    <span className="absolute right-2.5 bottom-2.5 size-3.5 rounded-full" style={{ backgroundColor: accent, boxShadow: `0 0 12px ${accent}99` }} />
                   </span>
-                  <span className="flex items-center justify-between gap-2 px-0.5">
-                    <span><span className="block text-sm font-semibold text-fg">{label}</span><span className="block text-xs text-muted">{hint}</span></span>
-                    {selected && <span className="grid size-5 shrink-0 place-items-center rounded-full bg-brand-500 text-brand-950"><Check className="size-3.5" strokeWidth={3} aria-hidden /></span>}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-fg">{label}</span>
+                    <span className="block truncate text-xs text-muted">{hint}</span>
                   </span>
+                  {selected && <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-500 text-brand-950 shadow-sm"><Check className="size-3.5" strokeWidth={3} aria-hidden /></span>}
                 </button>
               )
             })}

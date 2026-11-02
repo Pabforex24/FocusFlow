@@ -95,7 +95,7 @@ export default function FocusDetail() {
   }
 
   return (
-    <main className="focus-detail fixed inset-0 z-40 overflow-hidden text-fg" onPointerDown={revealControls}>
+    <main className="focus-detail fixed inset-0 z-40 overflow-hidden text-fg" data-focus-style={style} onPointerDown={revealControls}>
       <div className="grid h-dvh place-items-center px-3 py-16">
         <FocusTimerDisplay style={style} remainingMs={remainingMs} totalMs={totalMs} paused={paused} />
       </div>
@@ -121,22 +121,27 @@ export default function FocusDetail() {
       )}
 
       {styleOpen && (
-        <Modal title="Style du minuteur" description="Le changement est immédiat et sera conservé pour la prochaine session." icon={Palette} size="md" onClose={() => setStyleOpen(false)}>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <Modal title="Style du minuteur" description="Dix ambiances, dont quatre nouvelles. Le changement est immédiat et sera conservé." icon={Palette} size="lg" onClose={() => setStyleOpen(false)}>
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {FOCUS_STYLES.map((item) => {
               const selected = style === item.id
               return (
                 <button key={item.id} type="button" aria-pressed={selected} onClick={() => chooseStyle(item.id)}
-                  className={cn('group relative flex min-h-28 flex-col justify-between gap-3 rounded-2xl border p-3 text-left transition active:scale-[0.98]',
+                  className={cn('group relative flex items-center gap-3 rounded-2xl border p-2.5 text-left transition active:scale-[0.99] sm:flex-col sm:items-stretch sm:gap-2.5',
                     selected ? 'border-brand-500 bg-brand-500/8 ring-2 ring-brand-500/25' : 'border-line bg-surface-2/40 hover:border-brand-500/40 hover:bg-surface-2/70')}>
-                  <span className="grid h-16 place-items-center overflow-hidden rounded-xl bg-surface/70">
+                  <span className="relative grid h-20 w-28 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 sm:h-24 sm:w-full"
+                    style={{ backgroundImage: `radial-gradient(120% 120% at 20% 0%, ${item.accent}2e, transparent 58%), linear-gradient(145deg, var(--surface-2), var(--surface))` }}>
                     <FocusTimerDisplay style={item.id} remainingMs={PREVIEW_MS} totalMs={PREVIEW_MS} preview />
+                    <span className="absolute inset-x-4 bottom-1.5 h-px" style={{ background: `linear-gradient(90deg, transparent, ${item.accent}, transparent)` }} />
+                    {selected && <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-brand-500 text-brand-950 shadow-sm"><Check className="size-3" strokeWidth={3} aria-hidden /></span>}
                   </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-fg">{item.label}</span>
-                    <span className="block text-xs leading-snug text-subtle">{item.description}</span>
+                  <span className="min-w-0 flex-1 sm:px-0.5">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-semibold text-fg">{item.label}</span>
+                      <span className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">{item.tag}</span>
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-snug text-subtle">{item.description}</span>
                   </span>
-                  {selected && <span className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-brand-500 text-brand-950"><Check className="size-3.5" aria-hidden /></span>}
                 </button>
               )
             })}
