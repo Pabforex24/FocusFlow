@@ -176,6 +176,91 @@
 .focus-timer--flip:not(.is-hours), .focus-timer--glass:not(.is-hours) { font-size: clamp(4rem, 28vw, 9rem); }
 .focus-timer--calendar:not(.is-hours) { font-size: clamp(3.8rem, 26vw, 9rem); }
 
+/* Horloge à cartes : rendu flip-clock plus profond, avec charnières, reflets et ombres douces. */
+.focus-timer--flip .focus-card {
+  border-color: color-mix(in srgb, var(--line) 72%, rgb(var(--accent-rgb)) 28%);
+  border-radius: .18em;
+  background:
+    radial-gradient(circle at 13% 50%, rgb(var(--accent-soft-rgb) / 0.7) 0 .035em, transparent .05em),
+    radial-gradient(circle at 87% 50%, rgb(var(--accent-soft-rgb) / 0.7) 0 .035em, transparent .05em),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface) 86%, white) 0%,
+      color-mix(in srgb, var(--surface) 96%, rgb(var(--accent-soft-rgb)) 4%) 46%,
+      color-mix(in srgb, var(--surface) 76%, black) 50%,
+      color-mix(in srgb, var(--surface) 90%, black) 54%,
+      color-mix(in srgb, var(--surface) 82%, black) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.58),
+    inset 0 -1px 0 rgb(0 0 0 / 0.16),
+    0 .12em .25em -.12em rgb(0 0 0 / 0.5),
+    0 .5em .9em -.5em rgb(0 0 0 / 0.58),
+    0 0 0 1px rgb(var(--accent-rgb) / 0.07);
+}
+
+.focus-timer--flip .focus-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 50%;
+  border-radius: .18em .18em .04em .04em;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.3), transparent 82%);
+  pointer-events: none;
+}
+
+.focus-timer--flip .focus-card::after {
+  inset-inline: 0;
+  top: calc(50% - .015em);
+  height: .03em;
+  background: linear-gradient(90deg, rgb(0 0 0 / 0.38), rgb(255 255 255 / 0.38) 48%, rgb(0 0 0 / 0.38));
+  box-shadow: 0 .055em 0 rgb(255 255 255 / 0.13), 0 -.055em 0 rgb(0 0 0 / 0.2);
+}
+
+.focus-timer--flip .focus-card__value {
+  color: color-mix(in srgb, var(--fg) 88%, rgb(var(--accent-rgb)) 12%);
+  text-shadow: 0 .025em .03em rgb(0 0 0 / 0.16), 0 0 .14em rgb(var(--accent-rgb) / 0.14);
+  transform-origin: 50% 8%;
+  backface-visibility: hidden;
+  animation-name: focus-flip-in;
+}
+
+.focus-timer--flip .focus-group-label {
+  padding: .22em .58em;
+  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32);
+  letter-spacing: .1em;
+}
+
+.focus-timer--flip .focus-separator {
+  color: rgb(var(--accent-soft-rgb));
+  opacity: .52;
+  text-shadow: 0 0 .3em rgb(var(--accent-rgb) / 0.35);
+}
+
+.dark .focus-timer--flip .focus-card {
+  border-color: color-mix(in srgb, var(--line) 62%, rgb(var(--accent-rgb)) 38%);
+  background:
+    radial-gradient(circle at 13% 50%, rgb(var(--accent-soft-rgb) / 0.42) 0 .035em, transparent .05em),
+    radial-gradient(circle at 87% 50%, rgb(var(--accent-soft-rgb) / 0.42) 0 .035em, transparent .05em),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--surface) 86%, white) 0%,
+      color-mix(in srgb, var(--surface) 97%, rgb(var(--accent-soft-rgb)) 3%) 46%,
+      color-mix(in srgb, var(--surface) 66%, black) 50%,
+      color-mix(in srgb, var(--surface) 84%, black) 54%,
+      color-mix(in srgb, var(--surface) 72%, black) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 -1px 0 rgb(0 0 0 / 0.55),
+    0 .12em .25em -.12em rgb(0 0 0 / 0.78),
+    0 .5em 1em -.5em rgb(0 0 0 / 0.9),
+    0 0 0 1px rgb(var(--accent-rgb) / 0.11);
+}
+
+.dark .focus-timer--flip .focus-card__value {
+  color: color-mix(in srgb, var(--fg) 93%, rgb(var(--accent-soft-rgb)) 7%);
+  text-shadow: 0 .025em .035em rgb(0 0 0 / 0.45), 0 0 .16em rgb(var(--accent-rgb) / 0.2);
+}
+
 .focus-groups {
   display: flex;
   align-items: flex-start;
@@ -239,6 +324,13 @@
   from { transform: rotateX(-86deg); opacity: .35; }
   55%  { transform: rotateX(12deg); opacity: 1; }
   to   { transform: rotateX(0); opacity: 1; }
+}
+
+@keyframes focus-flip-in {
+  from { transform: rotateX(-94deg) translateY(-.03em); opacity: .15; }
+  58%  { transform: rotateX(9deg) translateY(.012em); opacity: 1; }
+  78%  { transform: rotateX(-2deg); }
+  to   { transform: rotateX(0) translateY(0); opacity: 1; }
 }
 
 .focus-card--calendar {
