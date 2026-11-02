@@ -85,7 +85,7 @@
   width: .18em;
   color: var(--fg);
   line-height: 0;
-  opacity: .32;
+  opacity: .72;
 }
 
 .focus-colon::before,
@@ -95,12 +95,14 @@
   height: .08em;
   border-radius: 50%;
   background: currentColor;
+  animation: focus-dot-blink 1.8s ease-in-out infinite;
 }
 
 .focus-timer--thin .focus-time-main {
-  font-size: clamp(3.5rem, 19.2vw, 10rem);
+  font-size: clamp(3.5rem, 18.6vw, 10rem);
   font-weight: 200;
-  letter-spacing: -.065em;
+  letter-spacing: 0;
+  column-gap: .03em;
 }
 
 .focus-timer--digital .focus-time-main {
@@ -114,18 +116,17 @@
 
 .focus-timer--minimal .focus-time-main {
   font-family: var(--font-sans);
-  font-size: clamp(3.8rem, 20vw, 10rem);
+  font-size: clamp(3.8rem, 19.3vw, 10rem);
   font-weight: 600;
-  letter-spacing: -.055em;
+  letter-spacing: 0;
+  column-gap: .03em;
 }
 
 .focus-timer--aurora .focus-colon {
   color: #0891b2;
-  opacity: .62;
 }
 .dark .focus-timer--aurora .focus-colon {
   color: #67e8f9;
-  opacity: .72;
 }
 
 .focus-timer--aurora .focus-time-main {
@@ -155,7 +156,6 @@
 }
 .focus-timer--neon .focus-colon {
   color: #f0abfc;
-  opacity: .9;
 }
 .focus-timer--neon .focus-colon::before,
 .focus-timer--neon .focus-colon::after {
@@ -180,8 +180,6 @@
 .focus-timer--glass .focus-card__value { color: #0f766e; }
 .dark .focus-timer--glass .focus-card__value { color: #99f6e4; }
 .focus-timer--glass .focus-card::after { background: rgb(15 118 110 / 0.2); }
-.focus-timer--glass .focus-separator { color: #0f766e; opacity: .55; }
-.dark .focus-timer--glass .focus-separator { color: #99f6e4; opacity: .7; }
 
 .focus-timer--orbit .focus-ring__track { stroke: rgb(148 163 184 / 0.22); }
 .focus-timer--orbit .focus-ring__bar {
@@ -192,7 +190,7 @@
   color: #fef3c7;
   text-shadow: 0 0 .24em rgb(251 191 36 / 0.36);
 }
-.focus-timer--orbit .focus-colon { color: #fbbf24; opacity: .82; }
+.focus-timer--orbit .focus-colon { color: #fbbf24; }
 .focus-timer--orbit .focus-colon::before,
 .focus-timer--orbit .focus-colon::after {
   box-shadow: 0 0 .3em rgb(251 191 36 / 0.65);
@@ -213,9 +211,13 @@
 @keyframes focus-orbit-spin {
   to { transform: rotate(360deg); }
 }
+@keyframes focus-dot-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .6; }
+}
 
-.focus-timer--thin:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 29.2vw, 15rem); }
-.focus-timer--minimal:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 30.5vw, 15rem); }
+.focus-timer--thin:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 28.6vw, 15rem); }
+.focus-timer--minimal:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 29.7vw, 15rem); }
 
 /* Cartes façon calendrier à pages / flip clock. */
 .focus-timer--flip, .focus-timer--glass { font-size: clamp(2.8rem, 17.5vw, 9rem); }
@@ -223,92 +225,44 @@
 .focus-timer--flip:not(.is-hours), .focus-timer--glass:not(.is-hours) { font-size: clamp(4rem, 27.2vw, 9rem); }
 .focus-timer--calendar:not(.is-hours) { font-size: clamp(3.8rem, 25.3vw, 9rem); }
 
-/* Horloge à cartes : rendu flip-clock plus profond, avec charnières, reflets et ombres douces. */
+/* Horloge à cartes : surface sobre, charnière fine, sans décor parasite. */
 .focus-timer--flip .focus-card {
-  border-color: color-mix(in srgb, var(--line) 72%, rgb(var(--accent-rgb)) 28%);
-  border-radius: .18em;
-  background:
-    radial-gradient(circle at 13% 50%, rgb(var(--accent-soft-rgb) / 0.7) 0 .035em, transparent .05em),
-    radial-gradient(circle at 87% 50%, rgb(var(--accent-soft-rgb) / 0.7) 0 .035em, transparent .05em),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--surface) 86%, white) 0%,
-      color-mix(in srgb, var(--surface) 96%, rgb(var(--accent-soft-rgb)) 4%) 46%,
-      color-mix(in srgb, var(--surface) 76%, black) 50%,
-      color-mix(in srgb, var(--surface) 90%, black) 54%,
-      color-mix(in srgb, var(--surface) 82%, black) 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.58),
-    inset 0 -1px 0 rgb(0 0 0 / 0.16),
-    0 .12em .25em -.12em rgb(0 0 0 / 0.5),
-    0 .5em .9em -.5em rgb(0 0 0 / 0.58),
-    0 0 0 1px rgb(var(--accent-rgb) / 0.07);
+  padding: .04em .05em .03em;
+  border-color: var(--line);
+  border-radius: .16em;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 97%, white), color-mix(in srgb, var(--surface) 95%, black));
+  box-shadow: var(--shadow-card);
 }
 
-.focus-timer--flip .focus-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 50%;
-  border-radius: .18em .18em .04em .04em;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.3), transparent 82%);
-  pointer-events: none;
+.dark .focus-timer--flip .focus-card {
+  border-color: var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, white), var(--surface));
 }
 
 .focus-timer--flip .focus-card::after {
   inset-inline: 0;
-  top: calc(50% - .015em);
-  height: .03em;
-  background: linear-gradient(90deg, rgb(0 0 0 / 0.38), rgb(255 255 255 / 0.38) 48%, rgb(0 0 0 / 0.38));
-  box-shadow: 0 .055em 0 rgb(255 255 255 / 0.13), 0 -.055em 0 rgb(0 0 0 / 0.2);
+  top: calc(50% - .5px);
+  height: 1px;
+  background: color-mix(in srgb, var(--line) 66%, transparent);
+  box-shadow: none;
 }
 
 .focus-timer--flip .focus-card__value {
-  color: color-mix(in srgb, var(--fg) 88%, rgb(var(--accent-rgb)) 12%);
-  text-shadow: 0 .025em .03em rgb(0 0 0 / 0.16), 0 0 .14em rgb(var(--accent-rgb) / 0.14);
+  color: var(--fg);
+  text-shadow: none;
   transform-origin: 50% 8%;
   backface-visibility: hidden;
   animation-name: focus-flip-in;
 }
 
-.focus-timer--flip .focus-group-label {
+.focus-timer--flip .focus-group-label,
+.focus-timer--calendar .focus-group-label {
   padding: .22em .58em;
   border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface) 66%, transparent);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32);
   letter-spacing: .1em;
-}
-
-.focus-timer--flip .focus-separator {
-  color: rgb(var(--accent-soft-rgb));
-  opacity: .68;
-}
-.focus-timer--flip .focus-separator::before,
-.focus-timer--flip .focus-separator::after {
-  box-shadow: 0 0 .35em rgb(var(--accent-rgb) / 0.38);
-}
-
-.dark .focus-timer--flip .focus-card {
-  border-color: color-mix(in srgb, var(--line) 62%, rgb(var(--accent-rgb)) 38%);
-  background:
-    radial-gradient(circle at 13% 50%, rgb(var(--accent-soft-rgb) / 0.42) 0 .035em, transparent .05em),
-    radial-gradient(circle at 87% 50%, rgb(var(--accent-soft-rgb) / 0.42) 0 .035em, transparent .05em),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--surface) 86%, white) 0%,
-      color-mix(in srgb, var(--surface) 97%, rgb(var(--accent-soft-rgb)) 3%) 46%,
-      color-mix(in srgb, var(--surface) 66%, black) 50%,
-      color-mix(in srgb, var(--surface) 84%, black) 54%,
-      color-mix(in srgb, var(--surface) 72%, black) 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.16),
-    inset 0 -1px 0 rgb(0 0 0 / 0.55),
-    0 .12em .25em -.12em rgb(0 0 0 / 0.78),
-    0 .5em 1em -.5em rgb(0 0 0 / 0.9),
-    0 0 0 1px rgb(var(--accent-rgb) / 0.11);
-}
-
-.dark .focus-timer--flip .focus-card__value {
-  color: color-mix(in srgb, var(--fg) 93%, rgb(var(--accent-soft-rgb)) 7%);
-  text-shadow: 0 .025em .035em rgb(0 0 0 / 0.45), 0 0 .16em rgb(var(--accent-rgb) / 0.2);
 }
 
 .focus-groups {
@@ -385,7 +339,8 @@
 
 .focus-card--calendar {
   width: .84em;
-  height: 1.24em;
+  height: 1.3em;
+  padding-top: .12em;
   border-radius: .18em;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface) 90%, rgb(var(--accent-soft-rgb)) 10%), var(--surface));
@@ -424,7 +379,7 @@
   margin-top: 0;
   color: var(--fg);
   line-height: 0;
-  opacity: .32;
+  opacity: .72;
 }
 
 .focus-separator::before,
@@ -434,12 +389,11 @@
   height: .08em;
   border-radius: 50%;
   background: currentColor;
+  animation: focus-dot-blink 1.8s ease-in-out infinite;
 }
 
 .focus-timer--calendar .focus-separator {
-  height: 1.24em;
-  color: rgb(var(--accent-rgb));
-  opacity: .58;
+  height: 1.3em;
 }
 
 /* Anneau de progression : le trait restant se vide avec le temps. */
@@ -449,6 +403,8 @@
   place-items: center;
   width: min(92vw, 58vh, 40rem);
   aspect-ratio: 1;
+  container-type: inline-size;
+  overflow: visible;
 }
 
 :is(.focus-timer--ring, .focus-timer--orbit) .focus-ring svg {
@@ -456,6 +412,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  overflow: visible;
   transform: rotate(-90deg);
 }
 
@@ -467,9 +424,21 @@
   transition: stroke-dashoffset .9s linear;
 }
 
-:is(.focus-timer--ring, .focus-timer--orbit) .focus-ring__content { position: relative; z-index: 1; }
-:is(.focus-timer--ring, .focus-timer--orbit) .focus-time-main { font-size: clamp(3.2rem, min(18vw, 12vh), 6.4rem); }
-:is(.focus-timer--ring, .focus-timer--orbit):not(.is-hours) .focus-time-main { font-size: clamp(5rem, 27vw, 9rem); }
+:is(.focus-timer--ring, .focus-timer--orbit) .focus-ring__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  max-width: 100%;
+}
+
+:is(.focus-timer--ring, .focus-timer--orbit) .focus-ring__content .focus-time-main {
+  font-size: clamp(1.9rem, 15cqw, 5.5rem);
+}
+
+:is(.focus-timer--ring, .focus-timer--orbit):not(.is-hours) .focus-ring__content .focus-time-main {
+  font-size: clamp(2.6rem, 24cqw, 9rem);
+}
 
 /* Pause : on garde le style visible, les chiffres sont simplement atténués. */
 .focus-timer.is-paused .focus-card__value,
@@ -492,23 +461,25 @@
 /* Paysage bas : on privilégie la hauteur pour ne jamais déborder. */
 @media (orientation: landscape) and (max-height: 560px) {
   .focus-time-main { font-size: min(41vh, 18.5vw); }
-  .focus-timer--thin .focus-time-main { font-size: min(40vh, 19.2vw); }
-  .focus-timer--minimal .focus-time-main { font-size: min(44vh, 20vw); }
+  .focus-timer--thin .focus-time-main { font-size: min(40vh, 18.6vw); }
+  .focus-timer--minimal .focus-time-main { font-size: min(44vh, 19.3vw); }
   .focus-timer:not(.is-hours) .focus-time-main { font-size: min(58vh, 28vw); }
-  .focus-timer--thin:not(.is-hours) .focus-time-main { font-size: min(58vh, 29.2vw); }
-  .focus-timer--minimal:not(.is-hours) .focus-time-main { font-size: min(70vh, 30.5vw); }
+  .focus-timer--thin:not(.is-hours) .focus-time-main { font-size: min(58vh, 28.6vw); }
+  .focus-timer--minimal:not(.is-hours) .focus-time-main { font-size: min(70vh, 29.7vw); }
   .focus-timer--flip, .focus-timer--glass { font-size: min(42vh, 17.5vw); }
   .focus-timer--calendar { font-size: min(42vh, 16.2vw); }
   .focus-timer--flip:not(.is-hours), .focus-timer--glass:not(.is-hours) { font-size: min(54vh, 27.2vw); }
   .focus-timer--calendar:not(.is-hours) { font-size: min(54vh, 25.3vw); }
   :is(.focus-timer--ring, .focus-timer--orbit) .focus-ring { width: min(72vh, 92vw); }
-  :is(.focus-timer--ring, .focus-timer--orbit) .focus-time-main { font-size: min(14vh, 18vw); }
-  :is(.focus-timer--ring, .focus-timer--orbit):not(.is-hours) .focus-time-main { font-size: min(21.5vh, 27vw); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .focus-card__value { animation: none; }
   .focus-ring__bar { transition: none; }
+  .focus-colon::before,
+  .focus-colon::after,
+  .focus-separator::before,
+  .focus-separator::after,
   .focus-timer--aurora .focus-time-main,
   .focus-timer--orbit .focus-ring::after { animation: none; }
 }

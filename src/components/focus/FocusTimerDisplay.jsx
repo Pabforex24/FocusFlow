@@ -6,7 +6,7 @@ function TimeText({ text, className }) {
     <div className={cn('focus-time-main', className)} aria-hidden>
       {text.split('').map((character, index) => (
         character === ':'
-          ? <span key={`colon-${index}`} className="focus-colon">:</span>
+          ? <span key={`colon-${index}`} className="focus-colon" />
           : <span key={`digit-${index}`}>{character}</span>
       ))}
     </div>
@@ -38,7 +38,7 @@ function CardClock({ parts, calendar }) {
             </div>
             <span className="focus-group-label">{group.label}</span>
           </div>
-          {groupIndex < groups.length - 1 && <span className="focus-separator" aria-hidden>:</span>}
+          {groupIndex < groups.length - 1 && <span className="focus-separator" aria-hidden />}
         </div>
       ))}
     </div>
