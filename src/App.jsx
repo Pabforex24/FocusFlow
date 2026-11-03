@@ -17,6 +17,7 @@ import Login from './pages/Login.jsx'
 import Monthly from './pages/Monthly.jsx'
 import Profile from './pages/Profile.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
+import Settings from './pages/Settings.jsx'
 import Tasks from './pages/Tasks.jsx'
 
 function SetupNotice() {
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="/monthly" element={<Monthly />} />
             <Route path="/coach" element={<Coach />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Routes>

@@ -1,4 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import DesktopHeader from './layout/DesktopHeader.jsx'
+import DesktopRail from './layout/DesktopRail.jsx'
 import FocusBar from './FocusBar.jsx'
 import Header from './layout/Header.jsx'
 import MobileNav from './layout/MobileNav.jsx'
@@ -18,9 +20,11 @@ export default function Layout() {
   return (
     <div className="min-h-dvh">
       <Sidebar />
-      <div className="md:pl-[4.5rem] lg:pl-64">
+      <DesktopRail />
+      <div className="md:pl-[4.5rem] lg:pl-[5.5rem]">
         <Header />
-        <main className="mx-auto w-full max-w-5xl px-4 pt-5 pb-32 sm:px-6 md:pt-8 md:pb-12 lg:px-8">
+        <DesktopHeader />
+        <main className="mx-auto w-full max-w-5xl px-4 pt-5 pb-32 sm:px-6 md:pt-8 md:pb-12 lg:px-8 lg:pt-4">
           {status === 'ready' && <OfflineBanner />}
           {status === 'loading' && <PageSkeleton />}
           {status === 'error' && <ErrorState message={loadError} onRetry={() => actions.refresh()} />}

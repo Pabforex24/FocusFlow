@@ -1,6 +1,7 @@
-import { ChartColumn, Flag, Layers, LayoutDashboard, ListChecks, ListPlus, Sparkles, Target, UserRound } from 'lucide-react'
+import { ChartColumn, Flag, Layers, LayoutDashboard, ListChecks, ListPlus, Sparkles, Target } from 'lucide-react'
 
-// Source unique de la navigation : sidebar, barre mobile et feuille "Créer" la lisent.
+// Source unique de la navigation : barre haute, rail, barre mobile et feuille "Créer" la lisent.
+// Le profil n'est volontairement plus ici : il passe par le menu de l'avatar.
 export const NAV_ITEMS = [
   { to: '/dashboard', label: 'Accueil', icon: LayoutDashboard },
   { to: '/tasks', label: 'Tâches', icon: ListChecks },
@@ -9,8 +10,11 @@ export const NAV_ITEMS = [
   { to: '/challenges', label: 'Challenges', short: 'Défis', icon: Flag },
   { to: '/monthly', label: 'Statistiques', short: 'Stats', icon: ChartColumn },
   { to: '/coach', label: 'Coach', icon: Sparkles },
-  { to: '/profile', label: 'Profil', icon: UserRound },
 ]
+
+// Desktop : les pages du quotidien restent dans la barre haute, l'analyse et l'accompagnement dans le rail.
+export const DESKTOP_TOP = ['/dashboard', '/tasks', '/goals', '/domains']
+export const DESKTOP_RAIL = ['/challenges', '/monthly', '/coach']
 
 // Barre du bas sur mobile : 3 entrées, bouton "+", 3 entrées. Domaines reste dans la feuille du "+" ;
 // le profil reste accessible par l'avatar en haut à droite. `short` = libellé court pour les petits écrans.
