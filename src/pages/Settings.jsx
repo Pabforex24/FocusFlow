@@ -3,6 +3,7 @@ import { Bell, Check, LogOut, Monitor, Moon, Pause, RefreshCw, ShieldAlert, Sun,
 import { Alert } from '../components/ui/Alert.jsx'
 import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Card, CardHeader } from '../components/ui/Card.jsx'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog.jsx'
 import { Field, Input } from '../components/ui/Input.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { Segmented } from '../components/ui/Segmented.jsx'
@@ -79,9 +80,11 @@ export default function Settings() {
   const { profile, actions } = useData()
   const { preference, setTheme, palette, setPalette } = useTheme()
   const signOut = useSignOut()
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const push = usePushNotifications()
   const toast = useToast()
   const hardcore = profile?.hardcore_mode ?? false
+  const logout = async () => { await signOut(); setConfirmLogout(false) }
 
   const testNotify = async () => {
     const local = await showTestNotification()
@@ -176,8 +179,13 @@ export default function Settings() {
           <Button variant="secondary" icon={RefreshCw} onClick={() => actions.refresh()}>Actualiser</Button>
         </Card>
 
-        <Button variant="danger-soft" className="w-full border border-rose-500/30" icon={LogOut} onClick={signOut}>Se déconnecter</Button>
+        <Button variant="danger-soft" className="w-full border border-rose-500/30" icon={LogOut} onClick={() => setConfirmLogout(true)}>Se déconnecter</Button>
       </div>
+
+      {confirmLogout && (
+        <ConfirmDialog title="Se déconnecter ?" message="Voulez-vous vraiment vous déconnecter ?"
+          confirmLabel="Se déconnecter" onConfirm={logout} onCancel={() => setConfirmLogout(false)} />
+      )}
     </>
   )
 }

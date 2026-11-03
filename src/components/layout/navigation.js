@@ -16,10 +16,10 @@ export const NAV_ITEMS = [
 export const DESKTOP_TOP = ['/dashboard', '/tasks', '/goals', '/domains']
 export const DESKTOP_RAIL = ['/challenges', '/monthly', '/coach']
 
-// Barre du bas sur mobile : 3 entrées, bouton "+", 3 entrées. Domaines reste dans la feuille du "+" ;
-// le profil reste accessible par l'avatar en haut à droite. `short` = libellé court pour les petits écrans.
+// Barre du bas sur mobile : 3 entrées, bouton "+", 3 entrées. Domaines remplace le Coach,
+// qui devient un bouton flottant. `short` = libellé court pour les petits écrans.
 export const MOBILE_LEFT = ['/dashboard', '/tasks', '/goals']
-export const MOBILE_RIGHT = ['/challenges', '/monthly', '/coach']
+export const MOBILE_RIGHT = ['/domains', '/challenges', '/monthly']
 
 export const CREATE_ACTIONS = [
   { to: '/tasks?new=1', label: 'Nouvelle tâche', hint: 'Une action à faire un jour précis', icon: ListPlus },

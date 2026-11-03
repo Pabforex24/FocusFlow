@@ -118,8 +118,8 @@ export default function Home() {
         )}
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4 sm:px-8 sm:py-5">
-          <Link to="/" aria-label="Accueil FocusFlow" className="shrink-0 rounded-xl">
-            <Logo textClassName="hidden min-[390px]:inline" />
+          <Link to="/dashboard" aria-label="Tableau de bord FocusFlow" className="shrink-0 rounded-xl">
+            <Logo textClassName="text-[15px] min-[390px]:text-lg" />
           </Link>
           <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {user ? (

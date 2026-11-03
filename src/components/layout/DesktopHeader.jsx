@@ -18,10 +18,15 @@ export default function DesktopHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 hidden px-5 pt-4 pb-2 lg:block">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 rounded-3xl border border-line bg-surface/90 px-3 shadow-card backdrop-blur-xl">
+      <header className="fixed top-0 right-0 left-24 z-30 isolate px-5 pt-4 pb-2">
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-bg"
+          style={{
+            maskImage: 'linear-gradient(to bottom, #000 calc(100% - 10px), transparent)',
+            WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 10px), transparent)',
+          }} />
+        <div className="relative mx-auto flex h-16 w-full max-w-[calc(64rem-2.5rem)] items-center gap-2 rounded-3xl border border-line bg-surface px-2 shadow-card">
           <NavLink to="/dashboard" aria-label="Accueil FocusFlow" className="shrink-0 rounded-2xl px-1.5 py-1 transition hover:bg-surface-2">
-            <Logo />
+            <Logo textClassName="hidden min-[860px]:inline" />
           </NavLink>
 
           <nav className="flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Navigation principale">

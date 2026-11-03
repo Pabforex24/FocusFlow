@@ -3,6 +3,7 @@ import { Pause, Play, Timer, X } from 'lucide-react'
 import { useFocus, useFocusTimer } from '../contexts/FocusContext.jsx'
 import { formatFocusTime } from '../lib/focus.js'
 import { ProgressBar } from './ui/ProgressBar.jsx'
+import { cn } from '../lib/cn.js'
 
 function requestDetailFullscreen() {
   if (document.fullscreenElement || !document.documentElement.requestFullscreen) return
@@ -11,17 +12,26 @@ function requestDetailFullscreen() {
 
 // Barre flottante visible sur toutes les pages tant qu'une session Focus est en cours.
 // Seul composant abonné au tick horodaté : les pages ne se re-rendent pas chaque seconde.
-export default function FocusBar() {
+export default function FocusBar({ layout = 'standard' }) {
   const { active, abandon, pause, resume } = useFocus()
   const { remainingMs, paused } = useFocusTimer()
   const { pathname, search } = useLocation()
   if (!active) return null
   const total = active.totalMs
   const elapsed = total ? ((total - remainingMs) / total) * 100 : 0
+  const style = layout === 'compact'
+    ? { right: 'calc(env(safe-area-inset-right, 0px) + 0.75rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }
+    : undefined
 
   return (
     <div role="timer" aria-label={`Temps restant : ${formatFocusTime(remainingMs, total)}`}
-      className="fixed inset-x-3 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] z-30 animate-fade-up rounded-2xl border border-brand-400/20 bg-linear-to-br from-brand-700 to-brand-950 p-3.5 text-white shadow-pop md:inset-x-auto md:right-6 md:bottom-6 md:w-80">
+      className={cn(
+        'fixed z-30 animate-fade-up rounded-2xl border border-brand-400/20 bg-linear-to-br from-brand-700 to-brand-950 p-3.5 text-white shadow-pop',
+        layout === 'desktop' && 'inset-x-auto right-6 bottom-6 w-80',
+        layout === 'standard' && 'inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))]',
+        layout === 'compact' && 'w-72 max-w-[calc(100vw-6rem)]',
+      )}
+      style={style}>
       <div className="flex items-center gap-3">
         <Link to="/focus" state={{ from: `${pathname}${search}` }} onClick={requestDetailFullscreen}
           aria-label="Ouvrir le détail Focus" title="Ouvrir le détail Focus"

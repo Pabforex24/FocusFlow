@@ -20,8 +20,10 @@ export function useAnchoredPanel({ width = 320, align = 'end' } = {}) {
   const place = useCallback(() => {
     const trigger = triggerRef.current?.getBoundingClientRect()
     if (!trigger) return
-    const vw = window.innerWidth
-    const vh = window.innerHeight
+    // clientWidth/clientHeight excluent la gouttière de défilement : les panneaux
+    // restent alignés sur la zone utile, même quand la page est courte.
+    const vw = document.documentElement.clientWidth || window.innerWidth
+    const vh = document.documentElement.clientHeight || window.innerHeight
     if (trigger.bottom < 0 || trigger.top > vh) { close(); return }
 
     const panelWidth = Math.min(width, vw - MARGIN * 2)

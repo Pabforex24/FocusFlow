@@ -475,6 +475,19 @@
 @layer base {
   html, body, #root { min-height: 100%; }
   html { accent-color: var(--color-brand-600); }
+  /* Desktop : la gouttière est réservée et la barre toujours présente, donc aucun décalage
+     quand une page devient plus longue. Sur écran tactile, la barre est superposée. */
+  @media (pointer: fine) {
+    html { scrollbar-gutter: stable; overflow-y: scroll; }
+  }
+  @media (pointer: coarse) {
+    html { scrollbar-gutter: auto; }
+  }
+  @supports not (scrollbar-gutter: stable) {
+    @media (pointer: fine) {
+      html { overflow-y: scroll; }
+    }
+  }
   ::selection { background: rgb(var(--accent-rgb) / 0.3); }
   body {
     @apply bg-bg font-sans text-fg antialiased;

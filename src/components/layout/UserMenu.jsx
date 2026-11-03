@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, Settings, UserRound } from 'lucide-react'
+import { ConfirmDialog } from '../ui/ConfirmDialog.jsx'
 import { useAnchoredPanel } from '../../lib/useAnchoredPanel.js'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useData } from '../../contexts/DataContext.jsx'
@@ -15,6 +16,7 @@ export default function UserMenu({ buttonClassName }) {
   const toast = useToast()
   const navigate = useNavigate()
   const { triggerRef, panelRef, open, setOpen, pos, close } = useAnchoredPanel({ width: 264 })
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const name = profile?.display_name || user.email
   const initials = name.slice(0, 2).toUpperCase()
 
@@ -24,9 +26,9 @@ export default function UserMenu({ buttonClassName }) {
   }, [open, pos, panelRef])
 
   const go = (to) => { close(); navigate(to) }
+  const requestLogout = () => { close(); setConfirmLogout(true) }
   const logout = async () => {
-    close()
-    try { await signOut() } catch (error) { toast.error(toUserMessage(error)) }
+    try { await signOut() } catch (error) { toast.error(toUserMessage(error)) } finally { setConfirmLogout(false) }
   }
 
   const onKeyDown = (event) => {
@@ -63,20 +65,25 @@ export default function UserMenu({ buttonClassName }) {
             </div>
           </div>
           <button type="button" role="menuitem" onClick={() => go('/profile')}
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-fg transition hover:bg-surface-2 focus:bg-surface-2 focus:outline-none">
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-fg transition hover:bg-surface-2 focus-visible:bg-surface-2 focus:outline-none">
             <UserRound className="size-4 text-muted" aria-hidden /> Mon profil
           </button>
           <button type="button" role="menuitem" onClick={() => go('/settings')}
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-fg transition hover:bg-surface-2 focus:bg-surface-2 focus:outline-none">
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-fg transition hover:bg-surface-2 focus-visible:bg-surface-2 focus:outline-none">
             <Settings className="size-4 text-muted" aria-hidden /> Réglages
           </button>
           <div className="my-1 border-t border-line" />
-          <button type="button" role="menuitem" onClick={logout}
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-500/10 focus:bg-rose-500/10 focus:outline-none dark:text-rose-400">
+          <button type="button" role="menuitem" onClick={requestLogout}
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-500/10 focus-visible:bg-rose-500/10 focus:outline-none dark:text-rose-400">
             <LogOut className="size-4" aria-hidden /> Se déconnecter
           </button>
         </div>,
         document.body,
+      )}
+
+      {confirmLogout && (
+        <ConfirmDialog title="Se déconnecter ?" message="Voulez-vous vraiment vous déconnecter ?"
+          confirmLabel="Se déconnecter" onConfirm={logout} onCancel={() => setConfirmLogout(false)} />
       )}
     </>
   )

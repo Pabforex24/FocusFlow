@@ -18,16 +18,21 @@ function Tab({ to, label, short, icon: Icon }) {
   )
 }
 
+// Même barre pour le téléphone et la tablette verticale : carte flottante en bas,
+// bouton "+" central. Le Coach est accessible via son bouton flottant.
 export default function MobileNav() {
   const [open, setOpen] = useState(false)
 
   return (
     <>
-      <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-40 pb-safe md:hidden">
-        <div className="mx-auto mb-2 grid h-16 w-[calc(100%-0.5rem)] max-w-md grid-cols-[repeat(6,minmax(2.75rem,1fr))_2.75rem] items-center rounded-3xl border border-line bg-surface/95 p-0.5 shadow-card backdrop-blur-xl">
+      <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-40 pb-safe">
+        <div aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] bg-gradient-to-t from-bg/60 via-bg/30 to-transparent backdrop-blur-[2px]" />
+        <div data-nav-zone
+          className="mx-auto mb-2 grid h-16 w-[calc(100%-0.5rem)] max-w-md grid-cols-[repeat(6,minmax(2.75rem,1fr))_2.75rem] items-center rounded-3xl border border-line bg-surface/95 p-0.5 shadow-card backdrop-blur-xl">
           {findNav(MOBILE_LEFT).map((item) => <Tab key={item.to} {...item} />)}
           <div className="flex justify-center">
-            <button type="button" onClick={() => setOpen(true)} aria-label="Créer ou explorer"
+            <button type="button" data-nav-zone onClick={() => setOpen(true)} aria-label="Créer ou explorer"
               className="-mt-5 grid size-14 place-items-center rounded-2xl btn-brand shadow-lg shadow-brand-500/30 transition active:scale-95">
               <Plus className="size-7" aria-hidden />
             </button>
