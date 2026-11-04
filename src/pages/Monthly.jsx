@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Layers, Medal, Sparkles, Target, TrendingUp } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, Layers, Medal, Sparkles, Target, TrendingUp } from 'lucide-react'
 import DomainTile from '../components/DomainTile.jsx'
 import { IconButton } from '../components/ui/Button.jsx'
 import { Card, CardHeader } from '../components/ui/Card.jsx'
@@ -8,11 +9,93 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { ProgressBar } from '../components/ui/ProgressBar.jsx'
 import { StatCard } from '../components/ui/StatCard.jsx'
 import { useData } from '../contexts/DataContext.jsx'
-import { formatMonth, formatShort, fromKey } from '../lib/dates.js'
+import { formatLong, formatMonth, formatShort, fromKey } from '../lib/dates.js'
 import { domainBreakdown, goalProgress, heatmap, monthSummary, rateColor } from '../lib/stats.js'
 import { cn } from '../lib/cn.js'
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+
+function MonthlyTrend({ cells, today }) {
+  const visible = cells.filter((c) => c.key <= today)
+  if (visible.length === 0) return <p className="text-sm text-muted">Aucune journée à afficher pour ce mois.</p>
+
+  let done = 0
+  let total = 0
+  const points = visible.map((c) => {
+    done += c.done
+    total += c.total
+    return { key: c.key, day: c.day, done, total }
+  })
+  const last = points[points.length - 1]
+  if (total === 0) return <p className="text-sm text-muted">Aucune tâche planifiée sur ce mois.</p>
+
+  const width = 640
+  const height = 220
+  const pad = { left: 38, right: 16, top: 18, bottom: 30 }
+  const innerWidth = width - pad.left - pad.right
+  const innerHeight = height - pad.top - pad.bottom
+  const max = Math.max(total, 1)
+  const x = (index) => pad.left + (points.length === 1 ? innerWidth / 2 : (index / (points.length - 1)) * innerWidth)
+  const y = (value) => pad.top + innerHeight - (value / max) * innerHeight
+  const line = (key) => points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[key]).toFixed(1)}`).join(' ')
+  const donePath = line('done')
+  const totalPath = line('total')
+  const areaPath = points.length > 1 ? `${donePath} L${x(points.length - 1)},${y(0)} L${x(0)},${y(0)} Z` : ''
+  const grid = [0, 0.5, 1]
+  const xIndexes = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter((v, i, all) => all.indexOf(v) === i)
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted">
+          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand-500" aria-hidden />Réalisé <strong className="font-semibold text-fg tabular-nums">{last.done}</strong></span>
+          <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full border border-line bg-surface-2" aria-hidden />Planifié <strong className="font-semibold text-fg tabular-nums">{last.total}</strong></span>
+          <span>Reste <strong className="font-semibold text-fg tabular-nums">{Math.max(0, last.total - last.done)}</strong></span>
+        </div>
+        <span className="text-xs text-subtle">Cumul jusqu’au {formatShort(last.key)}</span>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-52 w-full" role="img" aria-label={`Progression cumulée : ${last.done} tâches réalisées sur ${last.total} planifiées`}>
+        <title>Progression cumulée du mois</title>
+        {grid.map((ratio) => {
+          const value = Math.round(max * ratio)
+          const lineY = y(value)
+          return (
+            <g key={ratio}>
+              <line x1={pad.left} x2={width - pad.right} y1={lineY} y2={lineY} stroke="var(--line)" strokeDasharray="4 7" />
+              <text x={pad.left - 8} y={lineY + 4} textAnchor="end" fill="var(--subtle)" fontSize="10">{value}</text>
+            </g>
+          )
+        })}
+        {areaPath && <path d={areaPath} fill="rgb(var(--accent-rgb))" opacity="0.12" />}
+        <path d={totalPath} fill="none" stroke="var(--muted)" strokeWidth="2" strokeDasharray="6 6" opacity="0.55" />
+        <path d={donePath} fill="none" stroke="rgb(var(--accent-rgb))" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={x(points.length - 1)} cy={y(last.done)} r="4.5" fill="rgb(var(--accent-rgb))" stroke="var(--surface)" strokeWidth="2" />
+        {xIndexes.map((index) => (
+          <text key={index} x={x(index)} y={height - 8} textAnchor={index === 0 ? 'start' : index === points.length - 1 ? 'end' : 'middle'} fill="var(--subtle)" fontSize="10">{points[index].day}</text>
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+function WeekdayChart({ stats }) {
+  return (
+    <div className="grid grid-cols-7 gap-1.5 sm:gap-2" role="img" aria-label="Taux de complétion moyen par jour de la semaine">
+      {stats.map((stat) => (
+        <div key={stat.label} className="flex min-w-0 flex-col items-center gap-1.5">
+          <span className="text-[10px] font-semibold text-muted tabular-nums">{stat.rate === null ? '—' : `${stat.rate}%`}</span>
+          <div className="flex h-28 w-full items-end rounded-lg bg-surface-2/70">
+            <div className={cn('w-full rounded-lg', stat.rate === null ? 'bg-line' : 'bg-linear-to-t from-brand-700 to-brand-400')}
+              style={{ height: stat.rate === null ? 0 : `${Math.max(stat.rate, 5)}%` }} />
+          </div>
+          <span className="text-[10px] font-medium text-subtle">{stat.label}</span>
+          <span className="text-[9px] text-subtle tabular-nums">{stat.done}/{stat.total}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function Legend() {
   return (
@@ -38,6 +121,12 @@ export default function Monthly() {
   const monthKeyPrefix = `${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}`
   const monthTasks = tasks.filter((t) => t.scheduled_on.startsWith(monthKeyPrefix))
   const byDomain = domainBreakdown(domains, monthTasks).filter((x) => x.total > 0)
+  const weekdayStats = WEEKDAY_LABELS.map((label, index) => {
+    const cells = m.cells.filter((c) => c.weekday === index && c.key <= today)
+    const total = cells.reduce((sum, c) => sum + c.total, 0)
+    const done = cells.reduce((sum, c) => sum + c.done, 0)
+    return { label, done, total, rate: total ? Math.round((done / total) * 100) : null }
+  })
 
   if (tasks.length === 0) {
     return (
@@ -66,6 +155,18 @@ export default function Monthly() {
           <StatCard icon={Medal} tone="warning" label="Meilleur jour" value={m.best ? formatShort(m.best.key) : '—'} hint={m.best ? `${Math.round(m.best.rate * 100)} % réussi` : 'Aucune donnée'} />
         </section>
 
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader icon={TrendingUp} title="Progression cumulée" description="Tâches réalisées et planifiées jour après jour" />
+            <MonthlyTrend cells={m.cells} today={today} />
+          </Card>
+
+          <Card>
+            <CardHeader icon={BarChart3} title="Rythme hebdomadaire" description="Taux moyen par jour de la semaine" />
+            <WeekdayChart stats={weekdayStats} />
+          </Card>
+        </section>
+
         <Card>
           <CardHeader icon={CalendarDays} title="Calendrier du mois" action={<Legend />} />
           <div className="mb-2 grid grid-cols-7 gap-1.5 text-center text-xs font-medium text-subtle sm:gap-2">{WEEKDAYS.map((d, i) => <span key={i}>{d}</span>)}</div>
@@ -75,12 +176,12 @@ export default function Monthly() {
               const future = c.key > today
               const active = !future && c.rate !== null
               return (
-                <div key={c.key} title={`${formatShort(c.key)} : ${c.done}/${c.total}`}
-                  className={cn('grid aspect-square place-items-center rounded-lg text-xs font-semibold sm:rounded-xl sm:text-sm',
+                <Link key={c.key} to={`/tasks?day=${c.key}`} aria-label={`Voir les tâches du ${formatLong(c.key)}`} title={`${formatShort(c.key)} : ${c.done}/${c.total}`}
+                  className={cn('grid aspect-square place-items-center rounded-lg text-xs font-semibold transition hover:scale-[1.04] hover:ring-2 hover:ring-brand-400/60 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none sm:rounded-xl sm:text-sm',
                     active ? 'text-white' : 'bg-surface-2 text-subtle', c.key === today && 'ring-2 ring-brand-500 ring-offset-2 ring-offset-surface')}
                   style={active ? { backgroundColor: rateColor(c.rate) } : undefined}>
                   {c.day}
-                </div>
+                </Link>
               )
             })}
           </div>

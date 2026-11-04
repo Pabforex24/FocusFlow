@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { CalendarCheck, CalendarClock, CalendarX, ChevronLeft, ChevronRight, ListChecks, Plus, ShieldCheck, Shuffle, Trash2 } from 'lucide-react'
 import TaskForm from '../components/TaskForm.jsx'
 import TaskItem from '../components/TaskItem.jsx'
@@ -14,7 +15,7 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useOpenOnNew } from '../hooks/useOpenOnNew.js'
-import { addDays, formatLong, formatShort } from '../lib/dates.js'
+import { addDays, formatLong, formatShort, fromKey, toKey } from '../lib/dates.js'
 import { overdueTasks } from '../lib/tasks.js'
 
 function CatchUpModal({ overdue, onClose }) {
@@ -71,12 +72,19 @@ function CatchUpModal({ overdue, onClose }) {
 
 export default function Tasks() {
   const { tasks, today, restDays, actions } = useData()
-  const [day, setDay] = useState(today)
+  const [searchParams] = useSearchParams()
+  const queryDay = searchParams.get('day')
+  const requestedDay = queryDay && toKey(fromKey(queryDay)) === queryDay ? queryDay : null
+  const [day, setDay] = useState(requestedDay ?? today)
   const [form, setForm] = useState(null) // null | { task? }
   const [toDelete, setToDelete] = useState(null)
   const [postpone, setPostpone] = useState(null)
   const [catchup, setCatchup] = useState(false)
   useOpenOnNew(useCallback(() => setForm({}), []))
+
+  useEffect(() => {
+    if (requestedDay) setDay(requestedDay)
+  }, [requestedDay])
 
   const overdue = overdueTasks(tasks, today)
   const dayTasks = tasks.filter((t) => t.scheduled_on === day).sort((a, b) => a.created_at.localeCompare(b.created_at))

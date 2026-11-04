@@ -20,6 +20,13 @@ function clampViewport(pos) {
   }
 }
 
+// Le bouton reste collé à un bord : seul son déplacement vertical est libre.
+function snapToSide(pos) {
+  const clamped = clampViewport(pos)
+  const maxX = Math.max(MARGIN, window.innerWidth - SIZE - MARGIN)
+  return { x: clamped.x + SIZE / 2 < window.innerWidth / 2 ? MARGIN : maxX, y: clamped.y }
+}
+
 function getNavZones() {
   return [...document.querySelectorAll(NAV_ZONE_SELECTOR)]
     .map((element) => element.getBoundingClientRect())
@@ -41,15 +48,13 @@ function distance(a, b) {
 
 // Garde le bouton dans l'écran et hors de la barre de navigation, du rail et de la capsule.
 function resolvePos(pos) {
-  const target = clampViewport(pos)
+  const target = snapToSide(pos)
   const zones = getNavZones()
   if (zones.length === 0 || !overlapsNav(target, zones)) return target
 
   const candidates = zones.flatMap((zone) => [
     { x: target.x, y: zone.top - SIZE - MARGIN },
     { x: target.x, y: zone.bottom + MARGIN },
-    { x: zone.left - SIZE - MARGIN, y: target.y },
-    { x: zone.right + MARGIN, y: target.y },
   ])
   candidates.push(
     { x: MARGIN, y: MARGIN },
@@ -59,7 +64,7 @@ function resolvePos(pos) {
   )
 
   const free = candidates
-    .map(clampViewport)
+    .map(snapToSide)
     .filter((candidate) => !overlapsNav(candidate, zones))
   if (free.length === 0) return target
   return free.reduce((best, candidate) => (distance(candidate, target) < distance(best, target) ? candidate : best))
@@ -68,7 +73,7 @@ function resolvePos(pos) {
 function readPos(layout) {
   try {
     const saved = JSON.parse(localStorage.getItem(keyFor(layout)) ?? 'null')
-    return saved && Number.isFinite(saved.x) && Number.isFinite(saved.y) ? clampViewport(saved) : null
+    return saved && Number.isFinite(saved.x) && Number.isFinite(saved.y) ? snapToSide(saved) : null
   } catch {
     return null
   }
@@ -113,8 +118,8 @@ export default function CoachFab({ layout }) {
   const style = pos
     ? { left: pos.x, top: pos.y }
     : compact
-      ? { right: 'calc(env(safe-area-inset-right, 0px) + 0.75rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }
-      : { right: 'calc(env(safe-area-inset-right, 0px) + 1rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.25rem)' }
+      ? { right: 'calc(env(safe-area-inset-right, 0px) + 0.5rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }
+      : { right: 'calc(env(safe-area-inset-right, 0px) + 0.5rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.25rem)' }
 
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
