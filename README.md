@@ -52,7 +52,7 @@ api/          Fonctions Vercel (serveur) : coach.js (Groq), notify.js (rappels p
 
 ## Coach IA (Groq)
 
-La page Coach affiche d'abord des conseils **locaux** (calculés dans le navigateur, disponibles hors-ligne). Le bouton « Analyser » envoie un résumé compact des données (sans email ni donnée personnelle) à `api/coach.js`, qui interroge Groq : **la clé API reste côté serveur**. Le conseil du jour est mis en cache localement.
+La page **Coach Amadou** affiche une analyse automatique calculée localement (disponible hors-ligne). Le bouton « Discuter avec Amadou » ouvre une conversation limitée à 40 messages, conservée localement par jour. Chaque message envoie un contexte compact (sans email ni donnée personnelle) à `api/coach.js`, qui interroge Groq : **la clé API reste côté serveur**. Sans réseau ou sans session, Amadou répond localement.
 
 Variables Vercel : `GROQ_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (+ option `GROQ_MODEL`, défaut `openai/gpt-oss-120b`).
 
@@ -83,7 +83,7 @@ Pendant une session, le service worker affiche une **notification persistante** 
 
 ## Ce qui diffère de l'ancienne version
 
-- **Coach IA (Groq)** : rétabli via une fonction serveur (`api/coach.js`) — bouton « Analyser » de la page Coach.
+- **Coach IA (Groq)** : rétabli via une fonction serveur (`api/coach.js`) — analyse automatique et chat « Coach Amadou ».
 - **Notifications push / rappels** : rétablies (`api/notify.js` + `pg_cron` Supabase) — activées dans Profil.
 - **Mode 100 % hors-ligne sans compte** : supprimé (deux sources de vérité = source de bugs). Un compte est requis.
 - **Dates/heures des tâches** : jour uniquement (plus d'heure précise).

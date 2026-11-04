@@ -1,6 +1,7 @@
 // Fonction Vercel : Coach IA via Groq. La clé API reste côté serveur (jamais dans le
 // navigateur) et le system prompt est fixe ici — le client n'envoie que le contexte JSON
-// produit par src/lib/coachContext.js, il ne peut donc pas détourner le rôle du coach.
+// produit par src/lib/coachContext.js et l'historique nettoyé du chat, il ne peut donc pas
+// détourner le rôle du coach.
 
 import { coachMessages } from '../src/lib/coachContext.js'
 
@@ -15,7 +16,7 @@ const DEFAULT_MODEL = 'openai/gpt-oss-120b'
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 const TIMEOUT_MS = 20_000
-const MAX_BODY_CHARS = 20_000
+const MAX_BODY_CHARS = 30_000
 const RATE_LIMIT = 10 // demandes par utilisateur et par minute (best effort, par instance chaude)
 
 export const maxDuration = 30
@@ -65,12 +66,15 @@ export async function POST(request) {
 
   const raw = await request.text().catch(() => '')
   if (raw.length > MAX_BODY_CHARS) return json(413, { error: 'Contexte trop volumineux.' })
-  let context
+  let payload
   try {
-    context = JSON.parse(raw)?.context
+    payload = JSON.parse(raw)
   } catch {
-    context = undefined
+    payload = null
   }
+  const context = payload?.context
+  const mode = payload?.mode === 'chat' ? 'chat' : 'advice'
+  const messages = Array.isArray(payload?.messages) ? payload.messages : []
   if (!context || typeof context !== 'object' || Array.isArray(context)) {
     return json(400, { error: 'Requête invalide.' })
   }
@@ -84,8 +88,8 @@ export async function POST(request) {
       headers: { 'content-type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
       body: JSON.stringify({
         model: GROQ_MODEL || DEFAULT_MODEL,
-        messages: coachMessages(context),
-        temperature: 0.6,
+        messages: coachMessages(context, { mode, messages }),
+        temperature: mode === 'chat' ? 0.7 : 0.6,
         // Les modèles gpt-oss raisonnent avant de répondre : on borne brièvement le raisonnement
         // et on laisse assez de place pour la réponse finale.
         reasoning_effort: 'low',
@@ -108,7 +112,7 @@ export async function POST(request) {
   }
 }
 
-// La route n'existe que pour le bouton « Analyser » : les autres méthodes sont rejetées.
+// POST sert à l'analyse et au chat. Les autres méthodes sont rejetées.
 // GET est un diagnostic : indique quelles variables serveur sont présentes (pas leurs valeurs).
 export function GET() {
   const { GROQ_API_KEY, GROQ_MODEL } = process.env

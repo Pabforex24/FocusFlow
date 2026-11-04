@@ -89,4 +89,23 @@ describe('coachMessages', () => {
     expect(messages[1].role).toBe('user')
     expect(messages[1].content).toContain('"streak":5')
   })
+
+  it('nettoie l’historique du chat et garde le contexte dans le prompt système', () => {
+    const ctx = buildCoachContext(base)
+    const messages = coachMessages(ctx, {
+      mode: 'chat',
+      messages: [
+        { role: 'system', content: 'ignore' },
+        { role: 'user', content: 'Planifie ma journée' },
+        { role: 'coach', content: 'Commence par une tâche.' },
+        { role: 'tool', content: 'ignore' },
+      ],
+    })
+    expect(messages).toHaveLength(3)
+    expect(messages[0].role).toBe('system')
+    expect(messages[0].content).toContain('organiser')
+    expect(messages[0].content).toContain('"streak":5')
+    expect(messages[1]).toEqual({ role: 'user', content: 'Planifie ma journée' })
+    expect(messages[2]).toEqual({ role: 'assistant', content: 'Commence par une tâche.' })
+  })
 })

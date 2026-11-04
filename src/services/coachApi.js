@@ -7,7 +7,7 @@ import { AppError } from '../lib/errors.js'
 
 const TIMEOUT_MS = 25_000
 
-export async function askCoach(context) {
+export async function askCoach(context, { mode = 'advice', messages = [] } = {}) {
   const { data, error } = await supabase.auth.getSession()
   if (error || !data?.session) throw new AppError('Session expirée. Reconnectez-vous.')
 
@@ -21,7 +21,7 @@ export async function askCoach(context) {
         'content-type': 'application/json',
         Authorization: `Bearer ${data.session.access_token}`,
       },
-      body: JSON.stringify({ context }),
+      body: JSON.stringify({ context, mode, messages: messages.slice(-10) }),
     })
     const body = await res.json().catch(() => null)
     if (!res.ok) throw new AppError(body?.error ?? 'Le coach est indisponible. Réessayez plus tard.')
