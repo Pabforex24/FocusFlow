@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ArrowRight, MessageCircle, RotateCcw, Send, Sparkles, Target, TrendingUp, TriangleAlert, X } from 'lucide-react'
@@ -43,6 +43,7 @@ function CoachAvatar({ small = false }) {
 function ChatDialog({ chat, intro, input, sending, aiOffline, onClose, onInput, onSend, onPrompt, onClear }) {
   const dialogRef = useRef(null)
   const listRef = useRef(null)
+  const inputRef = useRef(null)
   useFocusTrap(dialogRef)
   useScrollLock()
 
@@ -56,6 +57,13 @@ function ChatDialog({ chat, intro, input, sending, aiOffline, onClose, onInput, 
     const list = listRef.current
     if (list) list.scrollTop = list.scrollHeight
   }, [chat, sending])
+
+  useLayoutEffect(() => {
+    const field = inputRef.current
+    if (!field) return
+    field.style.height = 'auto'
+    field.style.height = `${Math.min(field.scrollHeight, 120)}px`
+  }, [input])
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm sm:items-center sm:justify-center sm:p-6"
@@ -114,6 +122,7 @@ function ChatDialog({ chat, intro, input, sending, aiOffline, onClose, onInput, 
           )}
           <form onSubmit={(event) => { event.preventDefault(); onSend(input) }} className="flex items-end gap-2">
             <textarea
+              ref={inputRef}
               value={input}
               onChange={(event) => onInput(event.target.value)}
               onKeyDown={(event) => {
@@ -126,7 +135,7 @@ function ChatDialog({ chat, intro, input, sending, aiOffline, onClose, onInput, 
               maxLength={1000}
               placeholder="Écris à Amadou…"
               aria-label="Message à Amadou"
-              className="h-11 max-h-24 flex-1 resize-none py-2.5"
+              className="min-h-11 max-h-[7.5rem] flex-1 resize-none overflow-y-auto py-2.5"
             />
             <Button type="submit" icon={Send} loading={sending} disabled={!input.trim()} aria-label="Envoyer" className="size-11 shrink-0 px-0 sm:w-auto sm:px-3.5">
               <span className="sr-only sm:not-sr-only">Envoyer</span>
