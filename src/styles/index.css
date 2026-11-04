@@ -491,8 +491,8 @@
   .nav-glass {
     background-color: var(--surface);
     background-color: color-mix(in srgb, var(--surface) 70%, transparent);
-    -webkit-backdrop-filter: blur(22px) saturate(1.5);
-    backdrop-filter: blur(22px) saturate(1.5);
+    -webkit-backdrop-filter: blur(36px) saturate(1.7);
+    backdrop-filter: blur(36px) saturate(1.7);
   }
 }
 .dark .nav-glass {

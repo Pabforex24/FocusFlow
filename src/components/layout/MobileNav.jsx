@@ -13,27 +13,21 @@ function NotificationDot() {
   )
 }
 
-function Tab({ to, label, short, icon: Icon, hasAlert }) {
+function Tab({ to, label, icon: Icon, hasAlert }) {
   const accessibleName = hasAlert ? `${label}, notifications non lues` : label
 
   return (
     <NavLink to={to} aria-label={accessibleName}
       className={({ isActive }) => cn(
-        'relative flex min-h-11 min-w-11 items-center justify-center rounded-[1.35rem] outline-none transition-[background-color,color,box-shadow,transform] duration-200 focus-visible:ring-2 focus-visible:ring-brand-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-95',
+        'relative flex min-h-11 min-w-11 flex-1 items-center justify-center rounded-[1.35rem] outline-none transition-[background-color,color,box-shadow,transform] duration-200 focus-visible:ring-2 focus-visible:ring-brand-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-95',
         isActive
-          ? 'flex-none gap-px bg-brand-400/20 px-0 text-[7.5px] font-semibold tracking-[-0.02em] whitespace-nowrap text-brand-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-brand-500/25 ring-inset dark:bg-brand-300/20 dark:text-brand-50 dark:ring-brand-200/20 min-[360px]:gap-1.5 min-[360px]:px-2 min-[360px]:text-[0.5625rem] min-[400px]:text-[0.625rem]'
-          : 'flex-1 text-subtle hover:bg-surface-2/70 hover:text-fg',
+          ? 'bg-brand-400/20 text-brand-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-brand-500/25 ring-inset dark:bg-brand-300/20 dark:text-brand-50 dark:ring-brand-200/20'
+          : 'text-subtle hover:bg-surface-2/70 hover:text-fg',
       )}>
-      {({ isActive }) => (
-        <>
-          <span className="relative grid shrink-0 place-items-center">
-            <Icon aria-hidden
-              className={isActive ? 'size-[18px] min-[360px]:size-5' : 'size-[22px] min-[360px]:size-6'} />
-            {hasAlert && <NotificationDot />}
-          </span>
-          {isActive && <span>{short ?? label}</span>}
-        </>
-      )}
+      <span className="relative grid shrink-0 place-items-center">
+        <Icon aria-hidden className="size-[22px] min-[360px]:size-6" />
+        {hasAlert && <NotificationDot />}
+      </span>
     </NavLink>
   )
 }
