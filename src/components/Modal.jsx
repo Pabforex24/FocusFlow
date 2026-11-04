@@ -4,24 +4,7 @@ import { X } from 'lucide-react'
 import { IconButton } from './ui/Button.jsx'
 import { cn } from '../lib/cn.js'
 import { useFocusTrap } from '../lib/useFocusTrap.js'
-
-// Bloque le défilement de la page derrière la modale (technique fiable sur iOS Safari).
-function useScrollLock() {
-  useEffect(() => {
-    const y = window.scrollY
-    const { style } = document.body
-    const previous = { position: style.position, top: style.top, width: style.width }
-    style.position = 'fixed'
-    style.top = `-${y}px`
-    style.width = '100%'
-    return () => {
-      style.position = previous.position
-      style.top = previous.top
-      style.width = previous.width
-      window.scrollTo(0, y)
-    }
-  }, [])
-}
+import { useScrollLock } from '../lib/useScrollLock.js'
 
 // Pile des modales ouvertes : seule la plus récente réagit à Échap (évite de fermer
 // la modale parente quand une sous-modale est ouverte).

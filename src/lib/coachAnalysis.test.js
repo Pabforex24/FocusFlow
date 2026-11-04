@@ -60,7 +60,7 @@ describe('buildCoachAnalysis', () => {
   })
 
   it('propose des prompts et des actions d’organisation', () => {
-    expect(COACH_PROMPTS.length).toBeGreaterThanOrEqual(4)
+    expect(COACH_PROMPTS.length).toBeGreaterThanOrEqual(3)
     expect(COACH_ACTIONS.map((action) => action.to)).toContain('/challenges')
   })
 })

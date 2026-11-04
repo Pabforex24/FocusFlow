@@ -232,10 +232,8 @@ export function buildCoachAnalysis(data = {}) {
 }
 
 export const COACH_PROMPTS = [
-  'Planifie ma journée',
-  'Comment réduire ma charge ?',
-  'Quel défi choisir ?',
-  'Aide-moi à équilibrer mes domaines',
+  'Organise ma journée',
+  'Je suis débordé',
   'J’ai besoin de motivation',
 ]
 
