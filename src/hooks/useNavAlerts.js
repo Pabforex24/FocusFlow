@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useData } from '../contexts/DataContext.jsx'
-import { buildNavAlerts, readAlertIds, saveAlertIds, unreadAlertCount } from '../lib/navAlerts.js'
+import { buildNavAlerts, readAlertIds, saveAlertIds } from '../lib/navAlerts.js'
 
 const READ_EVENT = 'focusflow:nav-alerts-read'
 
@@ -15,6 +15,11 @@ export function useNavAlerts() {
     return () => window.removeEventListener(READ_EVENT, sync)
   }, [])
 
+  const unreadAlerts = useMemo(() => {
+    const seen = new Set(readIds)
+    return alerts.filter((alert) => !seen.has(alert.id))
+  }, [alerts, readIds])
+
   const markRead = useCallback(() => {
     const next = [...new Set([...readIds, ...alerts.map((alert) => alert.id)])]
     saveAlertIds(next)
@@ -22,5 +27,5 @@ export function useNavAlerts() {
     window.dispatchEvent(new Event(READ_EVENT))
   }, [alerts, readIds])
 
-  return { alerts, unread: unreadAlertCount(alerts, readIds), markRead }
+  return { alerts, unreadAlerts, unread: unreadAlerts.length, markRead }
 }

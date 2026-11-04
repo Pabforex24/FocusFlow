@@ -1,43 +1,74 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import QuickActionsModal from './QuickActionsModal.jsx'
 import { MOBILE_LEFT, MOBILE_RIGHT, findNav } from './navigation.js'
+import { useNavAlerts } from '../../hooks/useNavAlerts.js'
 import { cn } from '../../lib/cn.js'
 
-function Tab({ to, label, short, icon: Icon }) {
+function NotificationDot() {
   return (
-    <NavLink to={to} aria-label={label}
+    <span aria-hidden data-nav-badge
+      className="absolute top-0 right-0 size-2.5 -translate-y-1/2 rounded-full bg-[#ef4444] ring-2 ring-surface" />
+  )
+}
+
+function Tab({ to, label, short, icon: Icon, hasAlert }) {
+  const accessibleName = hasAlert ? `${label}, notifications non lues` : label
+
+  return (
+    <NavLink to={to} aria-label={accessibleName}
       className={({ isActive }) => cn(
-        'flex min-h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[9px] font-medium transition-colors min-[360px]:text-[10px]',
-        isActive ? 'bg-brand-500/12 text-brand-700 dark:text-brand-300' : 'text-subtle hover:bg-surface-2 hover:text-fg',
+        'relative flex min-h-11 min-w-11 items-center justify-center rounded-[1.35rem] outline-none transition-[background-color,color,box-shadow,transform] duration-200 focus-visible:ring-2 focus-visible:ring-brand-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-95',
+        isActive
+          ? 'flex-none gap-px bg-brand-400/20 px-0 text-[7.5px] font-semibold tracking-[-0.02em] whitespace-nowrap text-brand-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-brand-500/25 ring-inset dark:bg-brand-300/20 dark:text-brand-50 dark:ring-brand-200/20 min-[360px]:gap-1.5 min-[360px]:px-2 min-[360px]:text-[0.5625rem] min-[400px]:text-[0.625rem]'
+          : 'flex-1 text-subtle hover:bg-surface-2/70 hover:text-fg',
       )}>
-      <Icon className="size-5" aria-hidden />
-      <span className="w-full truncate px-1 text-center">{short ?? label}</span>
+      {({ isActive }) => (
+        <>
+          <span className="relative grid shrink-0 place-items-center">
+            <Icon aria-hidden
+              className={isActive ? 'size-[18px] min-[360px]:size-5' : 'size-[22px] min-[360px]:size-6'} />
+            {hasAlert && <NotificationDot />}
+          </span>
+          {isActive && <span>{short ?? label}</span>}
+        </>
+      )}
     </NavLink>
   )
 }
 
-// Même barre pour le téléphone et la tablette verticale : carte flottante en bas,
-// bouton "+" central. Le Coach est accessible via son bouton flottant.
+// Même barre pour le téléphone et la tablette verticale : capsule en verre, bouton "+"
+// central. Le Coach est accessible via son bouton flottant.
 export default function MobileNav() {
   const [open, setOpen] = useState(false)
+  const { unreadAlerts } = useNavAlerts()
+  const badges = useMemo(() => {
+    const counts = new Map()
+    unreadAlerts.forEach((alert) => {
+      const path = alert.to?.split('?')[0]
+      if (path) counts.set(path, true)
+    })
+    return counts
+  }, [unreadAlerts])
 
   return (
     <>
       <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-40 pb-safe">
         <div aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] bg-gradient-to-t from-bg/60 via-bg/30 to-transparent backdrop-blur-[2px]" />
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[calc(env(safe-area-inset-bottom,0px)+5.25rem)] bg-gradient-to-t from-bg/60 via-bg/30 to-transparent backdrop-blur-[2px]" />
         <div data-nav-zone
-          className="mx-auto mb-2 grid h-16 w-[calc(100%-0.5rem)] max-w-md grid-cols-[repeat(6,minmax(2.75rem,1fr))_2.75rem] items-center rounded-3xl border border-line bg-surface/95 p-0.5 shadow-card backdrop-blur-xl">
-          {findNav(MOBILE_LEFT).map((item) => <Tab key={item.to} {...item} />)}
-          <div className="flex justify-center">
-            <button type="button" data-nav-zone onClick={() => setOpen(true)} aria-label="Créer ou explorer"
-              className="-mt-5 grid size-14 place-items-center rounded-2xl btn-brand shadow-lg shadow-brand-500/30 transition active:scale-95">
-              <Plus className="size-7" aria-hidden />
-            </button>
-          </div>
-          {findNav(MOBILE_RIGHT).map((item) => <Tab key={item.to} {...item} />)}
+          className="nav-glass relative mx-auto mb-2 flex h-14 w-full max-w-md items-center gap-0 rounded-[1.65rem] min-[360px]:w-[calc(100%-0.5rem)] min-[360px]:gap-0.5 min-[360px]:px-1">
+          {findNav(MOBILE_LEFT).map((item) => (
+            <Tab key={item.to} {...item} hasAlert={badges.has(item.to)} />
+          ))}
+          <button type="button" data-nav-zone onClick={() => setOpen(true)} aria-label="Créer ou explorer"
+            className="-translate-y-3 grid size-11 shrink-0 place-items-center rounded-[1.15rem] btn-brand shadow-lg shadow-brand-500/30 transition active:scale-95 min-[360px]:size-12">
+            <Plus className="size-6" aria-hidden />
+          </button>
+          {findNav(MOBILE_RIGHT).map((item) => (
+            <Tab key={item.to} {...item} hasAlert={badges.has(item.to)} />
+          ))}
         </div>
       </nav>
       <QuickActionsModal open={open} onClose={() => setOpen(false)} />
