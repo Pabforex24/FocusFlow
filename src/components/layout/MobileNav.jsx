@@ -50,7 +50,7 @@ export default function MobileNav() {
     <>
       <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-40 pb-safe">
         <div aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[calc(env(safe-area-inset-bottom,0px)+5.25rem)] bg-gradient-to-t from-bg/60 via-bg/30 to-transparent backdrop-blur-[2px]" />
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[calc(env(safe-area-inset-bottom,0px)+4rem)] bg-gradient-to-t from-bg/60 via-bg/30 to-transparent backdrop-blur-[2px]" />
         <div data-nav-zone
           className="nav-glass relative mx-auto mb-2 flex h-14 w-full max-w-md items-center gap-0 rounded-[1.65rem] min-[360px]:w-[calc(100%-0.5rem)] min-[360px]:gap-0.5 min-[360px]:px-1">
           {findNav(MOBILE_LEFT).map((item) => (
