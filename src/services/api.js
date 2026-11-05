@@ -39,7 +39,12 @@ const readAll = (table, columns, orders) => fetchAllPages((from, to) => {
 // n'ont pas encore été créées, l'application continue de fonctionner sans cette fonctionnalité.
 const optionalRead = (promise) => promise.catch((error) => {
   const message = String(error?.message ?? '')
-  if (error?.code === '42P01' || /relation .* does not exist/i.test(message)) return []
+  const missingTable = error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || error?.status === 404
+    || /relation .* does not exist/i.test(message)
+    || /could not find the table/i.test(message)
+  if (missingTable) return []
   throw error
 })
 
