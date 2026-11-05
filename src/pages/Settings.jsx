@@ -51,7 +51,7 @@ function PauseCard() {
 
   return (
     <Card className="space-y-4">
-      <CardHeader title="Pauses · indisponibilité" description="Les jours couverts ne comptent pas (ni pénalité, ni série perdue) et décalent la fin des challenges en cours." />
+      <CardHeader title="Pauses · indisponibilité" description="Les jours couverts ne comptent pas (ni pénalité, ni série perdue) et décalent la fin des défis en cours." />
       <div className="grid grid-cols-2 gap-3">
         <Field label="Du"><Input type="date" value={start} onChange={(e) => setStart(e.target.value)} /></Field>
         <Field label="Au"><Input type="date" value={end} min={start} onChange={(e) => setEnd(e.target.value)} /></Field>

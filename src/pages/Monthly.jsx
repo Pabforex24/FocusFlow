@@ -131,7 +131,7 @@ export default function Monthly() {
   if (tasks.length === 0) {
     return (
       <>
-        <PageHeader title="Statistiques" subtitle="Votre régularité dans le temps" />
+        <PageHeader title="Statistiques" />
         <EmptyState icon={TrendingUp} title="Pas encore de données">Terminez quelques tâches : vos statistiques apparaîtront ici.</EmptyState>
       </>
     )
@@ -139,7 +139,7 @@ export default function Monthly() {
 
   return (
     <>
-      <PageHeader title="Statistiques" subtitle="Votre régularité dans le temps" />
+      <PageHeader title="Statistiques" />
 
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-2">

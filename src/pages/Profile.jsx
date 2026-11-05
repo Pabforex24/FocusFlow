@@ -40,7 +40,7 @@ export default function Profile() {
           <StatCard icon={Trophy} label="Tâches faites" value={stats.totalDone} />
           <StatCard icon={Flame} label="Série actuelle" value={`${stats.streak} j`} hint={`Record : ${stats.longestStreak} j`} tone="warning" />
           <StatCard icon={Timer} label="Sessions Focus" value={stats.focusCount} tone="info" />
-          <StatCard icon={Award} label="Challenges terminés" value={stats.challengesDone} tone="success" />
+          <StatCard icon={Award} label="Défis terminés" value={stats.challengesDone} tone="success" />
         </div>
       </div>
     </>

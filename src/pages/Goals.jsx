@@ -76,7 +76,7 @@ export default function Goals() {
 
   return (
     <>
-      <PageHeader title="Objectifs" subtitle="La progression se calcule à partir des tâches liées">
+      <PageHeader title="Objectifs">
         <Button icon={Plus} onClick={() => setForm({})} disabled={domains.length === 0}>Nouvel objectif</Button>
       </PageHeader>
 

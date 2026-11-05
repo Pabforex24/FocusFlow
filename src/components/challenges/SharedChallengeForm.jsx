@@ -78,7 +78,7 @@ export default function SharedChallengeForm({ onClose }) {
           Le classement compare les progressions sans exposer les tâches des autres.
         </Alert>
 
-        <Field label="Programme" hint={customChallenges.length === 0 ? 'Créez un challenge perso pour utiliser votre propre programme.' : undefined}>
+        <Field label="Programme" hint={customChallenges.length === 0 ? 'Créez un défi perso pour utiliser votre propre programme.' : undefined}>
           <Select value={sourceKey} onChange={(event) => changeSource(event.target.value)}>
             {sources.map((item) => <option key={item.value} value={item.value}>{item.challenge.title}</option>)}
           </Select>

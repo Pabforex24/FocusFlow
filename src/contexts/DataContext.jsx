@@ -298,7 +298,7 @@ export function DataProvider({ children }) {
     // Challenges
     startCatalogueChallenge: ({ challenge, startKey, endKey: endKeyIn, domainId, goalId }) => act(async () => {
       if (data.activeChallenges.some((a) => a.challenge_id === challenge.id && a.end_date >= todayKey())) {
-        throw new AppError('Ce challenge est déjà en cours.')
+        throw new AppError('Ce défi est déjà en cours.')
       }
       const endKey = endKeyIn || challengeEndKey(startKey, challenge.durationDays)
       if (endKey < startKey) throw new AppError('La date de fin doit suivre la date de début.')
@@ -309,7 +309,7 @@ export function DataProvider({ children }) {
         rows,
       )
       setData((d) => ({ ...d, activeChallenges: [created, ...d.activeChallenges], tasks: [...d.tasks, ...tasks] }))
-    }, 'Challenge démarré'),
+    }, 'Défi démarré'),
     stopChallenge: (id) => act(async () => {
       const target = data.activeChallenges.find((a) => a.id === id)
       if (target?.group_id) throw new AppError('Ce défi est partagé : utilisez « Quitter le défi » à la place.')
@@ -319,7 +319,7 @@ export function DataProvider({ children }) {
         activeChallenges: d.activeChallenges.filter((a) => a.id !== id),
         tasks: d.tasks.filter((t) => t.challenge_active_id !== id),
       }))
-    }, 'Challenge supprimé'),
+    }, 'Défi supprimé'),
     finishChallenge: (active) => act(async () => {
       if (active.group_id) throw new AppError('Un défi partagé se termine à la date commune du groupe.')
       const yesterday = addDays(todayKey(), -1)
@@ -333,10 +333,10 @@ export function DataProvider({ children }) {
         activeChallenges: d.activeChallenges.map((a) => (a.id === active.id ? updated : a)),
         tasks: d.tasks.map((t) => byId.get(t.id) ?? t),
       }))
-    }, 'Challenge terminé'),
-    addCustomChallenge: (c) => act(async () => { const row = await api.createCustomChallenge(userId, c); patch('customChallenges', (l) => [row, ...l]) }, 'Challenge créé'),
-    editCustomChallenge: (id, p) => act(async () => { const row = await api.updateCustomChallenge(id, p); patch('customChallenges', (l) => replaceIn(l, row)) }, 'Challenge modifié'),
-    removeCustomChallenge: (id) => act(async () => { await api.deleteCustomChallenge(id); patch('customChallenges', (l) => l.filter((c) => c.id !== id)) }, 'Challenge supprimé'),
+    }, 'Défi terminé'),
+    addCustomChallenge: (c) => act(async () => { const row = await api.createCustomChallenge(userId, c); patch('customChallenges', (l) => [row, ...l]) }, 'Défi créé'),
+    editCustomChallenge: (id, p) => act(async () => { const row = await api.updateCustomChallenge(id, p); patch('customChallenges', (l) => replaceIn(l, row)) }, 'Défi modifié'),
+    removeCustomChallenge: (id) => act(async () => { await api.deleteCustomChallenge(id); patch('customChallenges', (l) => l.filter((c) => c.id !== id)) }, 'Défi supprimé'),
 
     // Défis partagés : le programme vient du groupe, les tâches restent personnelles.
     createSharedChallenge: ({ group, domainId }) => act(async () => {

@@ -81,7 +81,7 @@ export default function Domains() {
 
   return (
     <>
-      <PageHeader title="Domaines" subtitle="Les grands pans de votre vie à faire progresser">
+      <PageHeader title="Domaines">
         <Button icon={Plus} onClick={() => setForm({})}>Nouveau domaine</Button>
       </PageHeader>
 

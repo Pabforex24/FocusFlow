@@ -15,7 +15,7 @@ const MARGIN = 8
 // propre "stacking context". Un menu en position absolue DANS la carte reste enfermé dans ce contexte, et les
 // cartes suivantes passent par-dessus, quel que soit son z-index. Hors de la carte, plus aucun parent ne peut le
 // masquer ni le couper.
-export function Menu({ items, label = 'Plus d\'actions' }) {
+export function Menu({ items, label = 'Plus d\'actions', triggerClassName }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState(null)
   const triggerRef = useRef(null)
@@ -65,7 +65,7 @@ export function Menu({ items, label = 'Plus d\'actions' }) {
 
   return (
     <>
-      <IconButton ref={triggerRef} icon={EllipsisVertical} label={label} size="sm" onClick={() => (open ? close() : setOpen(true))} aria-expanded={open} aria-haspopup="menu" />
+      <IconButton ref={triggerRef} icon={EllipsisVertical} label={label} size="sm" className={triggerClassName} onClick={() => (open ? close() : setOpen(true))} aria-expanded={open} aria-haspopup="menu" />
       {open && createPortal(
         <div ref={menuRef} role="menu"
           className={cn('fixed z-50 animate-scale-in rounded-2xl border border-line bg-surface p-1.5 shadow-pop', pos?.up ? 'origin-bottom-right' : 'origin-top-right')}

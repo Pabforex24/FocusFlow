@@ -45,7 +45,7 @@ function StartModal({ challenge, onClose }) {
   if (domains.length === 0) {
     return (
       <Modal title={challenge.title} icon={Flag} onClose={onClose}>
-        <p className="text-sm text-muted">Créez d'abord un domaine pour y ranger les tâches du challenge.</p>
+        <p className="text-sm text-muted">Créez d'abord un domaine pour y ranger les tâches du défi.</p>
         <Link to="/domains?new=1" className="mt-5 inline-flex h-11 items-center rounded-xl btn-brand px-4 text-sm font-semibold">Créer un domaine</Link>
       </Modal>
     )
@@ -68,7 +68,7 @@ function StartModal({ challenge, onClose }) {
       <form className="space-y-4" onSubmit={submit} noValidate>
         <p className="text-sm text-muted">Les tâches sont créées à l'avance dans votre planning.</p>
         <Field label="Date de début"><Input type="date" value={startKey} min={today} onChange={(e) => setStartKey(e.target.value)} /></Field>
-        <Field label="Durée du challenge">
+        <Field label="Durée du défi">
           <Segmented fill value={mode} onChange={setMode} options={[{ value: 'days', label: 'Nombre de jours' }, { value: 'until', label: 'Date de fin' }]} />
         </Field>
         {mode === 'days' ? (
@@ -102,7 +102,7 @@ function CustomForm({ challenge, template, onClose }) {
     e.preventDefault()
     const clean = blueprints.map((b) => ({ ...b, title: b.title.trim() })).filter((b) => b.title)
     const days = Number(form.duration_days)
-    if (!form.title.trim()) return setError('Donnez un titre au challenge.')
+    if (!form.title.trim()) return setError('Donnez un titre au défi.')
     if (!Number.isInteger(days) || days < 1 || days > 365) return setError('La durée doit être comprise entre 1 et 365 jours.')
     if (clean.length === 0) return setError('Ajoutez au moins une tâche récurrente.')
     if (clean.some((b) => b.frequency === 'custom' && !b.weekdays?.length)) return setError('Choisissez au moins un jour pour chaque tâche personnalisée.')
@@ -115,9 +115,9 @@ function CustomForm({ challenge, template, onClose }) {
   }
 
   return (
-    <Modal title={challenge || template ? 'Modifier le challenge' : 'Nouveau challenge'} icon={Flag} onClose={onClose}>
+    <Modal title={challenge || template ? 'Modifier le défi' : 'Nouveau défi'} icon={Flag} onClose={onClose}>
       <form className="space-y-4" onSubmit={submit} noValidate>
-        {template && <Alert tone="info">Une copie du catalogue sera enregistrée dans « Mes challenges ».</Alert>}
+        {template && <Alert tone="info">Une copie du catalogue sera enregistrée dans « Mes défis ».</Alert>}
         <Field label="Titre"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} maxLength={60} autoFocus placeholder="Ex. Lecture quotidienne" /></Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Durée (jours)"><Input type="number" min="1" max="365" value={form.duration_days} onChange={(e) => setForm({ ...form, duration_days: e.target.value })} /></Field>
@@ -202,10 +202,10 @@ function ActiveChallengeCard({ active, tasks, domains, today, onManage, onFinish
             </div>
           </div>
         </div>
-        <Menu items={[
+        <Menu triggerClassName="mr-8 lg:mr-0" items={[
           { label: 'Gérer les tâches', icon: ListChecks, onClick: onManage },
           ...(finished ? [] : [{ label: 'Terminer maintenant', icon: Flag, onClick: onFinish }]),
-          { label: 'Supprimer le challenge', icon: Trash2, danger: true, onClick: onDelete },
+          { label: 'Supprimer le défi', icon: Trash2, danger: true, onClick: onDelete },
         ]} />
       </div>
 
@@ -255,14 +255,14 @@ function ManageTasksModal({ active, onClose }) {
   const doneCount = list.filter((t) => t.done).length
 
   return (
-    <Modal title="Tâches du challenge" description={`${active.title} · ${doneCount}/${list.length} faites`} icon={ListChecks} size="lg" onClose={onClose}>
+    <Modal title="Tâches du défi" description={`${active.title} · ${doneCount}/${list.length} faites`} icon={ListChecks} size="lg" onClose={onClose}>
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-muted">Remplacez, reportez ou supprimez les tâches devenues inutiles.</p>
           <Button icon={Plus} variant="secondary" size="sm" onClick={() => setAdding(true)}>Ajouter</Button>
         </div>
         {list.length === 0 ? (
-          <EmptyState icon={ListChecks} title="Aucune tâche">Ce challenge n'a plus de tâches.</EmptyState>
+          <EmptyState icon={ListChecks} title="Aucune tâche">Ce défi n'a plus de tâches.</EmptyState>
         ) : (
           <ul className="space-y-2">
             {list.map((t) => (
@@ -284,7 +284,7 @@ function ManageTasksModal({ active, onClose }) {
       {adding && <TaskForm challengeId={active.id} defaultDay={today} onClose={() => setAdding(false)} />}
       {postpone && <PostponeDialog task={postpone} onClose={() => setPostpone(null)} />}
       {toDelete && (
-        <ConfirmDialog title="Supprimer cette tâche ?" message={`« ${toDelete.title} » sera retirée du challenge.`} onCancel={() => setToDelete(null)}
+        <ConfirmDialog title="Supprimer cette tâche ?" message={`« ${toDelete.title} » sera retirée du défi.`} onCancel={() => setToDelete(null)}
           onConfirm={async () => { await actions.removeTask(toDelete.id); setToDelete(null) }} />
       )}
     </Modal>
@@ -297,6 +297,8 @@ export default function Challenges() {
   const { activeChallenges, customChallenges, challengeGroups, challengeMembers, tasks, domains, today, actions } = useData()
   const navigate = useNavigate()
   const [starting, setStarting] = useState(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [friendsOpen, setFriendsOpen] = useState(false)
   const [customForm, setCustomForm] = useState(null)
   const [toStop, setToStop] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -339,49 +341,15 @@ export default function Challenges() {
 
   return (
     <>
-      <PageHeader title="Challenges" subtitle="Des séries de tâches planifiées sur plusieurs jours">
-        <Button icon={Users} variant="secondary" onClick={() => setSharedForm(true)}>Défi avec des amis</Button>
-        <Button icon={Plus} onClick={() => setCustomForm({})}>Créer un challenge</Button>
+      <PageHeader title="Défis">
+        <Button icon={Plus} className="w-full sm:w-auto" onClick={() => setCreateOpen(true)}>Créer un défi</Button>
       </PageHeader>
 
       <div className="space-y-8">
         <section className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-semibold text-fg">Avec des amis</h2>
-              <p className="text-sm text-muted">Même programme pour le groupe, tâches et progression personnelles.</p>
-            </div>
-            <Button variant="ghost" size="sm" icon={LogIn} onClick={() => setJoinCodeOpen(true)}>J'ai un code</Button>
-          </div>
-          {sortedGroups.length === 0 ? (
-            <EmptyState icon={Users} title="Aucun défi partagé" action={<Button icon={Users} variant="secondary" onClick={() => setSharedForm(true)}>Créer un défi</Button>}>
-              Invitez des amis à suivre le même programme. Chacun coche ses propres tâches.
-            </EmptyState>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {sortedGroups.map((group) => {
-                const active = activeChallenges.find((a) => a.group_id === group.id)
-                const members = challengeMembers.filter((m) => m.group_id === group.id)
-                return (
-                  <SharedChallengeCard
-                    key={group.id}
-                    group={group}
-                    active={active}
-                    tasks={tasks.filter((t) => active && t.challenge_active_id === active.id)}
-                    members={members}
-                    onLeave={() => setSharedToLeave(group)}
-                    onArchive={() => setSharedToArchive(group)}
-                  />
-                )
-              })}
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-3">
           <h2 className="text-lg font-semibold text-fg">En cours</h2>
           {personalActive.length === 0 ? (
-            <EmptyState icon={Flag} title="Aucun challenge personnel actif">Choisissez-en un dans le catalogue ci-dessous pour remplir automatiquement votre planning.</EmptyState>
+            <EmptyState icon={Flag} title="Aucun défi personnel actif">Choisissez-en un dans le catalogue ci-dessous pour remplir automatiquement votre planning.</EmptyState>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {personalActive.map((a) => <ActiveChallengeCard key={a.id} active={a} tasks={tasks} domains={domains} today={today} onManage={() => setManage(a)} onFinish={() => setToFinish(a)} onDelete={() => setToStop(a)} />)}
@@ -391,19 +359,76 @@ export default function Challenges() {
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-fg">Catalogue</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{CHALLENGE_CATALOGUE.map((c) => templateCard(c, c.icon, <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ template: c }) }]} />))}</div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{CHALLENGE_CATALOGUE.map((c) => templateCard(c, c.icon, <Menu triggerClassName="mr-8 lg:mr-0" items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ template: c }) }]} />))}</div>
         </section>
 
         {customChallenges.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-fg">Mes challenges</h2>
+            <h2 className="text-lg font-semibold text-fg">Mes défis</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {customChallenges.map((c) => templateCard(c, c.icon ?? 'flag', <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ challenge: c }) }, { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => setToDelete(c) }]} />))}
+              {customChallenges.map((c) => templateCard(c, c.icon ?? 'flag', <Menu triggerClassName="mr-8 lg:mr-0" items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ challenge: c }) }, { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => setToDelete(c) }]} />))}
             </div>
           </section>
         )}
       </div>
 
+      {createOpen && (
+        <Modal title="Créer un défi" description="Choisissez le type de défi à créer." icon={Plus} size="sm" onClose={() => setCreateOpen(false)}>
+          <div className="grid gap-2">
+            <Button variant="secondary" icon={Flag} className="h-auto w-full justify-start p-4 text-left" onClick={() => { setCreateOpen(false); setCustomForm({}) }}>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-fg">Pour moi</span>
+                <span className="block text-xs font-normal text-muted">Un défi personnel, à suivre seul.</span>
+              </span>
+            </Button>
+            <Button variant="secondary" icon={Users} className="h-auto w-full justify-start p-4 text-left" onClick={() => { setCreateOpen(false); setFriendsOpen(true) }}>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-fg">Avec des amis</span>
+                <span className="block text-xs font-normal text-muted">Un programme commun, chacun coche ses tâches.</span>
+              </span>
+            </Button>
+          </div>
+        </Modal>
+      )}
+      {friendsOpen && (
+        <Modal title="Avec des amis" description="Même programme pour le groupe, tâches et progression personnelles." icon={Users} size="lg" onClose={() => setFriendsOpen(false)}>
+          <div className="space-y-4">
+            {sortedGroups.length === 0 ? (
+              <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-surface-2/40 px-4 py-3 text-left">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
+                  <Users className="size-4" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-fg">Aucun défi partagé</p>
+                  <p className="text-xs text-muted">Créez-en un ou rejoignez un groupe avec un code.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {sortedGroups.map((group) => {
+                  const active = activeChallenges.find((a) => a.group_id === group.id)
+                  const members = challengeMembers.filter((m) => m.group_id === group.id)
+                  return (
+                    <SharedChallengeCard
+                      key={group.id}
+                      group={group}
+                      active={active}
+                      tasks={tasks.filter((t) => active && t.challenge_active_id === active.id)}
+                      members={members}
+                      onLeave={() => setSharedToLeave(group)}
+                      onArchive={() => setSharedToArchive(group)}
+                    />
+                  )
+                })}
+              </div>
+            )}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button icon={Users} variant="secondary" className="w-full" onClick={() => { setFriendsOpen(false); setSharedForm(true) }}>Créer un défi</Button>
+              <Button icon={LogIn} variant="secondary" className="w-full" onClick={() => { setFriendsOpen(false); setJoinCodeOpen(true) }}>Rejoindre avec un code</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
       {starting && <StartModal challenge={starting} onClose={() => setStarting(null)} />}
       {manage && <ManageTasksModal active={manage} onClose={() => setManage(null)} />}
       {customForm && <CustomForm challenge={customForm.challenge} template={customForm.template} onClose={() => setCustomForm(null)} />}
@@ -437,15 +462,15 @@ export default function Challenges() {
           onConfirm={async () => { await actions.archiveSharedChallenge(sharedToArchive.id); setSharedToArchive(null) }} />
       )}
       {toStop && (
-        <ConfirmDialog title="Supprimer le challenge ?" message="Toutes ses tâches (y compris celles déjà faites) seront supprimées." onCancel={() => setToStop(null)}
+        <ConfirmDialog title="Supprimer le défi ?" message="Toutes ses tâches (y compris celles déjà faites) seront supprimées." onCancel={() => setToStop(null)}
           onConfirm={async () => { await actions.stopChallenge(toStop.id); setToStop(null) }} />
       )}
       {toFinish && (
-        <ConfirmDialog title="Terminer le challenge maintenant ?" message="Il sera clôturé aujourd'hui. Les tâches restantes seront détachées et conservées comme tâches normales." onCancel={() => setToFinish(null)}
+        <ConfirmDialog title="Terminer le défi maintenant ?" message="Il sera clôturé aujourd'hui. Les tâches restantes seront détachées et conservées comme tâches normales." onCancel={() => setToFinish(null)}
           onConfirm={async () => { await actions.finishChallenge(toFinish); setToFinish(null) }} />
       )}
       {toDelete && (
-        <ConfirmDialog title="Supprimer ce modèle ?" message={`« ${toDelete.title} » sera supprimé. Les challenges déjà démarrés restent actifs.`} onCancel={() => setToDelete(null)}
+        <ConfirmDialog title="Supprimer ce modèle ?" message={`« ${toDelete.title} » sera supprimé. Les défis déjà démarrés restent actifs.`} onCancel={() => setToDelete(null)}
           onConfirm={async () => { await actions.removeCustomChallenge(toDelete.id); setToDelete(null) }} />
       )}
     </>

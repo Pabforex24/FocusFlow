@@ -135,7 +135,7 @@ export default function JoinSharedChallenge() {
           <Alert tone="danger" title="Invitation introuvable">Le lien est peut-être incomplet ou le défi a été supprimé.</Alert>
         )}
 
-        <p className="text-center text-xs text-subtle"><Link to="/challenges" className="font-medium text-brand-600 hover:underline dark:text-brand-300">Retour aux challenges</Link></p>
+        <p className="text-center text-xs text-subtle"><Link to="/challenges" className="font-medium text-brand-600 hover:underline dark:text-brand-300">Retour aux défis</Link></p>
       </div>
     </>
   )

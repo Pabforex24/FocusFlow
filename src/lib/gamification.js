@@ -111,7 +111,7 @@ export const BADGES = [
   { id: 'perfect_5', icon: 'gem', title: 'Perfectionniste', description: '5 journées parfaites', test: (s) => s.perfectDays >= 5 },
   { id: 'focus_1', icon: 'timer', title: 'Première session', description: 'Terminer 1 session Focus', test: (s) => s.focusCount >= 1 },
   { id: 'focus_10', icon: 'brain', title: 'Concentré', description: 'Terminer 10 sessions Focus', test: (s) => s.focusCount >= 10 },
-  { id: 'challenge_1', icon: 'flag', title: 'Challenger', description: 'Terminer un challenge', test: (s) => s.challengesDone >= 1 },
+  { id: 'challenge_1', icon: 'flag', title: 'Premier défi', description: 'Terminer un défi', test: (s) => s.challengesDone >= 1 },
 ]
 
 export function computeBadges(stats) {

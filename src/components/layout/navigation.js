@@ -7,7 +7,7 @@ export const NAV_ITEMS = [
   { to: '/tasks', label: 'Tâches', icon: ListChecks },
   { to: '/goals', label: 'Objectifs', icon: Target },
   { to: '/domains', label: 'Domaines', icon: Layers },
-  { to: '/challenges', label: 'Challenges', short: 'Défis', icon: Flag },
+  { to: '/challenges', label: 'Défis', short: 'Défis', icon: Flag },
   { to: '/monthly', label: 'Statistiques', short: 'Stats', icon: ChartColumn },
   { to: '/coach', label: 'Coach', icon: Sparkles },
 ]

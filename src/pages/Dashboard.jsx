@@ -147,9 +147,9 @@ export default function Dashboard() {
         <div className="space-y-6">
           {/* Challenges en cours */}
           <Card>
-            <CardHeader icon={Flag} title="Challenge en cours" action={<Link to="/challenges" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">Voir</Link>} />
+            <CardHeader icon={Flag} title="Défi en cours" action={<Link to="/challenges" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">Voir</Link>} />
             {runningChallenges.length === 0 ? (
-              <p className="text-sm text-muted">Aucun challenge actif. <Link to="/challenges" className="font-medium text-brand-600 hover:underline dark:text-brand-300">En démarrer un</Link></p>
+              <p className="text-sm text-muted">Aucun défi actif. <Link to="/challenges" className="font-medium text-brand-600 hover:underline dark:text-brand-300">En démarrer un</Link></p>
             ) : (
               <div className="space-y-4">
                 {runningChallenges.map((a) => {
