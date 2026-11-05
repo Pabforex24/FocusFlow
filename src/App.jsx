@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Settings2 } from 'lucide-react'
 import Layout from './components/Layout.jsx'
 import { Spinner } from './components/ui/LoadingState.jsx'
@@ -13,6 +13,7 @@ import Domains from './pages/Domains.jsx'
 import FocusDetail from './pages/FocusDetail.jsx'
 import Goals from './pages/Goals.jsx'
 import Home from './pages/Home.jsx'
+import JoinSharedChallenge from './pages/JoinSharedChallenge.jsx'
 import Login from './pages/Login.jsx'
 import Monthly from './pages/Monthly.jsx'
 import Profile from './pages/Profile.jsx'
@@ -45,10 +46,20 @@ function PublicRoutes() {
 
 export default function App() {
   const { user, loading, recovery } = useAuth()
+  const location = useLocation()
+  const next = new URLSearchParams(location.search).get('next')
+  const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : null
   if (!isSupabaseConfigured) return <SetupNotice />
   if (loading) return <div className="grid min-h-dvh place-items-center bg-bg"><Spinner className="size-8" /></div>
-  if (!user) return <PublicRoutes />
+  if (!user) {
+    if (location.pathname.startsWith('/challenges/rejoindre/')) {
+      const target = `${location.pathname}${location.search}`
+      return <Navigate to={`/login?next=${encodeURIComponent(target)}`} replace />
+    }
+    return <PublicRoutes />
+  }
   if (recovery) return <ResetPassword />
+  if (safeNext && (location.pathname === '/login' || location.pathname === '/signup')) return <Navigate to={safeNext} replace />
 
   return (
     <DataProvider>
@@ -64,6 +75,7 @@ export default function App() {
             <Route path="/goals" element={<Goals />} />
             <Route path="/domains" element={<Domains />} />
             <Route path="/challenges" element={<Challenges />} />
+            <Route path="/challenges/rejoindre/:code" element={<JoinSharedChallenge />} />
             <Route path="/monthly" element={<Monthly />} />
             <Route path="/coach" element={<Coach />} />
             <Route path="/profile" element={<Profile />} />

@@ -20,6 +20,7 @@ const snapshot = () => ({
   goals: [{ id: 'g1', domain_id: 'd1' }, { id: 'g2', domain_id: 'd2' }],
   tasks: [task('t1', { domain_id: 'd1', goal_id: 'g1' }), task('t2', { domain_id: 'd2', goal_id: 'g2' }), task('t3')],
   activeChallenges: [],   customChallenges: [], restDays: [], pausePeriods: [], focusSessions: [],
+  challengeGroups: [], challengeMembers: [],
 })
 
 async function setup() {
@@ -262,5 +263,82 @@ describe('DataContext', () => {
     expect(api.createPausePeriod).toHaveBeenCalledWith('u1', { start_date: '2026-10-10', end_date: '2026-10-12', label: 'Vacances' })
     expect(api.updateActiveChallenge).toHaveBeenCalledWith('a1', { end_date: '2026-11-02' })
     expect(result.current.pausePeriods).toHaveLength(1)
+  })
+
+  it('crée un défi partagé et ajoute le groupe, les membres et les tâches personnelles', async () => {
+    const { result } = await setup()
+    const group = { id: 'g1', owner_id: 'u1', title: 'Sport', color: '#111', icon: 'flag', start_date: '2026-10-01', end_date: '2026-10-02', blueprints: [{ title: 'Courir', frequency: 'daily' }] }
+    const active = { id: 'a1', group_id: 'g1', title: 'Sport', start_date: '2026-10-01', end_date: '2026-10-02' }
+    const member = { id: 'm1', group_id: 'g1', user_id: 'u1', role: 'owner' }
+    const created = [task('st1', { challenge_active_id: 'a1' }), task('st2', { challenge_active_id: 'a1' })]
+    api.createSharedChallenge.mockResolvedValue({ group, active, member, members: [member], tasks: created })
+    await act(async () => {
+      await result.current.actions.createSharedChallenge({ group, domainId: 'd1' })
+    })
+    expect(api.createSharedChallenge).toHaveBeenCalledWith(expect.objectContaining({ group, domainId: 'd1', taskRows: expect.any(Array) }))
+    expect(api.createSharedChallenge.mock.calls[0][0].taskRows).toHaveLength(2)
+    expect(result.current.challengeGroups).toEqual([group])
+    expect(result.current.challengeMembers).toEqual([member])
+    expect(result.current.activeChallenges).toEqual([active])
+    expect(result.current.tasks.map((t) => t.id)).toEqual(expect.arrayContaining(['st1', 'st2']))
+  })
+
+  it('rejoint un défi partagé avec le code et les tâches générées', async () => {
+    const { result } = await setup()
+    const group = { id: 'g1', title: 'Sport', color: '#111', icon: 'flag', start_date: '2026-10-01', end_date: '2026-10-01', blueprints: [{ title: 'Courir', frequency: 'daily' }] }
+    const active = { id: 'a1', group_id: 'g1', title: 'Sport', start_date: '2026-10-01', end_date: '2026-10-01' }
+    const member = { id: 'm1', group_id: 'g1', user_id: 'u1', role: 'member' }
+    api.joinSharedChallenge.mockResolvedValue({ group, active, member, members: [member], tasks: [task('st1', { challenge_active_id: 'a1' })] })
+    await act(async () => {
+      await result.current.actions.joinSharedChallenge({ code: 'CODE1234', group, domainId: 'd1' })
+    })
+    expect(api.joinSharedChallenge).toHaveBeenCalledWith(expect.objectContaining({ code: 'CODE1234', domainId: 'd1' }))
+    expect(result.current.challengeGroups).toEqual([group])
+    expect(result.current.challengeMembers).toEqual([member])
+    expect(result.current.activeChallenges).toEqual([active])
+  })
+
+  it('quitter un défi partagé retire uniquement la copie personnelle', async () => {
+    const snap = snapshot()
+    const shared = { id: 'a1', group_id: 'g1', challenge_id: 'group:g1', title: 'Sport', color: '#111', start_date: '2026-10-01', end_date: '2026-10-30' }
+    const personal = { id: 'a2', challenge_id: 'ch1', title: 'Perso', color: '#111', start_date: '2026-10-01', end_date: '2026-10-30' }
+    snap.activeChallenges = [shared, personal]
+    snap.challengeGroups = [{ id: 'g1' }, { id: 'g2' }]
+    snap.challengeMembers = [{ id: 'm1', group_id: 'g1', user_id: 'u1' }, { id: 'm2', group_id: 'g2', user_id: 'u1' }]
+    snap.tasks = [task('t1', { challenge_active_id: 'a1' }), task('t2', { challenge_active_id: 'a2' }), task('t3')]
+    api.loadAll.mockResolvedValue(snap)
+    api.leaveSharedChallenge.mockResolvedValue(null)
+    const { result } = await setup()
+    await act(async () => { await result.current.actions.leaveSharedChallenge('g1') })
+    expect(api.leaveSharedChallenge).toHaveBeenCalledWith('g1')
+    expect(result.current.challengeGroups.map((g) => g.id)).toEqual(['g2'])
+    expect(result.current.challengeMembers.map((m) => m.group_id)).toEqual(['g2'])
+    expect(result.current.activeChallenges.map((a) => a.id)).toEqual(['a2'])
+    expect(result.current.tasks.map((t) => t.id)).toEqual(['t2', 't3'])
+  })
+
+  it('refuse de supprimer une tâche d’un défi partagé', async () => {
+    const snap = snapshot()
+    snap.activeChallenges = [{ id: 'a1', group_id: 'g1', challenge_id: 'group:g1', title: 'Sport', color: '#111', start_date: '2026-10-01', end_date: '2026-10-30' }]
+    snap.tasks = [task('t1', { challenge_active_id: 'a1' })]
+    api.loadAll.mockResolvedValue(snap)
+    const { result } = await setup()
+    let ok
+    await act(async () => { ok = await result.current.actions.removeTask('t1') })
+    expect(ok).toBe(false)
+    expect(api.deleteTask).not.toHaveBeenCalled()
+    expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/défi partagé/i))
+  })
+
+  it('une pause ne décale pas un défi partagé', async () => {
+    const snap = snapshot()
+    const shared = { id: 'a1', group_id: 'g1', challenge_id: 'group:g1', title: 'Sport', color: '#111', start_date: '2026-10-01', end_date: '2026-10-30' }
+    snap.activeChallenges = [shared]
+    api.loadAll.mockResolvedValue(snap)
+    api.createPausePeriod.mockResolvedValue({ id: 'p1', start_date: '2026-10-10', end_date: '2026-10-12', label: null })
+    const { result } = await setup()
+    await act(async () => { await result.current.actions.addPause({ start_date: '2026-10-10', end_date: '2026-10-12' }) })
+    expect(api.updateActiveChallenge).not.toHaveBeenCalled()
+    expect(result.current.activeChallenges[0].end_date).toBe('2026-10-30')
   })
 })

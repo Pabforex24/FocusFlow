@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Target, Timer, TrendingUp, User } from 'lucide-react'
 import Logo from '../components/layout/Logo.jsx'
 import { Alert } from '../components/ui/Alert.jsx'
@@ -28,6 +28,10 @@ function IconInput({ icon: Icon, ...props }) {
 export default function Login({ initialMode = 'login' }) {
   const { signIn, signUp, resetPassword } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const requested = new URLSearchParams(location.search).get('next')
+  const next = requested?.startsWith('/') && !requested.startsWith('//') ? requested : null
+  const nextQuery = next ? `?next=${encodeURIComponent(next)}` : ''
   const [mode, setMode] = useState(initialMode)
   const [form, setForm] = useState({ email: '', password: '', name: '' })
   const [show, setShow] = useState(false)
@@ -44,11 +48,11 @@ export default function Login({ initialMode = 'login' }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const login = mode === 'login'
   const forgot = mode === 'forgot'
-  const switchMode = (next) => {
-    setMode(next)
+  const switchMode = (nextMode) => {
+    setMode(nextMode)
     setError('')
     setNotice('')
-    if (next === 'login' || next === 'signup') navigate(next === 'signup' ? '/signup' : '/login', { replace: true })
+    if (nextMode === 'login' || nextMode === 'signup') navigate(`${nextMode === 'signup' ? '/signup' : '/login'}${nextQuery}`, { replace: true })
   }
 
   const submit = async (e) => {

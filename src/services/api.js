@@ -35,13 +35,21 @@ const readAll = (table, columns, orders) => fetchAllPages((from, to) => {
   return run(query.range(from, to))
 })
 
+// Les défis partagés sont une migration optionnelle pour les bases existantes : si les tables
+// n'ont pas encore été créées, l'application continue de fonctionner sans cette fonctionnalité.
+const optionalRead = (promise) => promise.catch((error) => {
+  const message = String(error?.message ?? '')
+  if (error?.code === '42P01' || /relation .* does not exist/i.test(message)) return []
+  throw error
+})
+
 export async function loadAll(userId) {
   const db = client()
   // Sans session valide, Supabase répondrait par des listes VIDES (règles RLS) et non par une erreur : on les refuserait
   // à tort comme données réelles et on écraserait la copie locale. On exige donc une session.
   const { data: auth } = await db.auth.getSession()
   if (!auth?.session) throw new AppError('Session expirée ou introuvable. Reconnectez-vous.')
-  const [profile, domains, goals, tasks, activeChallenges, customChallenges, restDays, pausePeriods, focusSessions] = await Promise.all([
+  const [profile, domains, goals, tasks, activeChallenges, customChallenges, restDays, pausePeriods, focusSessions, challengeGroups, challengeMembers] = await Promise.all([
     run(db.from('profiles').select('*').eq('id', userId).maybeSingle()),
     readAll('domains', '*', [['created_at']]),
     readAll('goals', '*', [['created_at']]),
@@ -51,8 +59,13 @@ export async function loadAll(userId) {
     readAll('rest_days', 'day', [['day']]),
     readAll('pause_periods', '*', [['start_date']]),
     readAll('focus_sessions', '*', [['created_at']]),
+    optionalRead(readAll('challenge_groups', '*', [['created_at', false]])),
+    optionalRead(readAll('challenge_members', '*', [['joined_at']])),
   ])
-  return { profile, domains, goals, tasks, activeChallenges, customChallenges, restDays: restDays.map((r) => r.day), pausePeriods, focusSessions }
+  return {
+    profile, domains, goals, tasks, activeChallenges, customChallenges,
+    restDays: restDays.map((r) => r.day), pausePeriods, focusSessions, challengeGroups, challengeMembers,
+  }
 }
 
 const insertOne = (table, row) => run(client().from(table).insert(row).select().single())
@@ -99,6 +112,43 @@ export const deleteActiveChallenge = (id) => removeOne('active_challenges', id)
 export const createCustomChallenge = (userId, c) => insertOne('custom_challenges', { ...c, user_id: userId })
 export const updateCustomChallenge = (id, patch) => updateOne('custom_challenges', id, patch)
 export const deleteCustomChallenge = (id) => removeOne('custom_challenges', id)
+
+// ── Défis partagés ────────────────────────────────────────────────────────────
+// Le serveur crée le groupe, l'adhésion et les tâches personnelles en une transaction.
+export const createSharedChallenge = ({ group, domainId, taskRows }) =>
+  run(client().rpc('create_shared_challenge', {
+    p_title: group.title,
+    p_description: group.description ?? '',
+    p_color: group.color,
+    p_icon: group.icon ?? 'flag',
+    p_duration_days: group.duration_days ?? group.durationDays,
+    p_start_date: group.start_date,
+    p_end_date: group.end_date,
+    p_blueprints: group.blueprints ?? [],
+    p_domain_id: domainId,
+    p_tasks: taskRows,
+  }))
+
+export const joinSharedChallenge = ({ code, domainId, taskRows }) =>
+  run(client().rpc('join_shared_challenge', {
+    p_code: code,
+    p_domain_id: domainId,
+    p_tasks: taskRows,
+  }))
+
+export const getSharedChallengePreview = (code) =>
+  run(client().rpc('get_shared_challenge_preview', { p_code: code }))
+
+export const getSharedChallengeLeaderboard = (groupId) =>
+  run(client().rpc('get_shared_challenge_leaderboard', { p_group_id: groupId }))
+
+export const leaveSharedChallenge = (groupId) =>
+  run(client().rpc('leave_shared_challenge', { p_group_id: groupId }))
+
+export const archiveSharedChallenge = async (groupId) => {
+  const row = await run(client().rpc('archive_shared_challenge', { p_group_id: groupId }))
+  return Array.isArray(row) ? row[0] : row
+}
 
 // ── Profil, repos, focus ──────────────────────────────────────────────────────
 export const updateProfile = (id, patch) => updateOne('profiles', id, patch)

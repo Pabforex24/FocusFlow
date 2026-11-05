@@ -20,6 +20,7 @@ export function toUserMessage(error) {
   if (code === '23503') return 'Cet élément dépend d\'une donnée qui n\'existe plus. Actualisez la page.'
   if (code === '42501' || code === 'PGRST301') return 'Accès refusé. Reconnectez-vous puis réessayez.'
   if (code === '42P01') return 'La base de données n\'est pas initialisée (exécutez supabase/schema.sql).'
+  if (code === '42883' || /function .* does not exist/i.test(msg)) return 'Cette fonctionnalité n\'est pas encore disponible sur le serveur. Mettez la base à jour puis réessayez.'
   if (/invalid login credentials/i.test(msg)) return 'Email ou mot de passe incorrect.'
   if (/already registered/i.test(msg)) return 'Un compte existe déjà avec cet email.'
   if (/password should be at least/i.test(msg)) return 'Le mot de passe est trop court.'

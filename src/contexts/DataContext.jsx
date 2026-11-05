@@ -15,6 +15,7 @@ const DataContext = createContext(null)
 const EMPTY = {
   profile: null, domains: [], goals: [], tasks: [], activeChallenges: [],
   customChallenges: [], restDays: [], pausePeriods: [], focusSessions: [],
+  challengeGroups: [], challengeMembers: [],
 }
 const STALE_AFTER_MS = 30_000
 
@@ -55,7 +56,7 @@ export function DataProvider({ children }) {
     try {
       const next = await api.loadAll(userId)
       if (seq !== loadSeqRef.current) return
-      setData(next)
+      setData({ ...EMPTY, ...next })
       hasDataRef.current = true
       setStatus('ready')
       setLoadError(null)
@@ -124,6 +125,17 @@ export function DataProvider({ children }) {
     return true
   }, [toast])
 
+  // Les tâches d'un défi partagé sont générées par le programme commun : on peut les cocher,
+  // mais pas les modifier/supprimer, sinon le classement perdrait son sens.
+  const sharedTaskActiveIds = useMemo(
+    () => new Set(data.activeChallenges.filter((a) => a.group_id).map((a) => a.id)),
+    [data.activeChallenges],
+  )
+  const isSharedTask = useCallback(
+    (task) => Boolean(task?.challenge_active_id && sharedTaskActiveIds.has(task.challenge_active_id)),
+    [sharedTaskActiveIds],
+  )
+
   // Exécute une modification : signale l'erreur à l'utilisateur, renvoie true/false.
   const act = useCallback(async (fn, successMessage) => {
     if (!userId) { toast.error('Vous devez être connecté.'); return false }
@@ -181,6 +193,7 @@ export function DataProvider({ children }) {
     // (pas de modèle caché). Toutes les occurrences d'une répétition partagent un series_id et la
     // même règle `repeat` : on peut donc la modifier ou la supprimer d'un coup.
     addTask: (task, repeat) => act(async () => {
+      if (isSharedTask(task)) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être modifiées.')
       if (repeat && repeat.frequency !== 'none') {
         const dates = recurrenceDates(task.scheduled_on, repeat)
         if (dates.length === 0) throw new AppError('Aucune date ne correspond à cette répétition.')
@@ -195,6 +208,7 @@ export function DataProvider({ children }) {
     }, 'Tâche ajoutée'),
     editTask: (id, p) => act(async () => {
       const target = data.tasks.find((t) => t.id === id)
+      if (isSharedTask(target)) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être modifiées.')
       const fields = { ...p }
       if (p.scheduled_on && target) fields.postponed_from = postponeOrigin(target, p.scheduled_on)
       const row = await api.updateTask(id, fields)
@@ -203,6 +217,7 @@ export function DataProvider({ children }) {
     // Reconstruit une série (à la création d'une répétition depuis une tâche simple, ou à la
     // modification de sa répétition). Les occurrences déjà faites sont conservées telles quelles.
     saveSeries: (anchor, fields, repeat) => act(async () => {
+      if (isSharedTask(anchor)) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être modifiées.')
       const seriesId = anchor.series_id ?? newSeriesId()
       const existing = data.tasks.filter((t) => t.series_id === seriesId || t.id === anchor.id)
       const start = repeat?.start ?? existing.reduce((min, t) => (t.scheduled_on < min ? t.scheduled_on : min), existing[0].scheduled_on)
@@ -226,6 +241,7 @@ export function DataProvider({ children }) {
     }, 'Tâche modifiée'),
     removeTask: (id) => act(async () => {
       const target = data.tasks.find((t) => t.id === id)
+      if (isSharedTask(target)) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être supprimées. Quittez le défi pour les retirer.')
       if (target?.series_id) {
         await api.deleteTasksBySeries(target.series_id)
         patch('tasks', (l) => l.filter((t) => t.series_id !== target.series_id))
@@ -249,11 +265,13 @@ export function DataProvider({ children }) {
       return ok
     },
     postponeTask: (task) => act(async () => {
+      if (isSharedTask(task)) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être reportées.')
       const day = addDays(task.scheduled_on, 1)
       const row = await api.updateTask(task.id, { scheduled_on: day, postponed: true, postponed_from: postponeOrigin(task, day) })
       patch('tasks', (l) => replaceIn(l, row))
     }, 'Tâche reportée à demain'),
     moveTasksTo: (ids, day) => act(async () => {
+      if (data.tasks.some((t) => ids.includes(t.id) && isSharedTask(t))) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être déplacées.')
       const rows = await Promise.all(ids.map((id) => {
         const task = data.tasks.find((t) => t.id === id)
         return api.updateTask(id, { scheduled_on: day, postponed: true, postponed_from: task ? postponeOrigin(task, day) : null })
@@ -262,6 +280,7 @@ export function DataProvider({ children }) {
       patch('tasks', (l) => l.map((t) => byId.get(t.id) ?? t))
     }, ids.length > 1 ? 'Tâches reportées' : 'Tâche reportée'),
     spreadTasks: (ids, startDay, days) => act(async () => {
+      if (data.tasks.some((t) => ids.includes(t.id) && isSharedTask(t))) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être déplacées.')
       const plan = spreadDates(ids, startDay, days)
       const rows = await Promise.all(plan.map(({ id, day }) => {
         const task = data.tasks.find((t) => t.id === id)
@@ -271,6 +290,7 @@ export function DataProvider({ children }) {
       patch('tasks', (l) => l.map((t) => byId.get(t.id) ?? t))
     }, 'Tâches réparties'),
     removeTasks: (ids) => act(async () => {
+      if (data.tasks.some((t) => ids.includes(t.id) && isSharedTask(t))) throw new AppError('Les tâches d\'un défi partagé ne peuvent pas être supprimées.')
       await Promise.all(ids.map((id) => api.deleteTask(id)))
       patch('tasks', (l) => l.filter((t) => !ids.includes(t.id)))
     }, ids.length > 1 ? 'Tâches supprimées' : 'Tâche supprimée'),
@@ -291,6 +311,8 @@ export function DataProvider({ children }) {
       setData((d) => ({ ...d, activeChallenges: [created, ...d.activeChallenges], tasks: [...d.tasks, ...tasks] }))
     }, 'Challenge démarré'),
     stopChallenge: (id) => act(async () => {
+      const target = data.activeChallenges.find((a) => a.id === id)
+      if (target?.group_id) throw new AppError('Ce défi est partagé : utilisez « Quitter le défi » à la place.')
       await api.deleteActiveChallenge(id)
       setData((d) => ({
         ...d,
@@ -299,6 +321,7 @@ export function DataProvider({ children }) {
       }))
     }, 'Challenge supprimé'),
     finishChallenge: (active) => act(async () => {
+      if (active.group_id) throw new AppError('Un défi partagé se termine à la date commune du groupe.')
       const yesterday = addDays(todayKey(), -1)
       const endKey = yesterday < active.start_date ? active.start_date : yesterday
       const pending = data.tasks.filter((t) => t.challenge_active_id === active.id && !t.done)
@@ -315,6 +338,49 @@ export function DataProvider({ children }) {
     editCustomChallenge: (id, p) => act(async () => { const row = await api.updateCustomChallenge(id, p); patch('customChallenges', (l) => replaceIn(l, row)) }, 'Challenge modifié'),
     removeCustomChallenge: (id) => act(async () => { await api.deleteCustomChallenge(id); patch('customChallenges', (l) => l.filter((c) => c.id !== id)) }, 'Challenge supprimé'),
 
+    // Défis partagés : le programme vient du groupe, les tâches restent personnelles.
+    createSharedChallenge: ({ group, domainId }) => act(async () => {
+      const taskRows = buildChallengeTasks({ blueprints: group.blueprints, startKey: group.start_date, endKey: group.end_date, domainId })
+      const result = await api.createSharedChallenge({ group, domainId, taskRows })
+      setData((d) => ({
+        ...d,
+        challengeGroups: [result.group, ...d.challengeGroups.filter((g) => g.id !== result.group.id)],
+        challengeMembers: [...d.challengeMembers.filter((m) => m.group_id !== result.group.id), ...(result.members ?? [])],
+        activeChallenges: [result.active, ...d.activeChallenges.filter((a) => a.id !== result.active.id)],
+        tasks: [...d.tasks, ...(result.tasks ?? [])],
+      }))
+    }, 'Défi partagé créé'),
+    joinSharedChallenge: ({ code, group, domainId }) => act(async () => {
+      const taskRows = buildChallengeTasks({ blueprints: group.blueprints, startKey: group.start_date, endKey: group.end_date, domainId })
+      const result = await api.joinSharedChallenge({ code, domainId, taskRows })
+      setData((d) => ({
+        ...d,
+        challengeGroups: [result.group, ...d.challengeGroups.filter((g) => g.id !== result.group.id)],
+        challengeMembers: [...d.challengeMembers.filter((m) => m.group_id !== result.group.id), ...(result.members ?? [])],
+        activeChallenges: [result.active, ...d.activeChallenges.filter((a) => a.id !== result.active.id)],
+        tasks: [...d.tasks, ...(result.tasks ?? [])],
+      }))
+    }, 'Défi rejoint'),
+    leaveSharedChallenge: (groupId) => act(async () => {
+      await api.leaveSharedChallenge(groupId)
+      setData((d) => {
+        const activeIds = new Set(d.activeChallenges.filter((a) => a.group_id === groupId).map((a) => a.id))
+        return {
+          ...d,
+          challengeGroups: d.challengeGroups.filter((g) => g.id !== groupId),
+          challengeMembers: d.challengeMembers.filter((m) => m.group_id !== groupId),
+          activeChallenges: d.activeChallenges.filter((a) => a.group_id !== groupId),
+          tasks: d.tasks.filter((t) => !activeIds.has(t.challenge_active_id)),
+        }
+      })
+    }, 'Défi quitté'),
+    archiveSharedChallenge: (groupId) => act(async () => {
+      const row = await api.archiveSharedChallenge(groupId)
+      patch('challengeGroups', (l) => replaceIn(l, row))
+    }, 'Défi archivé'),
+    getSharedChallengePreview: (code) => api.getSharedChallengePreview(code),
+    getSharedLeaderboard: (groupId) => api.getSharedChallengeLeaderboard(groupId),
+
     // Imprévu : protège la série du jour, une fois par semaine (lundi → dimanche).
     declareRestDay: (day) => act(async () => {
       const weekStart = startOfWeekKey(day)
@@ -329,7 +395,9 @@ export function DataProvider({ children }) {
     addPause: ({ start_date, end_date, label }) => act(async () => {
       if (end_date < start_date) throw new AppError('La date de fin doit suivre la date de début.')
       const row = await api.createPausePeriod(userId, { start_date, end_date, label: label?.trim() || null })
+      // Un défi partagé garde les dates communes du groupe : une pause personnelle ne le décale pas.
       const overlapped = data.activeChallenges
+        .filter((a) => !a.group_id)
         .map((a) => ({ a, days: overlapDays(a.start_date, a.end_date, start_date, end_date) }))
         .filter((x) => x.days > 0)
       const updated = await Promise.all(overlapped.map(({ a, days }) => api.updateActiveChallenge(a.id, { end_date: addDays(a.end_date, days) })))
@@ -359,7 +427,7 @@ export function DataProvider({ children }) {
       const row = await api.updateProfile(userId, patch)
       setData((d) => ({ ...d, profile: row }))
     }),
-  }), [act, patch, refresh, userId, blockedOffline, data.activeChallenges, data.restDays, data.tasks])
+  }), [act, patch, refresh, userId, blockedOffline, isSharedTask, data.activeChallenges, data.restDays, data.tasks])
 
   const derived = useMemo(() => {
     const pauseDays = (data.pausePeriods ?? []).flatMap((p) => occurrenceDates(p.start_date, p.end_date, 'daily'))

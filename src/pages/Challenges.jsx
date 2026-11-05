@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { CalendarClock, Flag, Hourglass, ListChecks, Pencil, Play, Plus, Replace, Trash2, Trophy } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { CalendarClock, Flag, Hourglass, ListChecks, LogIn, Pencil, Play, Plus, Replace, Trash2, Trophy, Users } from 'lucide-react'
 import DomainTile from '../components/DomainTile.jsx'
 import Modal from '../components/Modal.jsx'
 import TaskForm from '../components/TaskForm.jsx'
 import PostponeDialog from '../components/PostponeDialog.jsx'
+import SharedChallengeCard from '../components/challenges/SharedChallengeCard.jsx'
+import SharedChallengeForm from '../components/challenges/SharedChallengeForm.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Card } from '../components/ui/Card.jsx'
@@ -22,6 +24,7 @@ import { CHALLENGE_CATALOGUE, challengeProgress } from '../lib/challenges.js'
 import { addDays, diffDays, formatShort } from '../lib/dates.js'
 import { DOMAIN_COLORS, DOMAIN_ICON_KEYS, ICONS } from '../lib/icons.js'
 import { challengeTasks } from '../lib/tasks.js'
+import { sharedChallengeStatus } from '../lib/sharedChallenges.js'
 import { cn } from '../lib/cn.js'
 
 const FREQ = [['daily', 'Tous les jours'], ['workdays', 'Jours ouvrés'], ['weekend', 'Week-end'], ['custom', 'Personnalisée']]
@@ -288,17 +291,30 @@ function ManageTasksModal({ active, onClose }) {
   )
 }
 
+const SHARED_STATUS_RANK = { active: 0, upcoming: 1, finished: 2, archived: 3 }
+
 export default function Challenges() {
-  const { activeChallenges, customChallenges, tasks, domains, today, actions } = useData()
+  const { activeChallenges, customChallenges, challengeGroups, challengeMembers, tasks, domains, today, actions } = useData()
+  const navigate = useNavigate()
   const [starting, setStarting] = useState(null)
   const [customForm, setCustomForm] = useState(null)
   const [toStop, setToStop] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [manage, setManage] = useState(null)
   const [toFinish, setToFinish] = useState(null)
+  const [sharedForm, setSharedForm] = useState(false)
+  const [sharedToLeave, setSharedToLeave] = useState(null)
+  const [sharedToArchive, setSharedToArchive] = useState(null)
+  const [joinCodeOpen, setJoinCodeOpen] = useState(false)
+  const [joinCode, setJoinCode] = useState('')
 
   const asChallenge = (c) => ({ id: c.id, title: c.title, durationDays: c.durationDays ?? c.duration_days, color: c.color, blueprints: c.blueprints })
   const running = (id) => activeChallenges.some((a) => a.challenge_id === id && a.end_date >= today)
+  const personalActive = activeChallenges.filter((a) => !a.group_id)
+  const sortedGroups = [...challengeGroups].sort((a, b) => (
+    SHARED_STATUS_RANK[sharedChallengeStatus(a, today)] - SHARED_STATUS_RANK[sharedChallengeStatus(b, today)]
+    || a.start_date.localeCompare(b.start_date)
+  ))
 
   const templateCard = (c, iconName, menu) => (
     <Card key={c.id} className="flex flex-col gap-4">
@@ -324,17 +340,51 @@ export default function Challenges() {
   return (
     <>
       <PageHeader title="Challenges" subtitle="Des séries de tâches planifiées sur plusieurs jours">
+        <Button icon={Users} variant="secondary" onClick={() => setSharedForm(true)}>Défi avec des amis</Button>
         <Button icon={Plus} onClick={() => setCustomForm({})}>Créer un challenge</Button>
       </PageHeader>
 
       <div className="space-y-8">
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-fg">En cours</h2>
-          {activeChallenges.length === 0 ? (
-            <EmptyState icon={Flag} title="Aucun challenge actif">Choisissez-en un dans le catalogue ci-dessous pour remplir automatiquement votre planning.</EmptyState>
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-fg">Avec des amis</h2>
+              <p className="text-sm text-muted">Même programme pour le groupe, tâches et progression personnelles.</p>
+            </div>
+            <Button variant="ghost" size="sm" icon={LogIn} onClick={() => setJoinCodeOpen(true)}>J'ai un code</Button>
+          </div>
+          {sortedGroups.length === 0 ? (
+            <EmptyState icon={Users} title="Aucun défi partagé" action={<Button icon={Users} variant="secondary" onClick={() => setSharedForm(true)}>Créer un défi</Button>}>
+              Invitez des amis à suivre le même programme. Chacun coche ses propres tâches.
+            </EmptyState>
           ) : (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {activeChallenges.map((a) => <ActiveChallengeCard key={a.id} active={a} tasks={tasks} domains={domains} today={today} onManage={() => setManage(a)} onFinish={() => setToFinish(a)} onDelete={() => setToStop(a)} />)}
+              {sortedGroups.map((group) => {
+                const active = activeChallenges.find((a) => a.group_id === group.id)
+                const members = challengeMembers.filter((m) => m.group_id === group.id)
+                return (
+                  <SharedChallengeCard
+                    key={group.id}
+                    group={group}
+                    active={active}
+                    tasks={tasks.filter((t) => active && t.challenge_active_id === active.id)}
+                    members={members}
+                    onLeave={() => setSharedToLeave(group)}
+                    onArchive={() => setSharedToArchive(group)}
+                  />
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-fg">En cours</h2>
+          {personalActive.length === 0 ? (
+            <EmptyState icon={Flag} title="Aucun challenge personnel actif">Choisissez-en un dans le catalogue ci-dessous pour remplir automatiquement votre planning.</EmptyState>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {personalActive.map((a) => <ActiveChallengeCard key={a.id} active={a} tasks={tasks} domains={domains} today={today} onManage={() => setManage(a)} onFinish={() => setToFinish(a)} onDelete={() => setToStop(a)} />)}
             </div>
           )}
         </section>
@@ -357,6 +407,35 @@ export default function Challenges() {
       {starting && <StartModal challenge={starting} onClose={() => setStarting(null)} />}
       {manage && <ManageTasksModal active={manage} onClose={() => setManage(null)} />}
       {customForm && <CustomForm challenge={customForm.challenge} template={customForm.template} onClose={() => setCustomForm(null)} />}
+      {sharedForm && <SharedChallengeForm onClose={() => setSharedForm(false)} />}
+      {joinCodeOpen && (
+        <Modal title="Rejoindre avec un code" icon={LogIn} size="sm" onClose={() => { setJoinCodeOpen(false); setJoinCode('') }}>
+          <form className="space-y-4" onSubmit={(event) => {
+            event.preventDefault()
+            const code = joinCode.trim().toUpperCase()
+            if (!code) return
+            setJoinCodeOpen(false)
+            setJoinCode('')
+            navigate(`/challenges/rejoindre/${encodeURIComponent(code)}`)
+          }}>
+            <Field label="Code d'invitation" hint="Le code à 8 caractères partagé par l'organisateur.">
+              <Input value={joinCode} onChange={(event) => setJoinCode(event.target.value.toUpperCase())} maxLength={8} autoFocus placeholder="ABCD2345" className="font-mono tracking-widest" />
+            </Field>
+            <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+              <Button variant="secondary" onClick={() => { setJoinCodeOpen(false); setJoinCode('') }}>Annuler</Button>
+              <Button type="submit" icon={LogIn} disabled={!joinCode.trim()}>Continuer</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+      {sharedToLeave && (
+        <ConfirmDialog title="Quitter ce défi ?" confirmLabel="Quitter" message="Votre progression et vos tâches personnelles seront supprimées. Les autres membres gardent les leurs." onCancel={() => setSharedToLeave(null)}
+          onConfirm={async () => { await actions.leaveSharedChallenge(sharedToLeave.id); setSharedToLeave(null) }} />
+      )}
+      {sharedToArchive && (
+        <ConfirmDialog title="Archiver ce défi ?" confirmLabel="Archiver" message="Le défi ne sera plus actif et les inscriptions seront fermées. Les progressions restent consultables." onCancel={() => setSharedToArchive(null)}
+          onConfirm={async () => { await actions.archiveSharedChallenge(sharedToArchive.id); setSharedToArchive(null) }} />
+      )}
       {toStop && (
         <ConfirmDialog title="Supprimer le challenge ?" message="Toutes ses tâches (y compris celles déjà faites) seront supprimées." onCancel={() => setToStop(null)}
           onConfirm={async () => { await actions.stopChallenge(toStop.id); setToStop(null) }} />
