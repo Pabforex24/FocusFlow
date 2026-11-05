@@ -20,7 +20,7 @@ export default function FocusBar({ layout = 'standard' }) {
   const total = active.totalMs
   const elapsed = total ? ((total - remainingMs) / total) * 100 : 0
   const style = layout === 'compact'
-    ? { right: 'calc(env(safe-area-inset-right, 0px) + 0.75rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }
+    ? { right: 'calc(env(safe-area-inset-right, 0px) + 1rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }
     : undefined
 
   return (

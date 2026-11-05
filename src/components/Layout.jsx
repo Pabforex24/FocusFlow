@@ -1,6 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import CoachFab from './layout/CoachFab.jsx'
-import CompactNav from './layout/CompactNav.jsx'
 import DesktopHeader from './layout/DesktopHeader.jsx'
 import DesktopRail from './layout/DesktopRail.jsx'
 import FocusBar from './FocusBar.jsx'
@@ -27,15 +26,15 @@ export default function Layout() {
   return (
     <div className="min-h-dvh" data-nav-layout={layout}>
       {desktop && <DesktopRail />}
-      <div className={cn(desktop && 'pl-24', compact && 'pl-[calc(env(safe-area-inset-left,0px)+5.25rem)]')}>
+      <div className={cn(desktop && 'pl-24')}>
         {desktop && <DesktopHeader />}
-        {standard && <Header />}
+        {(standard || compact) && <Header compact={compact} />}
         <main className={cn(
           'mx-auto w-full max-w-5xl',
           desktop
             ? 'px-5 pt-[6.5rem] pb-16'
             : compact
-              ? 'px-4 pt-[calc(env(safe-area-inset-top,0px)+5.25rem)] pb-24'
+              ? 'pt-4 pb-32 pl-[calc(env(safe-area-inset-left,0px)+1rem)] pr-[calc(env(safe-area-inset-right,0px)+1rem)]'
               : 'px-4 pt-5 pb-44',
         )}>
           {status === 'ready' && <OfflineBanner />}
@@ -45,8 +44,7 @@ export default function Layout() {
         </main>
       </div>
       <FocusBar layout={layout} />
-      {standard && <MobileNav />}
-      {compact && <CompactNav />}
+      {(standard || compact) && <MobileNav compact={compact} />}
       <CoachFab layout={layout} />
     </div>
   )

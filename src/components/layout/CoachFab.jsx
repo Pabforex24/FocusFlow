@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Sparkles } from 'lucide-react'
 import { useFocus } from '../../contexts/FocusContext.jsx'
 import { MOBILE_LEFT, MOBILE_RIGHT } from './navigation.js'
+import { cn } from '../../lib/cn.js'
 
 const MOBILE_PAGES = new Set([...MOBILE_LEFT, ...MOBILE_RIGHT])
-const SIZE = 56
+const SIZE = 48
 const MARGIN = 8
 const NAV_ZONE_SELECTOR = '[data-nav-zone]'
 
@@ -85,7 +86,7 @@ function savePos(layout, pos) {
 
 // Le Coach quitte la barre du bas sur mobile/tablette et devient un bouton flottant,
 // déplaçable, réduit à son icône. Il s'efface pendant une session Focus pour ne pas
-// recouvrir la barre de session.
+// recouvrir la barre de session, et s'estompe pendant le défilement.
 export default function CoachFab({ layout }) {
   const { pathname } = useLocation()
   const { active } = useFocus()
@@ -94,6 +95,7 @@ export default function CoachFab({ layout }) {
   const dragRef = useRef(null)
   const lastDragRef = useRef(0)
   const [pos, setPos] = useState(() => readPos(layout))
+  const [scrolling, setScrolling] = useState(false)
 
   useEffect(() => {
     if (layout === 'desktop') { setPos(null); return }
@@ -112,14 +114,25 @@ export default function CoachFab({ layout }) {
     }
   }, [pos])
 
+  useEffect(() => {
+    let timer
+    const onScroll = () => {
+      setScrolling(true)
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setScrolling(false), 500)
+    }
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('scroll', onScroll, { capture: true })
+    }
+  }, [])
+
   if (layout === 'desktop' || active || !MOBILE_PAGES.has(pathname)) return null
 
-  const compact = layout === 'compact'
   const style = pos
     ? { left: pos.x, top: pos.y }
-    : compact
-      ? { right: 'calc(env(safe-area-inset-right, 0px) + 0.5rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }
-      : { right: 'calc(env(safe-area-inset-right, 0px) + 0.5rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.25rem)' }
+    : { right: 'calc(env(safe-area-inset-right, 0px) + 0.5rem)', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }
 
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return
@@ -173,10 +186,13 @@ export default function CoachFab({ layout }) {
         if (Date.now() - lastDragRef.current < 400) { event.preventDefault(); return }
         navigate('/coach')
       }}
-      className="fixed z-40 grid size-14 touch-none place-items-center rounded-full btn-brand shadow-lg shadow-brand-500/25 transition active:scale-95 cursor-grab active:cursor-grabbing"
+      className={cn(
+        'fixed z-40 grid size-12 touch-none place-items-center rounded-full btn-brand shadow-lg shadow-brand-500/25 transition-[opacity,box-shadow] duration-300 active:scale-95 cursor-grab active:cursor-grabbing',
+        scrolling ? 'opacity-40' : 'opacity-100',
+      )}
       style={style}
     >
-      <Sparkles className="size-6" aria-hidden />
+      <Sparkles className="size-5" aria-hidden />
     </button>
   )
 }

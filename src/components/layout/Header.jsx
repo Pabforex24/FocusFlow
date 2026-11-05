@@ -4,15 +4,17 @@ import NotificationsMenu from './NotificationsMenu.jsx'
 import UserMenu from './UserMenu.jsx'
 import { Badge } from '../ui/Badge.jsx'
 import { useData } from '../../contexts/DataContext.jsx'
+import { cn } from '../../lib/cn.js'
 
 // Barre du haut mobile et tablette : carte flottante avec titre, série, alertes et compte.
 // Le thème et les réglages restent dans le menu du compte.
-export default function Header() {
+// En paysage iPhone, elle passe à 48 px pour laisser de la hauteur au contenu.
+export default function Header({ compact = false }) {
   const { stats } = useData()
 
   return (
     <header
-      className="sticky top-0 z-30 isolate pb-2"
+      className={cn('sticky top-0 z-30 isolate', compact ? 'pb-1.5' : 'pb-2')}
       style={{
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.5rem)',
         paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 1rem)',
@@ -24,8 +26,11 @@ export default function Header() {
           maskImage: 'linear-gradient(to bottom, #000 calc(100% - 10px), transparent)',
           WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 10px), transparent)',
         }} />
-      <div data-nav-zone className="relative mx-auto flex h-14 w-full max-w-[calc(64rem-2rem)] items-center justify-between gap-2 rounded-2xl border border-line bg-surface px-3 shadow-card">
-        <Logo className="min-w-0" />
+      <div data-nav-zone className={cn(
+        'relative mx-auto flex w-full max-w-[calc(64rem-2rem)] items-center justify-between gap-2 rounded-2xl border border-line bg-surface shadow-card',
+        compact ? 'h-12 px-2.5' : 'h-14 px-3',
+      )}>
+        <Logo className="min-w-0" textClassName={compact ? 'text-base' : undefined} />
         <div className="flex shrink-0 items-center gap-2">
           <Badge tone="warning" icon={Flame} className="text-sm">{stats.streak} j</Badge>
           <NotificationsMenu />
