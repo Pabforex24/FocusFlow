@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowDown, ArrowRight, Target, Timer, TrendingUp } from 'lucide-react'
 import Logo from '../components/layout/Logo.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { useTheme } from '../contexts/ThemeContext.jsx'
 import { cn } from '../lib/cn.js'
 
 const HERO_FEATURES = [
@@ -17,6 +18,7 @@ const PILLARS = [
   { icon: TrendingUp, title: 'Progressez', text: 'Suivez vos séries, vos niveaux et vos statistiques pour garder l\'élan.' },
 ]
 
+const HOME_THEME = { mode: 'dark', palette: 'foret' }
 const linkBase = 'group inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition duration-150 active:scale-[0.97]'
 const heroGlass = 'border border-fg/15 bg-surface/80 text-fg shadow-sm backdrop-blur-md transition hover:bg-surface dark:border-white/20 dark:bg-white/10 dark:hover:bg-white/20'
 
@@ -76,6 +78,7 @@ function Reveal({ as: Tag = 'div', className, delay = 0, children }) {
 
 export default function Home() {
   const { user } = useAuth()
+  const { setThemeOverride } = useTheme()
   const videoRef = useRef(null)
   const [showVideo, setShowVideo] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -84,6 +87,11 @@ export default function Home() {
     return !(connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType))
   })
   const [scrolled, setScrolled] = useState(false)
+
+  useLayoutEffect(() => {
+    setThemeOverride(HOME_THEME)
+    return () => setThemeOverride(null)
+  }, [setThemeOverride])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16)

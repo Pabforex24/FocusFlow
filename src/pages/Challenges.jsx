@@ -298,7 +298,6 @@ export default function Challenges() {
   const navigate = useNavigate()
   const [starting, setStarting] = useState(null)
   const [createOpen, setCreateOpen] = useState(false)
-  const [friendsOpen, setFriendsOpen] = useState(false)
   const [customForm, setCustomForm] = useState(null)
   const [toStop, setToStop] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -358,6 +357,45 @@ export default function Challenges() {
         </section>
 
         <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold text-fg">Défis partagés</h2>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" icon={Users} onClick={() => setSharedForm(true)}>Créer</Button>
+              <Button size="sm" variant="secondary" icon={LogIn} onClick={() => setJoinCodeOpen(true)}>Rejoindre</Button>
+            </div>
+          </div>
+          {sortedGroups.length === 0 ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-surface-2/40 px-4 py-3 text-left">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
+                <Users className="size-4" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-fg">Aucun défi partagé</p>
+                <p className="text-xs text-muted">Créez-en un ou rejoignez un groupe avec un code.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {sortedGroups.map((group) => {
+                const active = activeChallenges.find((a) => a.group_id === group.id)
+                const members = challengeMembers.filter((m) => m.group_id === group.id)
+                return (
+                  <SharedChallengeCard
+                    key={group.id}
+                    group={group}
+                    active={active}
+                    tasks={tasks.filter((t) => active && t.challenge_active_id === active.id)}
+                    members={members}
+                    onLeave={() => setSharedToLeave(group)}
+                    onArchive={() => setSharedToArchive(group)}
+                  />
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-3">
           <h2 className="text-lg font-semibold text-fg">Catalogue</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{CHALLENGE_CATALOGUE.map((c) => templateCard(c, c.icon, <Menu triggerClassName="mr-8 lg:mr-0" items={[{ label: 'Modifier', icon: Pencil, onClick: () => setCustomForm({ template: c }) }]} />))}</div>
         </section>
@@ -381,51 +419,12 @@ export default function Challenges() {
                 <span className="block text-xs font-normal text-muted">Un défi personnel, à suivre seul.</span>
               </span>
             </Button>
-            <Button variant="secondary" icon={Users} className="h-auto w-full justify-start p-4 text-left" onClick={() => { setCreateOpen(false); setFriendsOpen(true) }}>
+            <Button variant="secondary" icon={Users} className="h-auto w-full justify-start p-4 text-left" onClick={() => { setCreateOpen(false); setSharedForm(true) }}>
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-fg">Avec des amis</span>
                 <span className="block text-xs font-normal text-muted">Un programme commun, chacun coche ses tâches.</span>
               </span>
             </Button>
-          </div>
-        </Modal>
-      )}
-      {friendsOpen && (
-        <Modal title="Avec des amis" description="Même programme pour le groupe, tâches et progression personnelles." icon={Users} size="lg" onClose={() => setFriendsOpen(false)}>
-          <div className="space-y-4">
-            {sortedGroups.length === 0 ? (
-              <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-surface-2/40 px-4 py-3 text-left">
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
-                  <Users className="size-4" aria-hidden />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-fg">Aucun défi partagé</p>
-                  <p className="text-xs text-muted">Créez-en un ou rejoignez un groupe avec un code.</p>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3">
-                {sortedGroups.map((group) => {
-                  const active = activeChallenges.find((a) => a.group_id === group.id)
-                  const members = challengeMembers.filter((m) => m.group_id === group.id)
-                  return (
-                    <SharedChallengeCard
-                      key={group.id}
-                      group={group}
-                      active={active}
-                      tasks={tasks.filter((t) => active && t.challenge_active_id === active.id)}
-                      members={members}
-                      onLeave={() => setSharedToLeave(group)}
-                      onArchive={() => setSharedToArchive(group)}
-                    />
-                  )
-                })}
-              </div>
-            )}
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Button icon={Users} variant="secondary" className="w-full" onClick={() => { setFriendsOpen(false); setSharedForm(true) }}>Créer un défi</Button>
-              <Button icon={LogIn} variant="secondary" className="w-full" onClick={() => { setFriendsOpen(false); setJoinCodeOpen(true) }}>Rejoindre avec un code</Button>
-            </div>
           </div>
         </Modal>
       )}

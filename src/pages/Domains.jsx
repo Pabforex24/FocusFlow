@@ -9,7 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState.jsx'
 import { Field, Input } from '../components/ui/Input.jsx'
 import { Menu } from '../components/ui/Menu.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
-import { ProgressBar } from '../components/ui/ProgressBar.jsx'
+import { ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useOpenOnNew } from '../hooks/useOpenOnNew.js'
 import { DOMAIN_COLORS, DOMAIN_ICON_KEYS, ICONS, resolveIcon } from '../lib/icons.js'
@@ -98,7 +98,8 @@ export default function Domains() {
             const todayTasks = own.filter((t) => t.scheduled_on === today)
             const goalCount = goals.filter((g) => g.domain_id === d.id).length
             return (
-              <Card key={d.id} className="space-y-4">
+              <Card key={d.id} className="relative space-y-4 overflow-hidden">
+                <span aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: d.color }} />
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <DomainTile domain={d} size="lg" />
@@ -109,11 +110,15 @@ export default function Domains() {
                   </div>
                   <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setForm({ domain: d }) }, { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => setToDelete(d) }]} />
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm"><span className="text-muted">Progression</span><span className="font-semibold tabular-nums text-fg">{pct} %</span></div>
-                  <ProgressBar value={pct} color={d.color} />
+                <div className="flex items-center gap-4">
+                  <ProgressRing value={pct} size={68} stroke={6} tone={pct === 100 ? 'success' : 'brand'}>
+                    <span className="text-xs">{pct}%</span>
+                  </ProgressRing>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="text-sm font-medium text-fg">{done}/{own.length} tâche{own.length > 1 ? 's' : ''} terminée{own.length > 1 ? 's' : ''}</p>
+                    <p className="text-xs text-muted">Aujourd'hui : {todayTasks.filter((t) => t.done).length}/{todayTasks.length} tâches</p>
+                  </div>
                 </div>
-                <p className="text-xs text-subtle">Aujourd'hui : {todayTasks.filter((t) => t.done).length}/{todayTasks.length} tâches</p>
               </Card>
             )
           })}

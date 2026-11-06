@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, Palette, Pause, Play, X } from 'lucide-react'
+import { ArrowLeft, Check, Palette, Pause, Play, RotateCw, X } from 'lucide-react'
 import FocusTimerDisplay from '../components/focus/FocusTimerDisplay.jsx'
 import Modal from '../components/Modal.jsx'
 import { Button } from '../components/ui/Button.jsx'
@@ -39,6 +39,7 @@ export default function FocusDetail() {
   const from = location.state?.from
   const [style, setStyle] = useState(readFocusStyle)
   const [styleOpen, setStyleOpen] = useState(false)
+  const [rotated, setRotated] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(true)
   const [activity, setActivity] = useState(0)
   const hadSessionRef = useRef(Boolean(active))
@@ -95,8 +96,8 @@ export default function FocusDetail() {
   }
 
   return (
-    <main className="focus-detail fixed inset-0 z-40 overflow-hidden text-fg" data-focus-style={style} onPointerDown={revealControls}>
-      <div className="grid h-dvh place-items-center px-3 py-16">
+    <main className="focus-detail fixed inset-0 z-40 overflow-hidden text-fg" data-focus-style={style} data-rotated={rotated ? 'true' : 'false'} onPointerDown={revealControls}>
+      <div className="grid h-full place-items-center px-3 py-16">
         <FocusTimerDisplay style={style} remainingMs={remainingMs} totalMs={totalMs} paused={paused} />
       </div>
 
@@ -114,6 +115,10 @@ export default function FocusDetail() {
                 {paused ? 'Reprendre' : 'Pause'}
               </Button>
               <Button variant="danger-soft" icon={X} onClick={abandon}>Abandonner</Button>
+              <Button variant="secondary" icon={RotateCw} aria-pressed={rotated}
+                onClick={() => { setRotated((value) => !value); revealControls() }}>
+                {rotated ? 'Redresser' : 'Pivoter'}
+              </Button>
               <Button variant="secondary" icon={Palette} onClick={() => { setStyleOpen(true); revealControls() }}>Style</Button>
             </div>
           </div>

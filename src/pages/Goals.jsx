@@ -99,36 +99,38 @@ export default function Goals() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-3">
             {visible.map((g) => {
               const domain = domains.find((d) => d.id === g.domain_id)
               const p = goalProgress(g, tasks)
               const status = goalStatus(g, p, today)
               const left = g.deadline ? diffDays(today, g.deadline) : null
               return (
-                <Card key={g.id} interactive className="flex flex-col gap-4">
+                <Card key={g.id} interactive className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3">
                       <DomainTile domain={domain} />
                       <div className="min-w-0">
                         <h2 className="text-base leading-snug font-semibold break-words text-fg">{g.title}</h2>
                         <p className="text-sm text-muted">{domain?.name ?? 'Sans domaine'}</p>
+                        {g.description && <p className="mt-1 line-clamp-2 text-sm text-muted">{g.description}</p>}
                       </div>
                     </div>
                     <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setForm({ goal: g }) }, { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => setToDelete(g) }]} />
                   </div>
-                  {g.description && <p className="line-clamp-2 text-sm text-muted">{g.description}</p>}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-sm"><span className="text-muted">{p.done}/{p.total} tâches</span><span className="font-semibold tabular-nums text-fg">{p.pct} %</span></div>
-                    <ProgressBar value={p.pct} color={domain?.color} tone={status.tone === 'success' ? 'success' : 'brand'} />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={status.tone}>{status.label}</Badge>
-                    {g.deadline && (
-                      <Badge tone="neutral" icon={CalendarClock}>
-                        {left < 0 ? `Échue le ${formatShort(g.deadline)}` : left === 0 ? "Échéance aujourd'hui" : `${left} j restants · ${formatShort(g.deadline)}`}
-                      </Badge>
-                    )}
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex items-center justify-between text-sm"><span className="text-muted">{p.done}/{p.total} tâches</span><span className="font-semibold tabular-nums text-fg">{p.pct} %</span></div>
+                      <ProgressBar value={p.pct} color={domain?.color} tone={status.tone === 'success' ? 'success' : 'brand'} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                      <Badge tone={status.tone}>{status.label}</Badge>
+                      {g.deadline && (
+                        <Badge tone="neutral" icon={CalendarClock}>
+                          {left < 0 ? `Échue le ${formatShort(g.deadline)}` : left === 0 ? "Échéance aujourd'hui" : `${left} j restants · ${formatShort(g.deadline)}`}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </Card>
               )

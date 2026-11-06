@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Settings2 } from 'lucide-react'
 import Layout from './components/Layout.jsx'
@@ -49,6 +50,24 @@ export default function App() {
   const location = useLocation()
   const next = new URLSearchParams(location.search).get('next')
   const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : null
+  const scrollPositions = useRef(new Map())
+  const lastPath = useRef(location.pathname)
+  const scrollPath = useRef(location.pathname)
+
+  useLayoutEffect(() => {
+    if (lastPath.current === location.pathname) return
+    lastPath.current = location.pathname
+    scrollPath.current = location.pathname
+    window.scrollTo(0, scrollPositions.current.get(location.pathname) ?? 0)
+  }, [location.pathname])
+
+  useEffect(() => {
+    const save = () => scrollPositions.current.set(scrollPath.current, window.scrollY)
+    window.addEventListener('scroll', save, { passive: true })
+    save()
+    return () => window.removeEventListener('scroll', save)
+  }, [])
+
   if (!isSupabaseConfigured) return <SetupNotice />
   if (loading) return <div className="grid min-h-dvh place-items-center bg-bg"><Spinner className="size-8" /></div>
   if (!user) {

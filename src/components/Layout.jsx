@@ -40,7 +40,7 @@ export default function Layout() {
           {status === 'ready' && <OfflineBanner />}
           {status === 'loading' && <PageSkeleton />}
           {status === 'error' && <ErrorState message={loadError} onRetry={() => actions.refresh()} />}
-          {status === 'ready' && <div key={pathname} className="animate-fade-up"><Outlet /></div>}
+          {status === 'ready' && <div key={pathname} className="animate-page-in"><Outlet /></div>}
         </main>
       </div>
       <FocusBar layout={layout} />

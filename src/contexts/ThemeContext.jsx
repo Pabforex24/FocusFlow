@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 
 const STORAGE_KEY = 'focusflow-theme'
 const PALETTE_KEY = 'focusflow-palette'
@@ -42,6 +42,7 @@ export function ThemeProvider({ children }) {
   const [preference, setPreference] = useState(readPreference) // 'light' | 'dark' | 'system'
   const [palette, setPaletteState] = useState(readPalette) // identifiant de palette validé par PALETTES
   const [systemDark, setSystemDark] = useState(prefersDark)
+  const [override, setOverride] = useState(null)
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)')
@@ -51,12 +52,20 @@ export function ThemeProvider({ children }) {
   }, [])
 
   const resolved = preference === 'system' ? (systemDark ? 'dark' : 'light') : preference
+  const effectiveResolved = override?.mode ?? resolved
+  const effectivePalette = override?.palette ?? palette
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', resolved === 'dark')
-    document.documentElement.dataset.palette = palette
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[palette][resolved])
-  }, [resolved, palette])
+  useLayoutEffect(() => {
+    document.documentElement.classList.toggle('dark', effectiveResolved === 'dark')
+    document.documentElement.dataset.palette = effectivePalette
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[effectivePalette][effectiveResolved])
+  }, [effectiveResolved, effectivePalette])
+
+  const setThemeOverride = useCallback((next) => {
+    if (!next) return setOverride(null)
+    const mode = next.mode === 'light' ? 'light' : 'dark'
+    return setOverride({ mode, palette: PALETTES.includes(next.palette) ? next.palette : 'foret' })
+  }, [])
 
   const setPalette = useCallback((next) => {
     if (!PALETTES.includes(next)) return
@@ -79,9 +88,9 @@ export function ThemeProvider({ children }) {
   }, [])
 
   const value = useMemo(() => ({
-    preference, resolved, setTheme, palette, setPalette,
+    preference, resolved: effectiveResolved, setTheme, palette: effectivePalette, setPalette, setThemeOverride,
     toggle: () => setTheme(resolved === 'dark' ? 'light' : 'dark'),
-  }), [preference, resolved, setTheme, palette, setPalette])
+  }), [preference, effectiveResolved, setTheme, effectivePalette, setPalette, setThemeOverride, resolved])
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

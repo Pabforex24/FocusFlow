@@ -65,9 +65,15 @@ export default function MobileNav({ compact = false }) {
           paddingRight: 'calc(env(safe-area-inset-right, 0px) + 1rem)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}>
+        <div aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[calc(5.5rem+env(safe-area-inset-bottom,0px))] bg-linear-to-t from-bg via-bg/70 to-transparent backdrop-blur-[2px]"
+          style={{
+            maskImage: 'linear-gradient(to top, #000 36%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to top, #000 36%, transparent)',
+          }} />
         <div data-nav-zone
           className={cn(
-            'nav-glass relative mx-auto mb-2 flex h-14 w-full items-center rounded-[1.65rem]',
+            'nav-glass relative mx-auto mb-1 flex h-14 w-full items-center rounded-[1.65rem]',
             compact
               ? 'max-w-[24rem] gap-0.5 px-1'
               : 'max-w-md min-[360px]:gap-0.5 min-[360px]:px-1',
