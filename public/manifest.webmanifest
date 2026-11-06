@@ -1,7 +1,7 @@
 {
   "name": "FocusFlow",
   "short_name": "FocusFlow",
-  "description": "Discipline personnelle : objectifs, tâches et challenges au quotidien.",
+  "description": "Discipline personnelle : objectifs, tâches et défis au quotidien.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

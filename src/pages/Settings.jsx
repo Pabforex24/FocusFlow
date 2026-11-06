@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, Check, LogOut, Monitor, Moon, Pause, RefreshCw, ShieldAlert, Sun, Trash2 } from 'lucide-react'
+import { Bell, Check, LogOut, Monitor, Moon, Palette, Pause, RefreshCw, ShieldAlert, Sun, Trash2 } from 'lucide-react'
 import { Alert } from '../components/ui/Alert.jsx'
 import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Card, CardHeader } from '../components/ui/Card.jsx'
@@ -78,12 +78,14 @@ function PauseCard() {
 
 export default function Settings() {
   const { profile, actions } = useData()
-  const { preference, setTheme, palette, setPalette } = useTheme()
+  const { preference, resolved, setTheme, palette, setPalette } = useTheme()
   const signOut = useSignOut()
   const [confirmLogout, setConfirmLogout] = useState(false)
   const push = usePushNotifications()
   const toast = useToast()
   const hardcore = profile?.hardcore_mode ?? false
+  const currentPalette = PALETTE_CHOICES.find((choice) => choice.value === palette) ?? PALETTE_CHOICES[0]
+  const modeLabel = resolved === 'dark' ? 'Sombre' : 'Clair'
   const logout = async () => { await signOut(); setConfirmLogout(false) }
 
   const testNotify = async () => {
@@ -103,36 +105,50 @@ export default function Settings() {
       <PageHeader title="Réglages" subtitle="Apparence, notifications et confidentialité de ton espace." />
       <div className="mx-auto max-w-2xl space-y-4">
         <Card>
-          <CardHeader title="Apparence" description="Choisissez le mode et une ambiance. Chaque palette adapte les couleurs, les halos et les fonds." />
-          <Segmented fill value={preference} onChange={setTheme} options={[{ value: 'light', label: 'Clair', icon: Sun }, { value: 'dark', label: 'Sombre', icon: Moon }, { value: 'system', label: 'Auto', icon: Monitor }]} />
-          <div className="mt-5 mb-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-fg">Palette de couleurs</p>
-              <p className="text-xs text-subtle">8 ambiances · clair et sombre</p>
+          <CardHeader icon={Palette} title="Apparence" description="Choisissez le mode et une ambiance. Chaque palette adapte les couleurs, les halos et les fonds." />
+          <div className="space-y-5">
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <p className="text-sm font-medium text-fg">Mode d'affichage</p>
+                <p className="text-xs text-subtle">Auto suit le réglage de votre appareil.</p>
+              </div>
+              <Segmented fill value={preference} onChange={setTheme} options={[{ value: 'light', label: 'Clair', icon: Sun }, { value: 'dark', label: 'Sombre', icon: Moon }, { value: 'system', label: 'Auto', icon: Monitor }]} />
             </div>
-            <span className="shrink-0 rounded-full bg-surface-2 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted">Appliqué instantanément</span>
-          </div>
-          <div role="radiogroup" aria-label="Palette de couleurs" className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {PALETTE_CHOICES.map(({ value, label, hint, swatch, accent }) => {
-              const selected = palette === value
-              return (
-                <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => setPalette(value)}
-                  className={cn('group relative flex items-center gap-3 rounded-2xl border p-2.5 text-left transition active:scale-[0.99]',
-                    selected ? 'border-brand-500 bg-brand-500/8 ring-2 ring-brand-500/25' : 'border-line bg-surface-2/40 hover:border-brand-500/40 hover:bg-surface-2/70')}>
-                  <span className="relative block h-20 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10 sm:w-full"
-                    style={{ backgroundImage: `radial-gradient(120% 110% at 18% 0%, ${accent}55, transparent 55%), ${swatch}` }} aria-hidden>
-                    <span className="absolute left-2 top-2 h-1.5 w-10 rounded-full bg-white/35" />
-                    <span className="absolute bottom-2 left-2 h-7 w-16 rounded-md border border-white/15 bg-white/10 backdrop-blur-sm" />
-                    <span className="absolute right-2.5 bottom-2.5 size-3.5 rounded-full" style={{ backgroundColor: accent, boxShadow: `0 0 12px ${accent}99` }} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-fg">{label}</span>
-                    <span className="block truncate text-xs text-muted">{hint}</span>
-                  </span>
-                  {selected && <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-500 text-brand-950 shadow-sm"><Check className="size-3.5" strokeWidth={3} aria-hidden /></span>}
-                </button>
-              )
-            })}
+
+            <div className="border-t border-line pt-4">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-fg">Palette de couleurs</p>
+                  <p className="text-xs text-subtle">8 ambiances · clair et sombre</p>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-muted">
+                  <span className="size-1.5 rounded-full bg-brand-500" aria-hidden />
+                  {currentPalette.label} · {modeLabel}
+                </span>
+              </div>
+              <div role="radiogroup" aria-label="Palette de couleurs" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {PALETTE_CHOICES.map(({ value, label, hint, swatch, accent }) => {
+                  const selected = palette === value
+                  return (
+                    <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => setPalette(value)}
+                      className={cn('group relative flex flex-col gap-2.5 rounded-2xl border p-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 active:scale-[0.99]',
+                        selected ? 'border-brand-500 bg-brand-500/8 ring-2 ring-brand-500/25' : 'border-line bg-surface-2/40 hover:border-brand-500/40 hover:bg-surface-2/70')}>
+                      <span className="relative block aspect-[16/10] w-full overflow-hidden rounded-xl border border-white/10"
+                        style={{ backgroundImage: `radial-gradient(120% 110% at 18% 0%, ${accent}55, transparent 55%), ${swatch}` }} aria-hidden>
+                        <span className="absolute left-2 top-2 h-1.5 w-8 rounded-full bg-white/35" />
+                        <span className="absolute inset-x-2 bottom-2 h-6 rounded-md border border-white/15 bg-white/10 backdrop-blur-sm" />
+                        {!selected && <span className="absolute right-2 top-2 size-2.5 rounded-full" style={{ backgroundColor: accent, boxShadow: `0 0 12px ${accent}99` }} />}
+                      </span>
+                      <span className="min-w-0 px-0.5 pb-0.5">
+                        <span className="block truncate text-[13px] font-semibold text-fg sm:text-sm">{label}</span>
+                        <span className="block truncate text-[11px] text-muted sm:text-xs">{hint}</span>
+                      </span>
+                      {selected && <span className="absolute right-3 top-3 grid size-5 place-items-center rounded-full bg-brand-500 text-brand-950 shadow-sm"><Check className="size-3" strokeWidth={3} aria-hidden /></span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </Card>
 
