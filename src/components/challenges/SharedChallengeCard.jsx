@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Archive, CalendarClock, Flag, LogOut, Share2, Trophy, Users } from 'lucide-react'
+import { Archive, CalendarClock, Copy, Flag, LogOut, Share2, Trophy, Users } from 'lucide-react'
 import DomainTile from '../DomainTile.jsx'
 import { Badge } from '../ui/Badge.jsx'
 import { Button } from '../ui/Button.jsx'
@@ -59,6 +59,15 @@ export default function SharedChallengeCard({ group, active, tasks, members, onL
     }
   }, [actions, group.id, myDone])
 
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(group.join_code)
+      toast.success('Code d\'invitation copié')
+    } catch {
+      toast.error(`Impossible de copier le code. Code : ${group.join_code}`)
+    }
+  }
+
   const invite = async () => {
     const link = sharedChallengeLink(group.join_code)
     try {
@@ -86,9 +95,11 @@ export default function SharedChallengeCard({ group, active, tasks, members, onL
             </div>
           </div>
         </div>
-        <span className="shrink-0 rounded-lg bg-surface-2 px-2 py-1 font-mono text-[11px] font-semibold tracking-wider text-muted" title="Code d'invitation">
+        <button type="button" onClick={copyCode} title="Copier le code d'invitation" aria-label={`Copier le code d'invitation ${group.join_code}`}
+          className="group/code inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg bg-surface-2 px-2 py-1 font-mono text-[11px] font-semibold tracking-wider text-muted transition hover:bg-brand-500/10 hover:text-brand-600 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none dark:hover:text-brand-300">
           {group.join_code}
-        </span>
+          <Copy className="size-3.5 opacity-60 transition group-hover/code:opacity-100" aria-hidden />
+        </button>
       </div>
 
       {group.description && <p className="text-sm text-muted">{group.description}</p>}

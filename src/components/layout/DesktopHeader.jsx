@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Flame, Plus } from 'lucide-react'
-import Logo from './Logo.jsx'
+import { LogoLink } from './Logo.jsx'
 import NotificationsMenu from './NotificationsMenu.jsx'
 import QuickActionsModal from './QuickActionsModal.jsx'
 import UserMenu from './UserMenu.jsx'
@@ -25,9 +25,7 @@ export default function DesktopHeader() {
             WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 10px), transparent)',
           }} />
         <div className="relative mx-auto flex h-16 w-full max-w-[calc(64rem-2.5rem)] items-center gap-2 rounded-3xl border border-line bg-surface px-2 shadow-card">
-          <NavLink to="/dashboard" aria-label="Accueil FocusFlow" className="shrink-0 rounded-2xl px-1.5 py-1 transition hover:bg-surface-2">
-            <Logo textClassName="hidden min-[860px]:inline" />
-          </NavLink>
+          <LogoLink className="shrink-0 px-1.5" textClassName="hidden min-[860px]:inline" />
 
           <nav className="flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Navigation principale">
             {findNav(DESKTOP_TOP).map(({ to, label, icon: Icon }) => (

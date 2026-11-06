@@ -22,7 +22,7 @@ export function heatmap(tasks, today, weeks = 16) {
   return Array.from({ length: weeks }, (_, w) =>
     Array.from({ length: 7 }, (_, d) => {
       const key = addDays(firstMonday, w * 7 + d)
-      return { key, future: key > today, rate: rate(days[key]), total: days[key]?.total ?? 0 }
+      return { key, future: key > today, rate: rate(days[key]), total: days[key]?.total ?? 0, done: days[key]?.done ?? 0 }
     })
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { IconButton } from './ui/Button.jsx'
@@ -16,11 +16,34 @@ const iconTones = {
   danger: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
 }
 
+const readViewport = () => {
+  const viewport = typeof window === 'undefined' ? null : window.visualViewport
+  return {
+    height: viewport?.height ?? (typeof window === 'undefined' ? 0 : window.innerHeight),
+    offsetTop: viewport?.offsetTop ?? 0,
+  }
+}
+
 // Mobile : feuille qui monte du bas de l'écran. Desktop : fenêtre centrée.
 export default function Modal({ title, description, icon: Icon, tone = 'brand', size = 'md', onClose, children }) {
   useScrollLock()
   const dialogRef = useRef(null)
+  const [viewport, setViewport] = useState(readViewport)
   useFocusTrap(dialogRef)
+  useEffect(() => {
+    const visualViewport = window.visualViewport
+    const update = () => setViewport(readViewport())
+    update()
+    visualViewport?.addEventListener('resize', update)
+    visualViewport?.addEventListener('scroll', update)
+    window.addEventListener('resize', update)
+    return () => {
+      visualViewport?.removeEventListener('resize', update)
+      visualViewport?.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [])
+
   useEffect(() => {
     const entry = {}
     modalStack.push(entry)
@@ -35,10 +58,11 @@ export default function Modal({ title, description, icon: Icon, tone = 'brand', 
 
   return createPortal(
     <div data-modal-root className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6"
+      style={{ '--modal-vh': `${Math.max(0, viewport.height - 12)}px`, top: viewport.offsetTop, height: viewport.height, bottom: 'auto' }}
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
         className={cn(
-          'flex max-h-[92dvh] w-full flex-col rounded-t-3xl border border-line bg-surface shadow-pop animate-sheet-up',
+          'flex max-h-[var(--modal-vh,92dvh)] w-full flex-col rounded-t-3xl border border-line bg-surface shadow-pop animate-sheet-up',
           'sm:max-h-[85dvh] sm:rounded-3xl sm:animate-scale-in', sizes[size],
         )}>
         <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-line sm:hidden" aria-hidden />

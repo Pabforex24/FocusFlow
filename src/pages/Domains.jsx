@@ -13,6 +13,7 @@ import { ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { useOpenOnNew } from '../hooks/useOpenOnNew.js'
 import { DOMAIN_COLORS, DOMAIN_ICON_KEYS, ICONS, resolveIcon } from '../lib/icons.js'
+import { goalProgress } from '../lib/stats.js'
 import { cn } from '../lib/cn.js'
 
 function DomainForm({ domain, onClose }) {
@@ -96,27 +97,45 @@ export default function Domains() {
             const done = own.filter((t) => t.done).length
             const pct = own.length ? Math.round((done / own.length) * 100) : 0
             const todayTasks = own.filter((t) => t.scheduled_on === today)
-            const goalCount = goals.filter((g) => g.domain_id === d.id).length
+            const todayDone = todayTasks.filter((t) => t.done).length
+            const domainGoals = goals.filter((g) => g.domain_id === d.id)
+            const openGoals = domainGoals.filter((g) => goalProgress(g, tasks).pct < 100).length
+            const overdue = own.filter((t) => !t.done && t.scheduled_on < today).length
             return (
-              <Card key={d.id} className="relative space-y-4 overflow-hidden">
+              <Card key={d.id} className="group relative space-y-4 overflow-hidden transition duration-300 hover:border-brand-400/40 hover:shadow-pop">
                 <span aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: d.color }} />
-                <div className="flex items-start justify-between gap-3">
+                <span aria-hidden className="pointer-events-none absolute -top-12 -right-12 size-32 rounded-full opacity-0 blur-2xl transition duration-500 group-hover:opacity-20" style={{ backgroundColor: d.color }} />
+                <div className="relative flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <DomainTile domain={d} size="lg" />
                     <div className="min-w-0">
                       <h2 className="truncate text-base font-semibold text-fg">{d.name}</h2>
-                      <p className="text-sm text-muted">{goalCount} objectif{goalCount > 1 ? 's' : ''} · {own.length} tâche{own.length > 1 ? 's' : ''}</p>
+                      <p className="text-sm text-muted">{domainGoals.length} objectif{domainGoals.length > 1 ? 's' : ''} · {own.length} tâche{own.length > 1 ? 's' : ''}</p>
                     </div>
                   </div>
                   <Menu items={[{ label: 'Modifier', icon: Pencil, onClick: () => setForm({ domain: d }) }, { label: 'Supprimer', icon: Trash2, danger: true, onClick: () => setToDelete(d) }]} />
                 </div>
-                <div className="flex items-center gap-4">
-                  <ProgressRing value={pct} size={68} stroke={6} tone={pct === 100 ? 'success' : 'brand'}>
-                    <span className="text-xs">{pct}%</span>
+                <div className="relative flex items-center gap-4">
+                  <ProgressRing value={pct} size={76} stroke={7} tone={pct === 100 ? 'success' : 'brand'}>
+                    <span className="text-sm font-semibold tabular-nums">{pct}%</span>
                   </ProgressRing>
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-sm font-medium text-fg">{done}/{own.length} tâche{own.length > 1 ? 's' : ''} terminée{own.length > 1 ? 's' : ''}</p>
-                    <p className="text-xs text-muted">Aujourd'hui : {todayTasks.filter((t) => t.done).length}/{todayTasks.length} tâches</p>
+                  <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-surface-2/60 px-3 py-2">
+                      <p className="text-[10px] font-semibold tracking-wide text-subtle uppercase">Terminées</p>
+                      <p className="mt-0.5 text-sm font-semibold text-fg tabular-nums">{done}<span className="text-xs font-medium text-subtle">/{own.length}</span></p>
+                    </div>
+                    <div className="rounded-xl bg-surface-2/60 px-3 py-2">
+                      <p className="text-[10px] font-semibold tracking-wide text-subtle uppercase">Aujourd'hui</p>
+                      <p className="mt-0.5 text-sm font-semibold text-fg tabular-nums">{todayDone}<span className="text-xs font-medium text-subtle">/{todayTasks.length}</span></p>
+                    </div>
+                    <div className="rounded-xl bg-surface-2/60 px-3 py-2">
+                      <p className="text-[10px] font-semibold tracking-wide text-subtle uppercase">Objectifs actifs</p>
+                      <p className="mt-0.5 text-sm font-semibold text-fg tabular-nums">{openGoals}</p>
+                    </div>
+                    <div className={cn('rounded-xl px-3 py-2', overdue ? 'bg-rose-500/10' : 'bg-surface-2/60')}>
+                      <p className={cn('text-[10px] font-semibold tracking-wide uppercase', overdue ? 'text-rose-600 dark:text-rose-400' : 'text-subtle')}>En retard</p>
+                      <p className={cn('mt-0.5 text-sm font-semibold tabular-nums', overdue ? 'text-rose-600 dark:text-rose-400' : 'text-fg')}>{overdue}</p>
+                    </div>
                   </div>
                 </div>
               </Card>

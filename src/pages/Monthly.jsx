@@ -157,6 +157,80 @@ function Legend() {
   )
 }
 
+function ActivityHeatmap({ weeks }) {
+  const cells = weeks.flat()
+  const tracked = cells.filter((cell) => !cell.future && cell.total > 0)
+  const done = tracked.reduce((sum, cell) => sum + cell.done, 0)
+  const total = tracked.reduce((sum, cell) => sum + cell.total, 0)
+  const rate = total ? Math.round((done / total) * 100) : null
+  const activeDays = tracked.filter((cell) => cell.done > 0).length
+  const monthLabels = weeks.map((week) => {
+    const first = week.find((cell) => cell.key.endsWith('-01'))
+    return first ? fromKey(first.key).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '') : ''
+  })
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl bg-surface-2/60 px-3 py-2">
+          <p className="text-[10px] font-semibold tracking-wide text-subtle uppercase">Jours actifs</p>
+          <p className="mt-0.5 text-lg font-semibold text-fg tabular-nums">{activeDays}</p>
+        </div>
+        <div className="rounded-xl bg-surface-2/60 px-3 py-2">
+          <p className="text-[10px] font-semibold tracking-wide text-subtle uppercase">Terminées</p>
+          <p className="mt-0.5 text-lg font-semibold text-fg tabular-nums">{done}</p>
+        </div>
+        <div className="rounded-xl bg-surface-2/60 px-3 py-2">
+          <p className="text-[10px] font-semibold tracking-wide text-subtle uppercase">Taux</p>
+          <p className="mt-0.5 text-lg font-semibold text-fg tabular-nums">{rate === null ? '—' : `${rate} %`}</p>
+        </div>
+      </div>
+
+      <div className="-mx-1 overflow-x-auto px-1 pb-1">
+        <div className="flex min-w-max gap-2">
+          <div className="flex shrink-0 flex-col gap-1">
+            <span className="mb-1 h-3" aria-hidden />
+            {WEEKDAYS.map((day, index) => (
+              <span key={index} className="grid size-4 place-items-center text-[9px] font-medium text-subtle sm:size-5">{day}</span>
+            ))}
+          </div>
+          <div>
+            <div className="mb-1 flex h-3 gap-1">
+              {weeks.map((_, index) => (
+                <span key={index} className="w-4 truncate text-[8px] leading-none text-subtle sm:w-5">{monthLabels[index]}</span>
+              ))}
+            </div>
+            <div className="flex gap-1">
+              {weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-1">
+                  {week.map((cell) => {
+                    const label = cell.total
+                      ? `${formatShort(cell.key)} : ${cell.done}/${cell.total} tâche${cell.total > 1 ? 's' : ''}, ${Math.round(cell.rate * 100)} %`
+                      : `${formatShort(cell.key)} : aucune tâche`
+                    return cell.future ? (
+                      <span key={cell.key} className="size-4 rounded-[5px] sm:size-5" aria-hidden />
+                    ) : (
+                      <Link key={cell.key} to={`/tasks?day=${cell.key}`} aria-label={label} title={label}
+                        className={cn('size-4 rounded-[5px] transition hover:scale-110 hover:ring-2 hover:ring-brand-400/60 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none sm:size-5',
+                          cell.rate === null && 'bg-surface-2')}
+                        style={cell.rate !== null ? { backgroundColor: rateColor(cell.rate) } : undefined} />
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-subtle">
+        <span>Chaque carré ouvre la journée correspondante.</span>
+        <Legend />
+      </div>
+    </div>
+  )
+}
+
 export default function Monthly() {
   const { tasks, goals, domains, today } = useData()
   const now = fromKey(today)
@@ -288,20 +362,8 @@ export default function Monthly() {
         </div>
 
         <Card>
-          <CardHeader icon={TrendingUp} title="Activité sur 16 semaines" action={<Legend />} />
-          <div className="-mx-1 overflow-x-auto px-1 pb-1">
-            <div className="flex min-w-max gap-1">
-              {weeks.map((col, i) => (
-                <div key={i} className="flex flex-col gap-1">
-                  {col.map((c) => (
-                    <div key={c.key} title={`${formatShort(c.key)} : ${c.total ? Math.round(c.rate * 100) + ' %' : 'aucune tâche'}`}
-                      className={cn('size-4 rounded-[5px] sm:size-5', c.future ? 'bg-transparent' : c.rate === null && 'bg-surface-2')}
-                      style={!c.future && c.rate !== null ? { backgroundColor: rateColor(c.rate) } : undefined} />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
+          <CardHeader icon={TrendingUp} title="Activité sur 16 semaines" description="Lundi → dimanche, les 16 dernières semaines" />
+          <ActivityHeatmap weeks={weeks} />
         </Card>
       </div>
     </>

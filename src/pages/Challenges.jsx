@@ -341,7 +341,8 @@ export default function Challenges() {
   return (
     <>
       <PageHeader title="Défis">
-        <Button icon={Plus} className="w-full sm:w-auto" onClick={() => setCreateOpen(true)}>Créer un défi</Button>
+        <Button icon={LogIn} variant="secondary" onClick={() => setJoinCodeOpen(true)}>Rejoindre</Button>
+        <Button icon={Plus} onClick={() => setCreateOpen(true)}>Créer un défi</Button>
       </PageHeader>
 
       <div className="space-y-8">
@@ -357,13 +358,7 @@ export default function Challenges() {
         </section>
 
         <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-fg">Défis partagés</h2>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="secondary" icon={Users} onClick={() => setSharedForm(true)}>Créer</Button>
-              <Button size="sm" variant="secondary" icon={LogIn} onClick={() => setJoinCodeOpen(true)}>Rejoindre</Button>
-            </div>
-          </div>
+          <h2 className="text-lg font-semibold text-fg">Défis partagés</h2>
           {sortedGroups.length === 0 ? (
             <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-surface-2/40 px-4 py-3 text-left">
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">

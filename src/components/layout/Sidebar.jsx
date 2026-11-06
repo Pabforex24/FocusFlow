@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import Logo from './Logo.jsx'
+import { LogoLink } from './Logo.jsx'
 import ThemeToggle from '../ThemeToggle.jsx'
 import { IconButton } from '../ui/Button.jsx'
 import { NAV_ITEMS } from './navigation.js'
@@ -12,7 +12,7 @@ export default function Sidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[4.5rem] flex-col border-r border-line bg-surface px-3 py-5 md:flex lg:hidden dark:bg-surface/80 dark:backdrop-blur-xl">
-      <Logo showText={false} className="mb-6 justify-center" />
+      <LogoLink showText={false} className="mb-6 justify-center" />
 
       <IconButton className="mb-5 self-center btn-brand hover:text-brand-950" icon={Plus} label="Nouvelle tâche" onClick={() => navigate('/tasks?new=1')} />
 

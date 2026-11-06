@@ -33,9 +33,11 @@ describe('durées Focus', () => {
     expect(formatFocusTime(23 * 3_600_000 + 59 * 60_000 + 59_000, MAX_FOCUS_MS)).toBe('23:59:59')
   })
 
-  it('affiche les heures selon la durée totale, pas le temps restant', () => {
-    expect(splitFocusTime(59_000, 2 * 3_600_000).showHours).toBe(true)
-    expect(formatFocusTime(59_000, 2 * 3_600_000)).toBe('00:00:59')
+  it('cache les heures dès qu’il reste moins d’une heure', () => {
+    expect(splitFocusTime(59_000, 2 * 3_600_000).showHours).toBe(false)
+    expect(formatFocusTime(59_000, 2 * 3_600_000)).toBe('00:59')
+    expect(splitFocusTime(3_600_000, 2 * 3_600_000).showHours).toBe(true)
+    expect(formatFocusTime(3_599_000, 2 * 3_600_000)).toBe('59:59')
   })
 
   it('arrondit la durée du libellé et des minutes enregistrées', () => {

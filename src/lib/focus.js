@@ -29,13 +29,13 @@ export function durationFromParts({ hours = 0, minutes = 0, seconds = 0 } = {}) 
   return { ok: true, ms: totalSeconds * 1000, seconds: totalSeconds }
 }
 
-// Le format HH:MM:SS apparaît dès que la durée totale de la session atteint une heure.
-export function splitFocusTime(remainingMs, totalMs = remainingMs) {
+// Le format HH:MM:SS n'apparaît que tant qu'il reste au moins une heure.
+export function splitFocusTime(remainingMs) {
   const totalSeconds = Math.max(0, Math.ceil(Number(remainingMs) / 1000) || 0)
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
-  const showHours = Number(totalMs) >= 3_600_000
+  const showHours = totalSeconds >= 3600
   return {
     showHours,
     hours: pad(hours),
@@ -45,8 +45,8 @@ export function splitFocusTime(remainingMs, totalMs = remainingMs) {
   }
 }
 
-export function formatFocusTime(remainingMs, totalMs = remainingMs) {
-  return splitFocusTime(remainingMs, totalMs).text
+export function formatFocusTime(remainingMs) {
+  return splitFocusTime(remainingMs).text
 }
 
 export function formatDurationLabel(ms) {

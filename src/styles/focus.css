@@ -71,14 +71,36 @@
   line-height: .95;
   letter-spacing: -.045em;
   white-space: nowrap;
+  transition: font-size .45s cubic-bezier(.22, 1, .36, 1);
 }
 
 /* Largeur fixe par chiffre : le minuteur ne tremble plus quand les valeurs changent. */
-.focus-time-main > span:not(.focus-colon) {
+.focus-time-main > span:not(.focus-colon):not(.focus-time-hours),
+.focus-time-hours > span:not(.focus-colon) {
   display: inline-block;
   flex: 0 0 1ch;
   width: 1ch;
   text-align: center;
+}
+
+/* Le groupe des heures se replie au lieu de disparaître brutalement sous une heure. */
+.focus-time-hours {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  max-width: 4ch;
+  overflow: visible;
+  opacity: 1;
+  transform: translateX(0);
+  transition: max-width .45s cubic-bezier(.22, 1, .36, 1), opacity .28s ease, transform .45s cubic-bezier(.22, 1, .36, 1);
+}
+
+.focus-time-hours.is-hidden {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-.35em);
 }
 
 .focus-timer:not(.is-hours) .focus-time-main {
@@ -230,6 +252,9 @@
 .focus-timer--minimal:not(.is-hours) .focus-time-main { font-size: clamp(5rem, 29.7vw, 15rem); }
 
 /* Cartes façon calendrier à pages / flip clock. */
+.focus-timer--flip, .focus-timer--glass, .focus-timer--calendar {
+  transition: font-size .45s cubic-bezier(.22, 1, .36, 1);
+}
 .focus-timer--flip, .focus-timer--glass { font-size: clamp(2.8rem, 17.5vw, 9rem); }
 .focus-timer--calendar { font-size: clamp(2.6rem, 16.2vw, 9rem); }
 .focus-timer--flip:not(.is-hours), .focus-timer--glass:not(.is-hours) { font-size: clamp(4rem, 27.2vw, 9rem); }
@@ -261,7 +286,7 @@
   color: var(--fg);
   text-shadow: none;
   transform-origin: 50% 8%;
-  backface-visibility: hidden;
+  will-change: transform, opacity;
   animation-name: focus-flip-in;
 }
 
@@ -284,8 +309,22 @@
 
 .focus-groups__item {
   display: flex;
+  flex: 0 1 auto;
   align-items: flex-start;
   gap: clamp(.1rem, .65vw, .55rem);
+  max-width: 20em;
+  overflow: visible;
+  opacity: 1;
+  transform: translateX(0);
+  transition: max-width .45s cubic-bezier(.22, 1, .36, 1), opacity .28s ease, transform .45s cubic-bezier(.22, 1, .36, 1), margin .45s cubic-bezier(.22, 1, .36, 1);
+}
+
+.focus-groups__item.is-hidden-hours {
+  max-width: 0;
+  margin-inline-end: calc(-1 * clamp(.1rem, .65vw, .55rem));
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-.35em);
 }
 
 .focus-group {
@@ -341,10 +380,10 @@
 }
 
 @keyframes focus-flip-in {
-  from { transform: rotateX(-94deg); opacity: .15; }
-  58%  { transform: rotateX(9deg); opacity: 1; }
-  78%  { transform: rotateX(-2deg); }
-  to   { transform: rotateX(0); opacity: 1; }
+  from { transform: translateY(-9%) rotateX(-58deg); opacity: .3; }
+  58%  { transform: translateY(1%) rotateX(6deg); opacity: 1; }
+  78%  { transform: translateY(0) rotateX(-1.5deg); }
+  to   { transform: translateY(0) rotateX(0); opacity: 1; }
 }
 
 .focus-card--calendar {
@@ -438,8 +477,12 @@
   position: relative;
   z-index: 1;
   display: grid;
-  place-items: center;
+  width: 100%;
   max-width: 100%;
+  place-items: center;
+  justify-items: center;
+  padding-inline: 5%;
+  text-align: center;
 }
 
 :is(.focus-timer--ring, .focus-timer--orbit) .focus-ring__content .focus-time-main {
@@ -485,6 +528,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .focus-card__value { animation: none; }
+  .focus-time-main,
+  .focus-timer--flip,
+  .focus-timer--glass,
+  .focus-timer--calendar,
+  .focus-time-hours,
+  .focus-groups__item { transition: none; }
   .focus-ring__bar { transition: none; }
   .focus-colon::before,
   .focus-colon::after,

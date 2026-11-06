@@ -157,7 +157,7 @@ export default function CoachFab({ layout }) {
     if (!drag.moved && Math.hypot(dx, dy) < 5) return
     drag.moved = true
     event.preventDefault()
-    drag.next = resolvePos({ x: drag.originX + dx, y: drag.originY + dy })
+    drag.next = clampViewport({ x: drag.originX + dx, y: drag.originY + dy })
     setPos(drag.next)
   }
 
@@ -166,7 +166,11 @@ export default function CoachFab({ layout }) {
     if (!drag || drag.pointerId !== event.pointerId) return
     if (drag.moved) {
       lastDragRef.current = Date.now()
-      if (drag.next) savePos(layout, drag.next)
+      if (drag.next) {
+        const snapped = resolvePos(drag.next)
+        setPos(snapped)
+        savePos(layout, snapped)
+      }
     }
     dragRef.current = null
     try { event.currentTarget.releasePointerCapture?.(event.pointerId) } catch { /* capture déjà perdue */ }

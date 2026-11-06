@@ -1,5 +1,5 @@
 import { Flame } from 'lucide-react'
-import Logo from './Logo.jsx'
+import { LogoLink } from './Logo.jsx'
 import NotificationsMenu from './NotificationsMenu.jsx'
 import UserMenu from './UserMenu.jsx'
 import { Badge } from '../ui/Badge.jsx'
@@ -30,7 +30,7 @@ export default function Header({ compact = false }) {
         'relative mx-auto flex w-full max-w-[calc(64rem-2rem)] items-center justify-between gap-2 rounded-2xl border border-line bg-surface shadow-card',
         compact ? 'h-12 px-2.5' : 'h-14 px-3',
       )}>
-        <Logo className="min-w-0" textClassName={compact ? 'text-base' : undefined} />
+        <LogoLink textClassName={compact ? 'text-base' : undefined} />
         <div className="flex shrink-0 items-center gap-2">
           <Badge tone="warning" icon={Flame} className="text-sm">{stats.streak} j</Badge>
           <NotificationsMenu />

@@ -1,14 +1,20 @@
 import { cn } from '../../lib/cn.js'
 import { splitFocusTime } from '../../lib/focus.js'
 
-function TimeText({ text, className }) {
+function Digits({ value }) {
+  return value.split('').map((digit, index) => <span key={`${index}-${digit}`}>{digit}</span>)
+}
+
+function TimeText({ parts, className }) {
   return (
     <div className={cn('focus-time-main', className)} aria-hidden>
-      {text.split('').map((character, index) => (
-        character === ':'
-          ? <span key={`colon-${index}`} className="focus-colon" />
-          : <span key={`digit-${index}`}>{character}</span>
-      ))}
+      <span className={cn('focus-time-hours', !parts.showHours && 'is-hidden')} aria-hidden={!parts.showHours}>
+        <Digits value={parts.hours} />
+        <span className="focus-colon" />
+      </span>
+      <Digits value={parts.minutes} />
+      <span className="focus-colon" />
+      <Digits value={parts.seconds} />
     </div>
   )
 }
@@ -22,18 +28,20 @@ function DigitCard({ value, calendar }) {
 }
 
 function CardClock({ parts, calendar }) {
-  const groups = parts.showHours
-    ? [{ value: parts.hours, label: 'heures' }, { value: parts.minutes, label: 'minutes' }, { value: parts.seconds, label: 'secondes' }]
-    : [{ value: parts.minutes, label: 'minutes' }, { value: parts.seconds, label: 'secondes' }]
+  const groups = [
+    { key: 'hours', value: parts.hours, label: 'heures', hidden: !parts.showHours },
+    { key: 'minutes', value: parts.minutes, label: 'minutes' },
+    { key: 'seconds', value: parts.seconds, label: 'secondes' },
+  ]
 
   return (
     <div className="focus-groups">
       {groups.map((group, groupIndex) => (
-        <div key={group.label} className="focus-groups__item">
+        <div key={group.key} className={cn('focus-groups__item', group.hidden && 'is-hidden-hours')} aria-hidden={group.hidden || undefined}>
           <div className="focus-group">
             <div className="focus-digits" aria-hidden>
               {group.value.split('').map((digit, digitIndex) => (
-                <DigitCard key={`${groupIndex}-${digitIndex}`} value={digit} calendar={calendar} />
+                <DigitCard key={`${group.key}-${digitIndex}`} value={digit} calendar={calendar} />
               ))}
             </div>
             <span className="focus-group-label">{group.label}</span>
@@ -55,7 +63,7 @@ function RingClock({ parts, percentage }) {
         <circle className="focus-ring__bar" cx="50" cy="50" r={radius} fill="none" strokeLinecap="round"
           strokeDasharray={circumference} strokeDashoffset={circumference * (1 - percentage)} />
       </svg>
-      <div className="focus-ring__content"><TimeText text={parts.text} /></div>
+      <div className="focus-ring__content"><TimeText parts={parts} /></div>
     </div>
   )
 }
@@ -74,7 +82,7 @@ export default function FocusTimerDisplay({ style = 'flip', remainingMs, totalMs
         ? <RingClock parts={parts} percentage={percentage} />
         : cardStyle
           ? <CardClock parts={parts} calendar={style === 'calendar'} />
-          : <TimeText text={parts.text} />}
+          : <TimeText parts={parts} />}
     </div>
   )
 }

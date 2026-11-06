@@ -5,6 +5,7 @@ import { ArrowRight, MessageCircle, RotateCcw, Send, Sparkles, Target, TrendingU
 import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Card } from '../components/ui/Card.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
+import { ProgressBar, ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { buildCoachAnalysis, COACH_PROMPTS, localCoachReply } from '../lib/coachAnalysis.js'
 import { buildCoachContext } from '../lib/coachContext.js'
@@ -227,10 +228,17 @@ export default function Coach() {
       </PageHeader>
 
       <div className="space-y-4">
-        <section className="crystal-surface relative overflow-hidden rounded-3xl hero-surface p-5 text-white shadow-pop sm:p-8">
-          <div className="pointer-events-none absolute -right-10 -bottom-10 z-0 size-44 rounded-full bg-white/10 blur-2xl" aria-hidden />
-          <div className="relative z-10 flex items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/15"><Sparkles className="size-6" aria-hidden /></span>
+        <section className="relative overflow-hidden rounded-3xl hero-surface p-5 text-white shadow-pop sm:p-7">
+          <div className="pointer-events-none absolute -right-[10%] -bottom-[45%] -left-[10%] h-4/5 opacity-70" aria-hidden
+            style={{
+              backgroundImage: 'linear-gradient(rgb(var(--grid-rgb) / 0.1) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--grid-rgb) / 0.1) 1px, transparent 1px)',
+              backgroundSize: '44px 44px',
+              transform: 'perspective(360px) rotateX(62deg)',
+              transformOrigin: 'top',
+              WebkitMaskImage: 'linear-gradient(180deg, #000, transparent 85%)',
+              maskImage: 'linear-gradient(180deg, #000, transparent 85%)',
+            }} />
+          <div className="relative flex items-start justify-between gap-5">
             <div className="min-w-0">
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold tracking-wide text-white/70 uppercase">
                 <span className="inline-flex items-center gap-1.5">
@@ -240,11 +248,23 @@ export default function Coach() {
                 <span className="text-white/35">·</span>
                 <span className="normal-case tracking-normal text-white/55">toutes les 30 s</span>
               </p>
-              <h2 key={refreshedAt.getTime()} className="mt-1 animate-fade-in text-xl font-bold sm:text-2xl">{analysis.headline}</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85">{analysis.summary}</p>
+              <h2 key={refreshedAt.getTime()} className="mt-2 max-w-2xl animate-fade-in font-display text-2xl font-bold tracking-tight break-words text-balance sm:text-3xl">{analysis.headline}</h2>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/75">{analysis.summary}</p>
+              <p className="mt-4 border-t border-white/10 pt-3 text-[11px] text-white/55">Actualisé à {timeFormat.format(refreshedAt)}</p>
+            </div>
+            <div className="hidden shrink-0 sm:block">
+              <div className="relative grid size-40 place-items-center">
+                <span className="absolute inset-2 rotate-[8deg] animate-float motion-reduce:animate-none rounded-[2.25rem] border border-white/20 bg-white/5 shadow-[0_18px_40px_rgb(0_0_0/0.45),inset_0_0_30px_rgb(var(--accent-rgb)/0.1)] backdrop-blur-sm" aria-hidden />
+                <ProgressRing value={analysis.momentum.weekRate ?? 0} size={112} stroke={9} tone={analysis.momentum.weekRate === null ? 'brand' : analysis.momentum.weekRate >= 70 ? 'success' : analysis.momentum.weekRate >= 50 ? 'brand' : 'warning'}>
+                  <span className="text-center font-display text-2xl leading-none font-bold text-white">{analysis.momentum.weekRate === null ? '—' : `${analysis.momentum.weekRate}%`}<span className="mt-1 block font-sans text-[11px] font-medium text-white/65">cette semaine</span></span>
+                </ProgressRing>
+              </div>
             </div>
           </div>
-          <p className="relative z-10 mt-4 border-t border-white/10 pt-3 text-[11px] text-white/55">Actualisé à {timeFormat.format(refreshedAt)}</p>
+          <div className="relative mt-5 sm:hidden">
+            <div className="mb-1.5 flex justify-between text-xs text-white/75"><span>Complétion sur 7 jours</span><span className="tabular-nums">{analysis.momentum.weekRate === null ? '—' : `${analysis.momentum.weekRate}%`}</span></div>
+            <ProgressBar value={analysis.momentum.weekRate ?? 0} size="sm" className="bg-white/20" color="#ffffff" />
+          </div>
         </section>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
