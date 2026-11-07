@@ -6,6 +6,7 @@ Stack : **React + JavaScript + Vite + Tailwind CSS 4 + Lucide + Supabase**. Aucu
 ## Démarrage
 
 1. Créez un projet Supabase, puis exécutez `supabase/schema.sql` dans l'éditeur SQL.
+   Pour une base existante, exécutez les migrations dans l'ordre (les dernières : `009_focus_durees_longues`, `010_shared_challenges`, `011_shared_challenges_durcissement`).
 2. Dans Supabase → Authentication → Providers, laissez « Email » activé (désactivez la confirmation d'email pour tester plus vite si vous le souhaitez).
 3. `cp .env.example .env` et renseignez `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (clé **anon** uniquement, jamais la clé `service_role`).
 4. `npm install` puis `npm run dev`.
@@ -76,6 +77,14 @@ Pendant une session, le service worker affiche une **notification persistante** 
 3. Côté serveur, ouvrir `GET /api/notify` avec l'en-tête `Authorization: Bearer <CRON_SECRET>` : la réponse liste les variables présentes (`config`). Toute variable `false` bloque l'envoi.
 4. Vérifier la tâche planifiée : `select * from cron.job where jobname = 'focusflow-notify';` puis `select * from cron.job_run_details order by start_time desc limit 10;`. Rejouer `supabase/setup_cron_notify.sql` si elle manque.
 5. Le rappel « quotidien » n'est envoyé que s'il reste des tâches le jour même, à l'heure locale choisie (±10 min) ; l'alerte « série » à partir de 21 h si aucune tâche faite et série ≥ 2.
+
+## Tests de sécurité
+
+- `npm test` inclut les tests des fonctions serveur (`api/*.test.js`) : jeton obligatoire, taille maximale du corps, limitation de débit, nettoyage de l'historique du chat, diagnostics protégés.
+- `npm run test:rls` vérifie l'isolation entre deux comptes, sur un projet Supabase **de test** : lectures/écritures croisées, usurpation de `user_id`, rattachement à une ressource d'autrui, `push_log`, RPC Focus et défis partagés (aperçu sans code, classement réservé aux membres, adhésion avant le démarrage).
+  - Copiez `security/.env.test.example` vers `.env.test`, renseignez deux comptes de test, puis appliquez les migrations `009`, `010` et `011`.
+  - Ne lancez jamais ce script contre la production : il crée puis supprime des lignes de test.
+- CI : `.github/workflows/security.yml` exécute `npm run check` et le test RLS (si les secrets `TEST_*` sont configurés).
 
 ## PWA
 

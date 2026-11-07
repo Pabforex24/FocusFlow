@@ -9,6 +9,7 @@ import { Segmented } from '../components/ui/Segmented.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { toUserMessage } from '../lib/errors.js'
 import { MIN_PASSWORD } from '../lib/password.js'
+import { safeInternalPath } from '../lib/redirect.js'
 
 const PERKS = [
   { icon: Target, text: 'Transformez vos objectifs en tâches quotidiennes' },
@@ -30,7 +31,7 @@ export default function Login({ initialMode = 'login' }) {
   const navigate = useNavigate()
   const location = useLocation()
   const requested = new URLSearchParams(location.search).get('next')
-  const next = requested?.startsWith('/') && !requested.startsWith('//') ? requested : null
+  const next = safeInternalPath(requested)
   const nextQuery = next ? `?next=${encodeURIComponent(next)}` : ''
   const [mode, setMode] = useState(initialMode)
   const [form, setForm] = useState({ email: '', password: '', name: '' })

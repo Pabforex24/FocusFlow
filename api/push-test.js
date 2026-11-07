@@ -4,6 +4,7 @@
 // on n'envoie qu'à SES propres abonnements.
 
 import webpush from 'web-push'
+import { json } from './_security.js'
 
 export const maxDuration = 30
 
@@ -11,8 +12,6 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY
-
-const json = (status, body) => Response.json(body, { status })
 
 // Vérifie le jeton Supabase auprès de /auth/v1/user : aucune clé secrète nécessaire.
 async function verifySession(request) {
@@ -92,15 +91,5 @@ export async function POST(request) {
   return json(200, { ok: sent > 0, sent, total: subs.length, reason: sent > 0 ? null : 'send-failed' })
 }
 
-// Diagnostic : quelles variables serveur sont présentes (sans valeurs).
-export function GET() {
-  const config = {
-    SUPABASE_URL: Boolean(SUPABASE_URL),
-    SUPABASE_ANON_KEY: Boolean(SUPABASE_ANON_KEY),
-    SUPABASE_SERVICE_ROLE_KEY: Boolean(SERVICE_KEY),
-    VITE_VAPID_PUBLIC_KEY: Boolean(PUBLIC_KEY),
-    VAPID_PRIVATE_KEY: Boolean(process.env.VAPID_PRIVATE_KEY),
-    VAPID_SUBJECT: Boolean(process.env.VAPID_SUBJECT),
-  }
-  return json(200, { ok: Object.values(config).every(Boolean), config })
-}
+// Pas de GET : un diagnostic public révélerait la configuration serveur. La route ne
+// répond qu'en POST, avec la session de l'utilisateur.

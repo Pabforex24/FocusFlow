@@ -34,6 +34,10 @@ export default [
     languageOptions: { globals: { ...globals.node } },
   },
   {
+    files: ['security/**/*.mjs'],
+    languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: { ...globals.node } },
+  },
+  {
     // Fonctions Vercel (Node, pas de JSX, pas de globals navigateur).
     files: ['api/**/*.js'],
     languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: { ...globals.node } },

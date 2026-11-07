@@ -1,0 +1,50 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, tests et build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      # Informatif : les avis dev-only (Vitest, serveur de dev Vite) ne doivent pas
+      # bloquer une mise en production. Passer en bloquant après les montées de version.
+      - name: Audit des dépendances
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  rls:
+    name: Isolation RLS (deux comptes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Le script s'ignore proprement si les secrets ne sont pas configurés
+      # (par exemple sur une pull request venue d'un fork).
+      - name: Vérifier l'isolation entre comptes
+        run: npm run test:rls
+        env:
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+          TEST_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_EMAIL_A: ${{ secrets.TEST_EMAIL_A }}
+          TEST_PASSWORD_A: ${{ secrets.TEST_PASSWORD_A }}
+          TEST_EMAIL_B: ${{ secrets.TEST_EMAIL_B }}
+          TEST_PASSWORD_B: ${{ secrets.TEST_PASSWORD_B }}

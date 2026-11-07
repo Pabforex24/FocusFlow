@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:rls": "node --env-file-if-exists=.env.test security/rls.test.mjs",
     "check:js-only": "node scripts/check-no-typescript.mjs",
     "lint": "eslint .",
     "check": "npm run lint && npm run check:js-only && npm test && npm run build"

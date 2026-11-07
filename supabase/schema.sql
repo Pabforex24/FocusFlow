@@ -524,6 +524,7 @@ declare
   v_active  public.active_challenges;
   v_members jsonb;
   v_tasks   jsonb;
+  v_today   date;
 begin
   if v_uid is null then
     raise exception 'Authentification requise.';
@@ -541,6 +542,16 @@ begin
     select 1 from public.challenge_members where group_id = v_group.id and user_id = v_uid
   ) then
     raise exception 'Vous participez déjà à ce défi.';
+  end if;
+
+  -- Même règle que le client : on ne rejoint pas un défi déjà commencé.
+  select (now() at time zone coalesce(nullif(btrim(p.timezone), ''), 'UTC'))::date
+    into v_today
+    from public.profiles p
+   where p.id = v_uid;
+  v_today := coalesce(v_today, current_date);
+  if v_today > v_group.start_date then
+    raise exception 'Ce défi a déjà commencé.';
   end if;
   if p_domain_id is null or not exists (
     select 1 from public.domains where id = p_domain_id and user_id = v_uid

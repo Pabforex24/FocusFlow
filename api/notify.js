@@ -6,6 +6,7 @@ import webpush from 'web-push'
 import { addDays } from '../src/lib/dates.js'
 import { computeStats } from '../src/lib/gamification.js'
 import { STREAK_FROM_HOUR, decideReminder, localDateKey, localHour } from '../src/lib/notifications.js'
+import { json, secretMatches } from './_security.js'
 
 const MAX_USERS = 200    // plafond par cycle (durée de fonction + charge)
 const HISTORY_DAYS = 60  // fenêtre de calcul de la série
@@ -17,8 +18,6 @@ export const maxDuration = 60
 // seule paire de variables Vercel suffise (Vite n'expose au navigateur que les VITE_*, mais Vercel
 // les fournit aussi au runtime des fonctions).
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-
-const json = (status, body) => Response.json(body, { status })
 
 // Petit client REST Supabase en service_role (contourne la RLS : push_log n'a aucune politique).
 const rest = (path, init = {}) =>
@@ -108,7 +107,7 @@ export async function POST(request) {
     console.error('[notify] variables manquantes (CRON_SECRET / SUPABASE_* / VAPID_*)')
     return json(503, { error: 'Notifications non configurées sur le serveur.' })
   }
-  if ((request.headers.get('authorization') ?? '') !== `Bearer ${CRON_SECRET}`) {
+  if (!secretMatches(request, CRON_SECRET)) {
     return json(401, { error: 'Non autorisé.' })
   }
 
@@ -141,7 +140,7 @@ export async function POST(request) {
 export function GET(request) {
   const { CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = process.env
   const publicKey = process.env.VITE_VAPID_PUBLIC_KEY
-  if (!CRON_SECRET || (request.headers.get('authorization') ?? '') !== `Bearer ${CRON_SECRET}`) {
+  if (!secretMatches(request, CRON_SECRET)) {
     return json(401, { error: 'Non autorisé.' })
   }
   const config = {

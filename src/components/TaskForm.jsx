@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ListPlus, Pencil, Repeat } from 'lucide-react'
+import { ListPlus, Pencil } from 'lucide-react'
 import Modal from './Modal.jsx'
 import { Button } from './ui/Button.jsx'
 import { Field, Input, Select } from './ui/Input.jsx'

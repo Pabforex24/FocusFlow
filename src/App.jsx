@@ -7,6 +7,7 @@ import { useAuth } from './contexts/AuthContext.jsx'
 import { DataProvider } from './contexts/DataContext.jsx'
 import { FocusProvider } from './contexts/FocusContext.jsx'
 import { isSupabaseConfigured } from './lib/supabase.js'
+import { safeInternalPath } from './lib/redirect.js'
 import Challenges from './pages/Challenges.jsx'
 import Coach from './pages/Coach.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -49,7 +50,7 @@ export default function App() {
   const { user, loading, recovery } = useAuth()
   const location = useLocation()
   const next = new URLSearchParams(location.search).get('next')
-  const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : null
+  const safeNext = safeInternalPath(next)
   const scrollPositions = useRef(new Map())
   const lastPath = useRef(location.pathname)
   const scrollPath = useRef(location.pathname)

@@ -4,6 +4,7 @@
 // détourner le rôle du coach.
 
 import { coachMessages } from '../src/lib/coachContext.js'
+import { json, secretMatches } from './_security.js'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 // llama-3.3-70b-versatile a été retiré par Groq le 16/08/2026 ; gpt-oss-120b est son remplacement
@@ -23,8 +24,6 @@ export const maxDuration = 30
 
 // Limitation simple en mémoire : suffit pour protéger le quota Groq côté utilisateur.
 const hits = new Map()
-
-const json = (status, body) => Response.json(body, { status })
 
 function rateLimited(userId) {
   const now = Date.now()
@@ -112,9 +111,14 @@ export async function POST(request) {
   }
 }
 
-// POST sert à l'analyse et au chat. Les autres méthodes sont rejetées.
-// GET est un diagnostic : indique quelles variables serveur sont présentes (pas leurs valeurs).
-export function GET() {
+// POST sert à l'analyse et au chat. Les autres méthodes sont rejetées (405).
+// GET est un diagnostic réservé à l'exploitant : il exige CRON_SECRET et n'expose que la
+// présence des variables (jamais leurs valeurs). Sans secret configuré, la route n'existe pas.
+export function GET(request) {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return json(404, { error: 'Introuvable.' })
+  if (!secretMatches(request, secret)) return json(401, { error: 'Non autorisé.' })
+
   const { GROQ_API_KEY, GROQ_MODEL } = process.env
   const config = {
     GROQ_API_KEY: Boolean(GROQ_API_KEY),
@@ -126,10 +130,4 @@ export function GET() {
     VITE_SUPABASE_ANON_KEY: Boolean(process.env.VITE_SUPABASE_ANON_KEY),
   }
   return json(200, { ok: Boolean(GROQ_API_KEY && SUPABASE_URL && SUPABASE_ANON_KEY), config })
-}
-export function PUT() {
-  return GET()
-}
-export function DELETE() {
-  return GET()
 }
