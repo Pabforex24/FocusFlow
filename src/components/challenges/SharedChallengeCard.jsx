@@ -8,7 +8,7 @@ import { ProgressBar } from '../ui/ProgressBar.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useData } from '../../contexts/DataContext.jsx'
 import { useToast } from '../../contexts/ToastContext.jsx'
-import { challengeProgress } from '../../lib/challenges.js'
+import { blueprintDurationLabel, challengeProgress } from '../../lib/challenges.js'
 import { cn } from '../../lib/cn.js'
 import { formatShort } from '../../lib/dates.js'
 import { sharedChallengeLink, sharedChallengeStatus, sharedChallengeTotals } from '../../lib/sharedChallenges.js'
@@ -153,7 +153,7 @@ export default function SharedChallengeCard({ group, active, tasks, members, onL
           {group.blueprints.map((blueprint, index) => (
             <li key={index} className="flex items-start gap-2">
               <Flag className="mt-0.5 size-3.5 shrink-0 text-subtle" aria-hidden />
-              <span>{blueprint.title}{blueprint.duration ? ` · ${blueprint.duration}` : ''}</span>
+              <span>{blueprint.title}{blueprintDurationLabel(blueprint) ? ` · ${blueprintDurationLabel(blueprint)}` : ''}</span>
             </li>
           ))}
         </ul>

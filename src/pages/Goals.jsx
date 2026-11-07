@@ -45,7 +45,7 @@ function GoalForm({ goal, defaultDomain, onClose }) {
         <Field label="Titre" error={errors.title}><Input value={form.title} onChange={set('title')} maxLength={120} autoFocus placeholder="Ex. Courir un semi-marathon" /></Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Domaine" error={errors.domain_id}><Select value={form.domain_id} onChange={set('domain_id')}>{domains.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
-          <Field label="Échéance" hint="Optionnel"><Input type="date" value={form.deadline} onChange={set('deadline')} /></Field>
+          <Field label="Date limite" hint="Optionnel"><Input type="date" value={form.deadline} onChange={set('deadline')} /></Field>
         </div>
         <Field label="Description" hint="Optionnel"><Textarea rows={3} value={form.description} onChange={set('description')} maxLength={500} /></Field>
         <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
@@ -127,7 +127,7 @@ export default function Goals() {
                       <Badge tone={status.tone}>{status.label}</Badge>
                       {g.deadline && (
                         <Badge tone="neutral" icon={CalendarClock}>
-                          {left < 0 ? `Échue le ${formatShort(g.deadline)}` : left === 0 ? "Échéance aujourd'hui" : `${left} j restants · ${formatShort(g.deadline)}`}
+                          {left < 0 ? `Échue le ${formatShort(g.deadline)}` : left === 0 ? "Date limite aujourd'hui" : `${left} j restants · ${formatShort(g.deadline)}`}
                         </Badge>
                       )}
                     </div>

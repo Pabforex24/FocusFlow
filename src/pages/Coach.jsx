@@ -5,7 +5,6 @@ import { ArrowRight, MessageCircle, RotateCcw, Send, Sparkles, Target, TrendingU
 import { Button, IconButton } from '../components/ui/Button.jsx'
 import { Card } from '../components/ui/Card.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
-import { ProgressBar, ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { buildCoachAnalysis, COACH_PROMPTS, localCoachReply } from '../lib/coachAnalysis.js'
 import { buildCoachContext } from '../lib/coachContext.js'
@@ -238,7 +237,7 @@ export default function Coach() {
               WebkitMaskImage: 'linear-gradient(180deg, #000, transparent 85%)',
               maskImage: 'linear-gradient(180deg, #000, transparent 85%)',
             }} />
-          <div className="relative flex items-start justify-between gap-5">
+          <div className="relative">
             <div className="min-w-0">
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold tracking-wide text-white/70 uppercase">
                 <span className="inline-flex items-center gap-1.5">
@@ -248,22 +247,10 @@ export default function Coach() {
                 <span className="text-white/35">·</span>
                 <span className="normal-case tracking-normal text-white/55">toutes les 30 s</span>
               </p>
-              <h2 key={refreshedAt.getTime()} className="mt-2 max-w-2xl animate-fade-in font-display text-2xl font-bold tracking-tight break-words text-balance sm:text-3xl">{analysis.headline}</h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/75">{analysis.summary}</p>
+              <h2 key={refreshedAt.getTime()} className="mt-2 max-w-3xl animate-fade-in font-display text-2xl font-bold tracking-tight break-words text-balance sm:text-3xl">{analysis.headline}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">{analysis.summary}</p>
               <p className="mt-4 border-t border-white/10 pt-3 text-[11px] text-white/55">Actualisé à {timeFormat.format(refreshedAt)}</p>
             </div>
-            <div className="hidden shrink-0 sm:block">
-              <div className="relative grid size-40 place-items-center">
-                <span className="absolute inset-2 rotate-[8deg] animate-float motion-reduce:animate-none rounded-[2.25rem] border border-white/20 bg-white/5 shadow-[0_18px_40px_rgb(0_0_0/0.45),inset_0_0_30px_rgb(var(--accent-rgb)/0.1)] backdrop-blur-sm" aria-hidden />
-                <ProgressRing value={analysis.momentum.weekRate ?? 0} size={112} stroke={9} tone={analysis.momentum.weekRate === null ? 'brand' : analysis.momentum.weekRate >= 70 ? 'success' : analysis.momentum.weekRate >= 50 ? 'brand' : 'warning'}>
-                  <span className="text-center font-display text-2xl leading-none font-bold text-white">{analysis.momentum.weekRate === null ? '—' : `${analysis.momentum.weekRate}%`}<span className="mt-1 block font-sans text-[11px] font-medium text-white/65">cette semaine</span></span>
-                </ProgressRing>
-              </div>
-            </div>
-          </div>
-          <div className="relative mt-5 sm:hidden">
-            <div className="mb-1.5 flex justify-between text-xs text-white/75"><span>Complétion sur 7 jours</span><span className="tabular-nums">{analysis.momentum.weekRate === null ? '—' : `${analysis.momentum.weekRate}%`}</span></div>
-            <ProgressBar value={analysis.momentum.weekRate ?? 0} size="sm" className="bg-white/20" color="#ffffff" />
           </div>
         </section>
 
@@ -281,7 +268,7 @@ export default function Coach() {
             </Link>
           </Card>
 
-          <Card className="flex flex-col" data-coach-insight={insight.label}>
+          <Card className="flex min-h-[8.5rem] flex-col" data-coach-insight={insight.label}>
             <div className="flex items-start gap-3">
               <span className={cn('grid size-9 shrink-0 place-items-center rounded-xl bg-surface-2', insight.tone)}><InsightIcon className="size-5" aria-hidden /></span>
               <div className="min-w-0">

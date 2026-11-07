@@ -11,6 +11,7 @@ import Challenges from './pages/Challenges.jsx'
 import Coach from './pages/Coach.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Domains from './pages/Domains.jsx'
+import DomainDetail from './pages/DomainDetail.jsx'
 import FocusDetail from './pages/FocusDetail.jsx'
 import Goals from './pages/Goals.jsx'
 import Home from './pages/Home.jsx'
@@ -93,6 +94,7 @@ export default function App() {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/domains" element={<Domains />} />
+            <Route path="/domains/:id" element={<DomainDetail />} />
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/challenges/rejoindre/:code" element={<JoinSharedChallenge />} />
             <Route path="/monthly" element={<Monthly />} />

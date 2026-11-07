@@ -19,6 +19,7 @@ import {
   remainingFocusMs,
   resumeFocusSession,
 } from '../lib/focus.js'
+import { taskMinutes } from '../lib/duration.js'
 import {
   closeFocusNotification,
   requestFocusPermission,
@@ -184,13 +185,41 @@ function CustomDurationField({ part, label, max, value, onChange }) {
 }
 
 function FocusPicker({ task, tasks, disabled, onStart, onClose }) {
-  const [quick, setQuick] = useState(25)
-  const [customMode, setCustomMode] = useState(false)
-  const [custom, setCustom] = useState({ hours: '', minutes: '', seconds: '' })
+  const initialMinutes = taskMinutes(task)
+  const [quick, setQuick] = useState(QUICK_FOCUS_MINUTES.includes(initialMinutes) ? initialMinutes : 25)
+  const [customMode, setCustomMode] = useState(Boolean(task && !initialMinutes))
+  const [custom, setCustom] = useState(() => {
+    if (!initialMinutes) return { hours: '', minutes: '', seconds: '' }
+    return { hours: initialMinutes >= 60 ? String(Math.floor(initialMinutes / 60)) : '', minutes: String(initialMinutes % 60), seconds: '' }
+  })
   const [error, setError] = useState('')
   const [taskId, setTaskId] = useState(task?.id ?? '')
   const chosen = tasks.find((t) => t.id === taskId) || task || null
   const customDuration = customMode ? durationFromParts(custom) : null
+
+  const applyTaskDuration = (minutes) => {
+    if (!minutes) {
+      setCustomMode(true)
+      setCustom({ hours: '', minutes: '', seconds: '' })
+      setError('')
+      return
+    }
+    if (QUICK_FOCUS_MINUTES.includes(minutes)) {
+      setQuick(minutes)
+      setCustomMode(false)
+    } else {
+      setCustomMode(true)
+      setCustom({ hours: minutes >= 60 ? String(Math.floor(minutes / 60)) : '', minutes: String(minutes % 60), seconds: '' })
+    }
+    setError('')
+  }
+
+  const selectTask = (event) => {
+    const id = event.target.value
+    setTaskId(id)
+    if (!id) { setQuick(25); setCustomMode(false); setError(''); return }
+    applyTaskDuration(taskMinutes(tasks.find((t) => t.id === id) || (task?.id === id ? task : null)))
+  }
 
   const chooseQuick = (value) => {
     setQuick(value)
@@ -235,12 +264,13 @@ function FocusPicker({ task, tasks, disabled, onStart, onClose }) {
           {error && <p role="alert" className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400"><CircleAlert className="size-3.5 shrink-0" aria-hidden />{error}</p>}
         </div>
         <Field label="Tâche liée" hint="Optionnel : elle sera cochée à la fin de la session (+30 XP)">
-          <Select value={taskId} onChange={(e) => setTaskId(e.target.value)}>
+          <Select value={taskId} onChange={selectTask}>
             <option value="">Aucune</option>
             {task && !tasks.some((t) => t.id === task.id) && <option value={task.id}>{task.title}</option>}
             {tasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
           </Select>
         </Field>
+        {chosen?.focus_linked === false && <Alert tone="info">La session sera liée à cette tâche, mais elle ne sera pas cochée automatiquement.</Alert>}
         <Alert tone="info" icon={BellOff} title="Ne pas déranger">
           Avant de commencer, activez le mode « Ne pas déranger » du téléphone. Une page web ne peut pas bloquer les appels ni les notifications des autres applications.
         </Alert>

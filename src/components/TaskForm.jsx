@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { ListPlus, Pencil, Repeat } from 'lucide-react'
 import Modal from './Modal.jsx'
 import { Button } from './ui/Button.jsx'
-import { Field, Input, Select } from './ui/Input.jsx'
+import { Checkbox, Field, Input, Select } from './ui/Input.jsx'
+import { Alert } from './ui/Alert.jsx'
 import { Segmented } from './ui/Segmented.jsx'
 import { WeekdayPicker } from './ui/WeekdayPicker.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { addDays, diffDays, todayKey, weekdayIndex } from '../lib/dates.js'
 import { GENERATED_TASK_XP } from '../lib/challenges.js'
+import { durationFieldValue, taskMinutes } from '../lib/duration.js'
 
 const PRIORITIES = [{ value: 'low', label: 'Basse' }, { value: 'medium', label: 'Normale' }, { value: 'high', label: 'Haute' }]
 const REPEATS = [['none', 'Aucune'], ['daily', 'Tous les jours'], ['workdays', 'Jours ouvrés'], ['weekend', 'Week-end'], ['custom', 'Personnalisée']]
@@ -25,7 +27,13 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
 
   const [form, setForm] = useState({
     title: task?.title ?? '', domain_id: task?.domain_id ?? '', goal_id: task?.goal_id ?? '',
-    scheduled_on: task?.scheduled_on ?? defaultDay ?? '', duration: task?.duration ?? '', priority: task?.priority ?? 'medium',
+    scheduled_on: task?.scheduled_on ?? defaultDay ?? '',
+    duration_minutes: durationFieldValue(taskMinutes(task)),
+    start_time: task?.start_time?.slice(0, 5) ?? '',
+    end_time: task?.end_time?.slice(0, 5) ?? '',
+    reminder_minutes: task?.reminder_minutes ?? '',
+    focus_linked: task?.focus_linked !== false,
+    priority: task?.priority ?? 'medium',
   })
   const [repeat, setRepeat] = useState(() => isSeries
     ? { frequency: storedRepeat.frequency ?? 'daily', mode: 'days', days: diffDays(seriesStart, seriesEnd) + 1, until: seriesEnd, weekdays: storedRepeat.weekdays ?? [] }
@@ -34,6 +42,8 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
   const [busy, setBusy] = useState(false)
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const goalOptions = goals.filter((g) => !form.domain_id || g.domain_id === form.domain_id)
+  const selectedGoal = goals.find((g) => g.id === form.goal_id)
+  const deadlineWarning = selectedGoal?.deadline && form.scheduled_on && form.scheduled_on > selectedGoal.deadline
 
   const recurring = repeat.frequency !== 'none'
   const startDate = isSeries ? seriesStart : form.scheduled_on
@@ -48,12 +58,18 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
     if (recurring && repeat.mode === 'until' && (!repeat.until || repeat.until < startDate)) found.until = 'La date de fin doit être après le début.'
     if (recurring && repeat.mode === 'days' && (Number(repeat.days) < 1 || Number(repeat.days) > 90)) found.days = 'Entre 1 et 90 jours.'
     if (recurring && repeat.frequency === 'custom' && repeat.weekdays.length === 0) found.weekdays = 'Choisissez au moins un jour.'
+    const minutes = form.duration_minutes === '' ? null : Number(form.duration_minutes)
+    if (minutes !== null && (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440)) found.duration_minutes = 'Saisissez une durée entre 1 et 1 440 minutes.'
+    if (form.start_time && form.end_time && form.end_time < form.start_time) found.end_time = 'L\'heure de fin doit suivre l\'heure de début.'
     setErrors(found)
     if (Object.keys(found).length) return
     setBusy(true)
     const fields = {
       title: form.title.trim(), domain_id: form.domain_id || null, goal_id: form.goal_id || null,
-      duration: form.duration.trim() || null, priority: form.priority,
+      duration: null, duration_minutes: form.duration_minutes === '' ? null : Number(form.duration_minutes),
+      start_time: form.start_time || null, end_time: form.end_time || null,
+      reminder_minutes: form.reminder_minutes === '' ? null : Number(form.reminder_minutes),
+      focus_linked: form.focus_linked, priority: form.priority,
     }
     let ok
     if (editing && (isSeries || recurring)) {
@@ -77,9 +93,14 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
           {isSeries ? (
             <Field label="Série" hint={`Début le ${seriesStart}`}><div className="flex min-h-11 items-center rounded-xl border border-line bg-surface-2/50 px-3 text-sm text-muted">{seriesRows.length} occurrence{seriesRows.length > 1 ? 's' : ''}</div></Field>
           ) : (
-            <Field label="Date" error={errors.scheduled_on}><Input type="date" value={form.scheduled_on} min={editing ? undefined : todayKey()} onChange={set('scheduled_on')} /></Field>
+            <Field label="Date de début" error={errors.scheduled_on}><Input type="date" value={form.scheduled_on} min={editing ? undefined : todayKey()} onChange={set('scheduled_on')} /></Field>
           )}
-          <Field label="Durée" hint="Optionnel, ex. 30min"><Input value={form.duration} onChange={set('duration')} maxLength={20} placeholder="30min" /></Field>
+          <Field label="Durée" hint="1 à 1 440 minutes" error={errors.duration_minutes} htmlFor="task-duration">
+            <div className="relative">
+              <Input id="task-duration" type="number" inputMode="numeric" min="1" max="1440" step="1" value={form.duration_minutes} onChange={set('duration_minutes')} placeholder="30" className="pr-12" />
+              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-subtle">min</span>
+            </div>
+          </Field>
           <Field label="Domaine">
             <Select value={form.domain_id} onChange={(e) => setForm((f) => ({ ...f, domain_id: e.target.value, goal_id: '' }))}>
               <option value="">Aucun</option>{domains.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -91,7 +112,23 @@ export default function TaskForm({ task, defaultDay, challengeId, onClose }) {
             </Select>
           </Field>
         </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Heure de début" hint="Optionnel"><Input type="time" value={form.start_time} onChange={set('start_time')} /></Field>
+          <Field label="Heure de fin" hint="Optionnel" error={errors.end_time}><Input type="time" value={form.end_time} onChange={set('end_time')} /></Field>
+          <Field label="Rappel" hint="Quand l'app est fermée">
+            <Select value={form.reminder_minutes} onChange={set('reminder_minutes')}>
+              <option value="">Aucun</option>
+              <option value="0">À l'heure</option>
+              <option value="10">10 min avant</option>
+              <option value="30">30 min avant</option>
+              <option value="60">1 h avant</option>
+            </Select>
+          </Field>
+        </div>
+        <Checkbox checked={form.focus_linked} onChange={(e) => setForm((f) => ({ ...f, focus_linked: e.target.checked }))}
+          label="Cocher à la fin d'une session Focus" description="La tâche est validée automatiquement quand le minuteur se termine." />
         <Field label="Priorité"><Segmented fill value={form.priority} onChange={(v) => setForm((f) => ({ ...f, priority: v }))} options={PRIORITIES} /></Field>
+        {deadlineWarning && <Alert tone="warning" title="Après la date limite de l'objectif">Cette tâche est planifiée après le {selectedGoal.deadline}. Vous pouvez continuer, mais l'objectif risque d'être en retard.</Alert>}
 
         {!inChallenge && (
           <div className="space-y-4 rounded-2xl border border-line bg-surface-2/40 p-3.5">

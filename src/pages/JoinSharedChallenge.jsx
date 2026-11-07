@@ -12,6 +12,7 @@ import { Spinner } from '../components/ui/LoadingState.jsx'
 import { useData } from '../contexts/DataContext.jsx'
 import { formatShort } from '../lib/dates.js'
 import { toUserMessage } from '../lib/errors.js'
+import { blueprintDurationLabel } from '../lib/challenges.js'
 import { sharedChallengeCanJoin, sharedChallengeStatus } from '../lib/sharedChallenges.js'
 
 const statusLabel = (status, group) => {
@@ -98,7 +99,7 @@ export default function JoinSharedChallenge() {
                   {group.blueprints.map((blueprint, index) => (
                     <li key={index} className="flex items-start gap-2">
                       <Flag className="mt-0.5 size-3.5 shrink-0 text-subtle" aria-hidden />
-                      <span>{blueprint.title}{blueprint.duration ? ` · ${blueprint.duration}` : ''}</span>
+                      <span>{blueprint.title}{blueprintDurationLabel(blueprint) ? ` · ${blueprintDurationLabel(blueprint)}` : ''}</span>
                     </li>
                   ))}
                 </ul>

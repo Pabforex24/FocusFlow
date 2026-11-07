@@ -182,7 +182,7 @@ export default function Dashboard() {
                         <span className="text-xs font-semibold tabular-nums text-muted">{progress.pct} %</span>
                       </div>
                       <ProgressBar value={progress.pct} color={domain?.color} size="sm" />
-                      {goal.deadline && <p className="text-xs text-subtle">Échéance {formatShort(goal.deadline)}</p>}
+                      {goal.deadline && <p className="text-xs text-subtle">Date limite {formatShort(goal.deadline)}</p>}
                     </div>
                   )
                 })}

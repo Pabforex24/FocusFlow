@@ -4,6 +4,7 @@ import { useFocus } from '../contexts/FocusContext.jsx'
 import { Badge } from './ui/Badge.jsx'
 import { Menu } from './ui/Menu.jsx'
 import { cn } from '../lib/cn.js'
+import { formatDurationMinutes, taskMinutes } from '../lib/duration.js'
 
 // compact : version pour l'accueil (sans menu d'actions).
 export default function TaskItem({ task, onEdit, onDelete, onPostpone, compact = false }) {
@@ -11,6 +12,8 @@ export default function TaskItem({ task, onEdit, onDelete, onPostpone, compact =
   const { openPicker } = useFocus()
   const domain = domains.find((d) => d.id === task.domain_id)
   const goal = goals.find((g) => g.id === task.goal_id)
+  const minutes = taskMinutes(task)
+  const time = task.start_time ? task.start_time.slice(0, 5) : null
 
   const menu = task.done
     ? [{ label: 'Supprimer', icon: Trash2, danger: true, onClick: () => onDelete(task) }]
@@ -39,7 +42,7 @@ export default function TaskItem({ task, onEdit, onDelete, onPostpone, compact =
             <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: domain.color }} />{domain.name}</span>
           )}
           {goal && <span className="inline-flex items-center gap-1"><Target className="size-3.5" aria-hidden />{goal.title}</span>}
-          {task.duration && <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden />{task.duration}</span>}
+          {(time || minutes) && <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden />{[time, formatDurationMinutes(minutes)].filter(Boolean).join(' · ')}</span>}
           <span className="font-semibold text-amber-600 dark:text-amber-400">+{task.xp_value} XP</span>
           {task.priority === 'high' && !task.done && <Badge tone="warning" icon={ChevronsUp}>Prioritaire</Badge>}
           {task.postponed && !task.done && <Badge tone="neutral">Reportée</Badge>}

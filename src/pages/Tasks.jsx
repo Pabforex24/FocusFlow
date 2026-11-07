@@ -87,7 +87,7 @@ export default function Tasks() {
   }, [requestedDay])
 
   const overdue = overdueTasks(tasks, today)
-  const dayTasks = tasks.filter((t) => t.scheduled_on === day).sort((a, b) => a.created_at.localeCompare(b.created_at))
+  const dayTasks = tasks.filter((t) => t.scheduled_on === day).sort((a, b) => (a.start_time ?? '').localeCompare(b.start_time ?? '') || a.created_at.localeCompare(b.created_at))
   const todo = dayTasks.filter((t) => !t.done)
   const done = dayTasks.filter((t) => t.done)
   const pct = dayTasks.length ? Math.round((done.length / dayTasks.length) * 100) : 0

@@ -7,14 +7,24 @@
 create extension if not exists "pgcrypto";
 
 create table public.profiles (
-  id             uuid primary key references auth.users(id) on delete cascade,
-  display_name   text,
-  hardcore_mode  boolean not null default false,
-  remind_enabled boolean not null default false,
-  remind_hour    smallint check (remind_hour between 0 and 23),
-  timezone       text,
-  created_at     timestamptz not null default now()
+  id                 uuid primary key references auth.users(id) on delete cascade,
+  display_name       text,
+  first_name         text,
+  last_name          text,
+  avatar_url         text,
+  public_code        text not null default upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8)),
+  profile_visibility text not null default 'friends' check (profile_visibility in ('private', 'friends', 'public')),
+  directory_opt_in   boolean not null default false,
+  notify_prefs       jsonb not null default '{}'::jsonb,
+  quiet_start        smallint check (quiet_start between 0 and 23),
+  quiet_end          smallint check (quiet_end between 0 and 23),
+  hardcore_mode      boolean not null default false,
+  remind_enabled     boolean not null default false,
+  remind_hour        smallint check (remind_hour between 0 and 23),
+  timezone           text,
+  created_at         timestamptz not null default now()
 );
+create unique index profiles_public_code_idx on public.profiles(upper(public_code));
 
 create table public.domains (
   id         uuid primary key default gen_random_uuid(),
@@ -54,6 +64,11 @@ create table public.tasks (
   challenge_active_id uuid references public.active_challenges(id) on delete cascade,
   title               text not null,
   duration            text,
+  duration_minutes    integer check (duration_minutes between 1 and 1440),
+  start_time          time,
+  end_time            time,
+  reminder_minutes    smallint check (reminder_minutes in (0, 10, 30, 60)),
+  focus_linked        boolean not null default true,
   scheduled_on        date not null,
   done                boolean not null default false,
   done_at             timestamptz,
@@ -67,6 +82,7 @@ create table public.tasks (
 );
 create index tasks_user_day_idx on public.tasks(user_id, scheduled_on);
 create index tasks_series_idx on public.tasks(series_id);
+alter table public.tasks add constraint tasks_time_range check (end_time is null or start_time is null or end_time >= start_time);
 
 create table public.custom_challenges (
   id            uuid primary key default gen_random_uuid(),
@@ -104,6 +120,52 @@ create table public.focus_sessions (
   minutes      integer not null,
   completed_on date not null,
   created_at   timestamptz not null default now()
+);
+
+create table public.notifications (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  kind       text not null,
+  title      text not null,
+  body       text not null default '',
+  link       text,
+  read_at    timestamptz,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz,
+  source_key text not null,
+  unique (user_id, source_key)
+);
+create index notifications_user_idx on public.notifications(user_id, created_at desc);
+create index notifications_unread_idx on public.notifications(user_id) where read_at is null;
+
+create table public.friend_requests (
+  id           uuid primary key default gen_random_uuid(),
+  sender_id    uuid not null references auth.users(id) on delete cascade,
+  receiver_id  uuid not null references auth.users(id) on delete cascade,
+  status       text not null default 'pending' check (status in ('pending', 'accepted', 'declined')),
+  created_at   timestamptz not null default now(),
+  responded_at timestamptz,
+  check (sender_id <> receiver_id),
+  unique (sender_id, receiver_id)
+);
+create index friend_requests_receiver_idx on public.friend_requests(receiver_id, status);
+
+create table public.friendships (
+  id         uuid primary key default gen_random_uuid(),
+  user_a     uuid not null references auth.users(id) on delete cascade,
+  user_b     uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  check (user_a < user_b),
+  unique (user_a, user_b)
+);
+create index friendships_a_idx on public.friendships(user_a);
+create index friendships_b_idx on public.friendships(user_b);
+
+create table public.earned_badges (
+  user_id   uuid not null references auth.users(id) on delete cascade,
+  badge_id  text not null,
+  earned_at timestamptz not null default now(),
+  primary key (user_id, badge_id)
 );
 
 -- Notifications push (migration 003).
@@ -151,6 +213,10 @@ alter table public.rest_days         enable row level security;
 alter table public.focus_sessions    enable row level security;
 alter table public.push_subscriptions enable row level security;
 alter table public.push_log          enable row level security;
+alter table public.notifications     enable row level security;
+alter table public.friend_requests   enable row level security;
+alter table public.friendships       enable row level security;
+alter table public.earned_badges     enable row level security;
 
 -- (select auth.uid()) est évalué une seule fois par requête au lieu d'une fois par ligne.
 -- Les tables qui pointent vers d'autres tables vérifient en plus que la ligne liée appartient
@@ -199,6 +265,27 @@ create policy "own focus" on public.focus_sessions for all
 create policy "own push subs" on public.push_subscriptions for all
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
+create policy "own notifications" on public.notifications for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+create policy "read own friend requests" on public.friend_requests for select
+  using ((select auth.uid()) in (sender_id, receiver_id));
+create policy "send friend request" on public.friend_requests for insert
+  with check ((select auth.uid()) = sender_id);
+create policy "answer friend request" on public.friend_requests for update
+  using ((select auth.uid()) in (sender_id, receiver_id))
+  with check ((select auth.uid()) in (sender_id, receiver_id));
+create policy "delete own friend request" on public.friend_requests for delete
+  using ((select auth.uid()) in (sender_id, receiver_id));
+
+create policy "read own friendships" on public.friendships for select
+  using ((select auth.uid()) in (user_a, user_b));
+create policy "delete own friendship" on public.friendships for delete
+  using ((select auth.uid()) in (user_a, user_b));
+
+create policy "own earned badges" on public.earned_badges for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
 -- push_log : aucune politique volontairement. Seule la clé service_role (fonction serveur
 -- api/notify.js) peut la lire et l'écrire ; les clients ne la manipulent jamais.
 
@@ -245,11 +332,33 @@ end $$;
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, display_name)
-  values (new.id, coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)))
+  insert into public.profiles (id, display_name, first_name, last_name)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)),
+    nullif(btrim(new.raw_user_meta_data->>'first_name'), ''),
+    nullif(btrim(new.raw_user_meta_data->>'last_name'), '')
+  )
   on conflict (id) do nothing;
   return new;
 end; $$;
+
+create or replace function public.make_friends(p_request_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_req public.friend_requests;
+begin
+  select * into v_req from public.friend_requests where id = p_request_id for update;
+  if not found or v_req.receiver_id <> auth.uid() or v_req.status <> 'pending' then
+    raise exception 'Demande introuvable.' using errcode = '42501';
+  end if;
+  update public.friend_requests set status = 'accepted', responded_at = now() where id = p_request_id;
+  insert into public.friendships (user_a, user_b)
+  values (least(v_req.sender_id, v_req.receiver_id), greatest(v_req.sender_id, v_req.receiver_id))
+  on conflict (user_a, user_b) do nothing;
+end; $$;
+revoke all on function public.make_friends(uuid) from public, anon;
+grant execute on function public.make_friends(uuid) to authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
@@ -278,8 +387,17 @@ begin
   if p_task_id is not null then
     update public.tasks
        set done = true, done_at = now()
-     where id = p_task_id and user_id = auth.uid()
+     where id = p_task_id
+       and user_id = auth.uid()
+       and done = false
+       and focus_linked = true
+       and scheduled_on <= p_completed_on
      returning * into v_task;
+
+    if v_task is null then
+      select * into v_task from public.tasks
+       where id = p_task_id and user_id = auth.uid();
+    end if;
   end if;
 
   return json_build_object('session', to_jsonb(v_session), 'task', to_jsonb(v_task));

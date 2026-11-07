@@ -1,5 +1,6 @@
 import { addDays, todayKey } from './dates.js'
 import { goalProgress, lastDays } from './stats.js'
+import { formatDurationMinutes, taskMinutes } from './duration.js'
 
 // Analyse locale du Coach : aucune requête réseau, aucun texte inventé.
 // Elle se recalcule à chaque changement de données et sert aussi de repli au chat IA.
@@ -68,7 +69,7 @@ export function buildCoachAnalysis(data = {}) {
   const focus = {
     title: priorityTask ? 'Priorité du jour' : 'Prochaine action',
     text: priorityTask
-      ? `Commence par « ${short(priorityTask.title, 70)} »${priorityTask.duration ? ` (${priorityTask.duration})` : ''} et garde une seule priorité jusqu'au bout.`
+      ? `Commence par « ${short(priorityTask.title, 70)} »${taskMinutes(priorityTask) ? ` (${formatDurationMinutes(taskMinutes(priorityTask))})` : ''} et garde une seule priorité jusqu'au bout.`
       : todayTasks.length
         ? 'La journée est terminée. Choisis une petite action pour demain afin de garder ton élan.'
         : 'Planifie une action de 10 minutes pour aujourd’hui. Une seule suffit pour créer de l’élan.',

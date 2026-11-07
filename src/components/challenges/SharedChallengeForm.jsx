@@ -6,7 +6,7 @@ import { Alert } from '../ui/Alert.jsx'
 import { Button } from '../ui/Button.jsx'
 import { Field, Input, Select } from '../ui/Input.jsx'
 import { useData } from '../../contexts/DataContext.jsx'
-import { CHALLENGE_CATALOGUE, buildChallengeTasks } from '../../lib/challenges.js'
+import { CHALLENGE_CATALOGUE, blueprintDurationLabel, buildChallengeTasks } from '../../lib/challenges.js'
 import { addDays, diffDays, formatShort } from '../../lib/dates.js'
 
 const sourceValue = (prefix, challenge) => `${prefix}:${challenge.id}`
@@ -110,7 +110,7 @@ export default function SharedChallengeForm({ onClose }) {
               {source.blueprints.map((blueprint, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <Flag className="mt-0.5 size-3.5 shrink-0 text-subtle" aria-hidden />
-                  <span>{blueprint.title}{blueprint.duration ? ` · ${blueprint.duration}` : ''}</span>
+                  <span>{blueprint.title}{blueprintDurationLabel(blueprint) ? ` · ${blueprintDurationLabel(blueprint)}` : ''}</span>
                 </li>
               ))}
             </ul>

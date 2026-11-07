@@ -20,7 +20,8 @@ import { WeekdayPicker } from '../components/ui/WeekdayPicker.jsx'
 import { ProgressBar, ProgressRing } from '../components/ui/ProgressBar.jsx'
 import { Segmented } from '../components/ui/Segmented.jsx'
 import { useData } from '../contexts/DataContext.jsx'
-import { CHALLENGE_CATALOGUE, challengeProgress } from '../lib/challenges.js'
+import { CHALLENGE_CATALOGUE, blueprintDurationLabel, blueprintDurationMinutes, challengeProgress } from '../lib/challenges.js'
+import { formatDurationMinutes, taskMinutes } from '../lib/duration.js'
 import { addDays, diffDays, formatShort } from '../lib/dates.js'
 import { DOMAIN_COLORS, DOMAIN_ICON_KEYS, ICONS } from '../lib/icons.js'
 import { challengeTasks } from '../lib/tasks.js'
@@ -92,7 +93,7 @@ function CustomForm({ challenge, template, onClose }) {
   const { actions } = useData()
   const source = challenge ?? template
   const [form, setForm] = useState({ title: source?.title ?? '', description: source?.description ?? '', duration_days: source?.duration_days ?? source?.durationDays ?? 30, color: source?.color ?? DOMAIN_COLORS[0], icon: source?.icon ?? 'flag' })
-  const [blueprints, setBlueprints] = useState(source?.blueprints?.length ? source.blueprints.map((b) => ({ weekdays: [], ...b })) : [{ title: '', duration: '', frequency: 'daily', weekdays: [] }])
+  const [blueprints, setBlueprints] = useState(source?.blueprints?.length ? source.blueprints.map((b) => ({ weekdays: [], ...b, duration_minutes: blueprintDurationMinutes(b) ?? '' })) : [{ title: '', duration_minutes: '', frequency: 'daily', weekdays: [] }])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const setBp = (i, k, v) => setBlueprints((l) => l.map((b, idx) => (idx === i ? { ...b, [k]: v } : b)))
@@ -100,12 +101,16 @@ function CustomForm({ challenge, template, onClose }) {
 
   const submit = async (e) => {
     e.preventDefault()
-    const clean = blueprints.map((b) => ({ ...b, title: b.title.trim() })).filter((b) => b.title)
+    const clean = blueprints.map((b) => {
+      const minutes = b.duration_minutes === '' || b.duration_minutes === null || b.duration_minutes === undefined ? null : Number(b.duration_minutes)
+      return { ...b, title: b.title.trim(), duration: null, duration_minutes: Number.isInteger(minutes) && minutes > 0 ? minutes : null }
+    }).filter((b) => b.title)
     const days = Number(form.duration_days)
     if (!form.title.trim()) return setError('Donnez un titre au défi.')
     if (!Number.isInteger(days) || days < 1 || days > 365) return setError('La durée doit être comprise entre 1 et 365 jours.')
     if (clean.length === 0) return setError('Ajoutez au moins une tâche récurrente.')
     if (clean.some((b) => b.frequency === 'custom' && !b.weekdays?.length)) return setError('Choisissez au moins un jour pour chaque tâche personnalisée.')
+    if (clean.some((b) => b.duration_minutes !== null && (b.duration_minutes < 1 || b.duration_minutes > 1440))) return setError('Les durées doivent être comprises entre 1 et 1 440 minutes.')
     setError('')
     setBusy(true)
     const payload = { title: form.title.trim(), description: form.description.trim(), duration_days: days, color: form.color, icon: form.icon, blueprints: clean }
@@ -152,14 +157,14 @@ function CustomForm({ challenge, template, onClose }) {
             <div key={i} className="space-y-2 rounded-2xl border border-line bg-surface-2/50 p-3">
               <Input placeholder="Titre de la tâche" value={b.title} onChange={(e) => setBp(i, 'title', e.target.value)} maxLength={100} aria-label={`Titre de la tâche ${i + 1}`} />
               <div className="flex items-center gap-2">
-                <Input placeholder="Durée (20min)" value={b.duration} onChange={(e) => setBp(i, 'duration', e.target.value)} maxLength={20} aria-label="Durée" />
+                <div className="relative flex-1"><Input type="number" inputMode="numeric" min="1" max="1440" placeholder="Durée en min" value={b.duration_minutes} onChange={(e) => setBp(i, 'duration_minutes', e.target.value)} className="pr-12" aria-label="Durée en minutes" /><span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-subtle">min</span></div>
                 <Select value={b.frequency} onChange={(e) => setBp(i, 'frequency', e.target.value)} aria-label="Fréquence">{FREQ.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
                 {blueprints.length > 1 && <IconButton icon={Trash2} variant="danger-soft" label="Retirer cette tâche" onClick={() => setBlueprints((l) => l.filter((_, idx) => idx !== i))} />}
               </div>
               {b.frequency === 'custom' && <WeekdayPicker value={b.weekdays ?? []} onChange={(weekdays) => setBpWeekdays(i, weekdays)} />}
             </div>
           ))}
-          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setBlueprints((l) => [...l, { title: '', duration: '', frequency: 'daily', weekdays: [] }])}>Ajouter une tâche</Button>
+          <Button size="sm" variant="secondary" icon={Plus} onClick={() => setBlueprints((l) => [...l, { title: '', duration_minutes: '', frequency: 'daily', weekdays: [] }])}>Ajouter une tâche</Button>
         </div>
 
         {error && <Alert tone="danger">{error}</Alert>}
@@ -269,7 +274,7 @@ function ManageTasksModal({ active, onClose }) {
               <li key={t.id} className="flex items-center gap-2 rounded-2xl border border-line bg-surface-2/40 p-3">
                 <div className="min-w-0 flex-1">
                   <p className={cn('truncate text-sm font-medium', t.done ? 'text-subtle line-through' : 'text-fg')}>{t.title}</p>
-                  <p className="text-xs text-muted">{formatShort(t.scheduled_on)}{t.duration ? ` · ${t.duration}` : ''}{t.done ? ' · faite' : t.scheduled_on < today ? ' · en retard' : ''}</p>
+                  <p className="text-xs text-muted">{formatShort(t.scheduled_on)}{taskMinutes(t) ? ` · ${formatDurationMinutes(taskMinutes(t))}` : ''}{t.done ? ' · faite' : t.scheduled_on < today ? ' · en retard' : ''}</p>
                 </div>
                 <Button size="sm" variant="secondary" icon={Replace} onClick={() => setEditTask(t)}>Remplacer</Button>
                 {!t.done && <IconButton icon={CalendarClock} label="Reporter à une date" variant="secondary" size="sm" onClick={() => setPostpone(t)} />}
@@ -329,7 +334,7 @@ export default function Challenges() {
       {c.description && <p className="text-sm text-muted">{c.description}</p>}
       <ul className="space-y-1.5 text-sm text-fg">
         {c.blueprints.map((b, i) => (
-          <li key={i} className="flex items-start gap-2"><ListChecks className="mt-0.5 size-4 shrink-0 text-subtle" aria-hidden /><span>{b.title}<span className="text-muted">{b.duration ? ` · ${b.duration}` : ''} · {freqText(b)}</span></span></li>
+          <li key={i} className="flex items-start gap-2"><ListChecks className="mt-0.5 size-4 shrink-0 text-subtle" aria-hidden /><span>{b.title}<span className="text-muted">{blueprintDurationLabel(b) ? ` · ${blueprintDurationLabel(b)}` : ''} · {freqText(b)}</span></span></li>
         ))}
       </ul>
       <Button className="mt-auto" icon={Play} variant={running(c.id) ? 'secondary' : 'primary'} disabled={running(c.id)} onClick={() => setStarting(asChallenge(c))}>
